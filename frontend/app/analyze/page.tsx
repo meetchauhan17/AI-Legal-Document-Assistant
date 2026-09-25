@@ -2,19 +2,16 @@
 
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import {
   ArrowLeft,
   FileText,
   Upload,
   Type,
-  Loader2,
   CheckCircle2,
   AlertTriangle,
   ShieldAlert,
   ShieldCheck,
-  Eye,
   ChevronDown,
   ChevronUp,
   Info,
@@ -24,6 +21,9 @@ import {
   Globe,
   MessageSquare,
   Scale,
+  RotateCcw,
+  Layers,
+  ArrowRight,
 } from 'lucide-react';
 import { useDocument } from '@/context/DocumentContext';
 import {
@@ -36,8 +36,23 @@ import {
   type RiskResponse,
   type Clause,
 } from '@/lib/api';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
+import { Textarea } from '@/components/ui/Input';
 
-// ── Constants ─────────────────────────────────────────────────────────────
+// ── Sample Document for Quick Evaluation ──────────────────────────────────
+
+const SAMPLE_CONTRACT = `RESIDENTIAL LEASE AGREEMENT
+This Agreement is entered into on March 1, 2026, between Greenfield Properties LLC ("Landlord") and Alex Mercer ("Tenant").
+1. PREMISES & TERM: Landlord leases to Tenant the premises at 742 Evergreen Terrace for a fixed term of 12 months, beginning April 1, 2026 and ending March 31, 2027.
+2. MONTHLY RENT: Tenant agrees to pay $2,200.00 on or before the 1st of each month. A late fee of $75.00 applies if rent is not received within a 3-day grace period.
+3. SECURITY DEPOSIT: Tenant shall deposit $4,400.00 upon execution. Landlord reserves the unilateral right to withhold deposits for standard wear-and-tear without itemized receipts within 60 days.
+4. AUTO-RENEWAL TRAP: This lease shall automatically renew for an additional 12-month period unless written certified notice is received 90 days prior to term expiration.
+5. MAINTENANCE & REPAIRS: Tenant is liable for all plumbing, HVAC servicing, and mechanical repairs regardless of pre-existing condition.
+6. UNILATERAL TERMINATION: Landlord may terminate this lease and execute immediate lockout with 3 days notice upon any alleged rule infraction.
+7. GOVERNING LAW: State of Oregon.`;
+
+// ── Constants & Types ─────────────────────────────────────────────────────
 
 const LANGUAGES = [
   { value: 'en', label: 'English' },
@@ -46,35 +61,18 @@ const LANGUAGES = [
 ];
 
 const LOADING_STAGES = [
-  { key: 'uploading', icon: Upload, label: 'Reading document…', color: '#2563EB' },
-  { key: 'simplifying', icon: BookOpen, label: 'Simplifying language…', color: '#7C3AED' },
-  { key: 'risks', icon: ShieldAlert, label: 'Scanning for risks…', color: '#DC2626' },
+  { key: 'uploading', label: 'Reading document…', desc: 'Extracting text and establishing in-memory session', icon: Upload, color: 'from-blue-400 to-blue-600' },
+  { key: 'simplifying', label: 'Simplifying language…', desc: 'Translating legalese into plain English and key takeaways', icon: BookOpen, color: 'from-purple-400 to-clay-accent' },
+  { key: 'risks', label: 'Scanning for risks…', desc: 'Evaluating one-sided clauses, liability waivers, and hidden traps', icon: ShieldAlert, color: 'from-pink-400 to-pink-600' },
 ] as const;
 
 type StageKey = typeof LOADING_STAGES[number]['key'];
 
-// ── Animation variants ────────────────────────────────────────────────────
-
-const fadeSlide = {
-  hidden: { opacity: 0, y: 22 },
-  visible: (i = 0) => ({
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1], delay: i * 0.08 },
-  }),
-};
-
-const staggerContainer = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.1, delayChildren: 0.05 } },
-};
-
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.82 },
-  visible: { opacity: 1, scale: 1, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } },
-};
-
-// ── Helpers ───────────────────────────────────────────────────────────────
+interface AnalysisResult {
+  upload: UploadResponse;
+  simplify: SimplifyResponse;
+  risk: RiskResponse;
+}
 
 function clauseLevel(clause: Clause): 'standard' | 'attention' | 'risk' {
   const raw = (clause.category_level ?? clause.category ?? '').toLowerCase();
@@ -83,217 +81,122 @@ function clauseLevel(clause: Clause): 'standard' | 'attention' | 'risk' {
   return 'standard';
 }
 
-const SEVERITY_STYLES = {
+const SEVERITY_CONFIG = {
   risk: {
-    border: 'border-l-red-500',
-    bg: 'bg-red-50',
-    badge: 'bg-red-100 text-red-700',
-    icon: <ShieldAlert className="w-3.5 h-3.5" />,
-    label: 'Risk',
-    dot: 'bg-red-500',
+    borderLeft: 'border-l-4 border-l-[#DB2777]',
+    badgeBg: 'bg-pink-100 text-pink-700',
+    dotBg: 'bg-[#DB2777]',
+    icon: ShieldAlert,
+    label: 'Potential Risk',
   },
   attention: {
-    border: 'border-l-amber-500',
-    bg: 'bg-amber-50',
-    badge: 'bg-amber-100 text-amber-700',
-    icon: <AlertTriangle className="w-3.5 h-3.5" />,
-    label: 'Attention',
-    dot: 'bg-amber-400',
+    borderLeft: 'border-l-4 border-l-[#F59E0B]',
+    badgeBg: 'bg-amber-100 text-amber-700',
+    dotBg: 'bg-[#F59E0B]',
+    icon: AlertTriangle,
+    label: 'Attention Needed',
   },
   standard: {
-    border: 'border-l-emerald-500',
-    bg: 'bg-emerald-50',
-    badge: 'bg-emerald-100 text-emerald-700',
-    icon: <ShieldCheck className="w-3.5 h-3.5" />,
-    label: 'Standard',
-    dot: 'bg-emerald-500',
+    borderLeft: 'border-l-4 border-l-[#10B981]',
+    badgeBg: 'bg-emerald-100 text-emerald-700',
+    dotBg: 'bg-[#10B981]',
+    icon: ShieldCheck,
+    label: 'Standard Terms',
   },
 };
 
-// ── Sub-components ────────────────────────────────────────────────────────
+// ── Clause Item Component ─────────────────────────────────────────────────
 
-function StagedLoader({ currentStage }: { currentStage: StageKey }) {
-  const currentIdx = LOADING_STAGES.findIndex((s) => s.key === currentStage);
+function ClauseItem({ clause, index }: { clause: Clause; index: number }) {
+  const level = clauseLevel(clause);
+  const cfg = SEVERITY_CONFIG[level];
+  const [expanded, setExpanded] = useState(false);
+  const IconComponent = cfg.icon;
+
   return (
-    <div className="flex flex-col items-center gap-6 py-12 px-6">
-      {/* Animated ring + icon */}
-      <div className="relative w-20 h-20">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
-          className="absolute inset-0 rounded-full border-2 border-transparent"
-          style={{
-            borderTopColor: LOADING_STAGES[currentIdx]?.color ?? '#2563EB',
-            borderRightColor: `${LOADING_STAGES[currentIdx]?.color ?? '#2563EB'}30`,
-          }}
-        />
-        <div className="absolute inset-2 rounded-full bg-white flex items-center justify-center shadow-inner">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentStage}
-              initial={{ opacity: 0, scale: 0.6 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.6 }}
-              transition={{ duration: 0.25 }}
-              className="text-primary"
-            >
-              {React.createElement(
-                LOADING_STAGES[currentIdx]?.icon ?? Loader2,
-                { className: 'w-7 h-7', style: { color: LOADING_STAGES[currentIdx]?.color } }
-              )}
-            </motion.div>
-          </AnimatePresence>
+    <div
+      onClick={() => setExpanded(!expanded)}
+      className={`rounded-[24px] bg-white border border-white/90 p-5 shadow-clayCard ${cfg.borderLeft} hover:-translate-y-1 transition-all duration-300 cursor-pointer`}
+      style={{
+        animationDelay: `${index * 80}ms`,
+      }}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 mt-0.5 shadow-clayPressed">
+            <IconComponent className="w-4 h-4 text-clay-foreground" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider font-heading ${cfg.badgeBg}`}>
+                {cfg.label}
+              </span>
+              <span className="text-xs font-bold text-clay-muted">
+                {clause.category || 'General Clause'}
+              </span>
+            </div>
+            <p className="font-sans text-xs sm:text-sm text-clay-foreground font-medium leading-snug line-clamp-2">
+              {clause.clause_text.replace(/\n/g, ' ')}
+            </p>
+          </div>
         </div>
-      </div>
 
-      {/* Stage label */}
-      <AnimatePresence mode="wait">
-        <motion.p
-          key={currentStage}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.3 }}
-          className="text-base font-semibold text-text-primary"
+        <button
+          type="button"
+          className="text-clay-muted hover:text-clay-accent transition-colors p-1"
+          aria-label={expanded ? 'Collapse' : 'Expand'}
         >
-          {LOADING_STAGES[currentIdx]?.label}
-        </motion.p>
-      </AnimatePresence>
-
-      {/* Stage progress dots */}
-      <div className="flex gap-3">
-        {LOADING_STAGES.map((stage, idx) => (
-          <motion.div
-            key={stage.key}
-            className={`h-2 rounded-full transition-all duration-500 ${
-              idx < currentIdx
-                ? 'bg-emerald-500 w-6'
-                : idx === currentIdx
-                ? 'w-6'
-                : 'bg-slate-200 w-2'
-            }`}
-            style={idx === currentIdx ? { background: stage.color } : {}}
-            animate={idx === currentIdx ? { opacity: [1, 0.5, 1] } : {}}
-            transition={idx === currentIdx ? { repeat: Infinity, duration: 1.2 } : {}}
-          />
-        ))}
+          {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
       </div>
 
-      <p className="text-[12px] text-text-secondary">
-        This may take 10–20 seconds for long documents
-      </p>
+      {expanded && (
+        <div className="mt-4 pt-4 border-t border-slate-100/80 space-y-3">
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-clay-muted font-heading block mb-1">
+              Practical Explanation
+            </span>
+            <p className="font-sans text-xs sm:text-sm text-clay-foreground leading-relaxed bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+              {clause.explanation}
+            </p>
+          </div>
+
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-clay-muted font-heading block mb-1">
+              Exact Contract Excerpt
+            </span>
+            <p className="font-mono text-xs text-clay-muted italic bg-[#EFEBF5]/60 p-3 rounded-xl border border-white shadow-clayPressed leading-relaxed">
+              &quot;{clause.clause_text.trim()}&quot;
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function ClauseCard({ clause, index }: { clause: Clause; index: number }) {
-  const level = clauseLevel(clause);
-  const style = SEVERITY_STYLES[level];
-  const [expanded, setExpanded] = useState(false);
-
-  return (
-    <motion.div
-      variants={fadeSlide}
-      custom={index * 0.5}
-      whileHover={{ y: -3, boxShadow: '0 12px 28px -6px rgba(15,23,42,0.1)' }}
-      transition={{ y: { duration: 0.2 }, boxShadow: { duration: 0.2 } }}
-      className={`relative bg-white rounded-xl border border-slate-200/70 border-l-4 ${style.border}
-                  shadow-[0_2px_12px_-4px_rgba(15,23,42,0.05)] overflow-hidden cursor-pointer`}
-      onClick={() => setExpanded((p) => !p)}
-      role="button"
-      aria-expanded={expanded}
-    >
-      <div className="flex items-start gap-3 p-4">
-        {/* Severity badge */}
-        <span
-          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold
-                      uppercase tracking-wide shrink-0 mt-0.5 ${style.badge}`}
-        >
-          {style.icon}
-          {style.label}
-        </span>
-
-        {/* Category + excerpt preview */}
-        <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-semibold text-text-primary leading-snug mb-0.5">
-            {clause.category}
-          </p>
-          <p className="text-[12px] text-text-secondary line-clamp-2 leading-relaxed">
-            {clause.clause_text.replace(/\n/g, ' ')}
-          </p>
-        </div>
-
-        {/* Expand toggle */}
-        <button
-          className="shrink-0 text-text-secondary hover:text-text-primary transition-colors"
-          aria-label={expanded ? 'Collapse clause' : 'Expand clause'}
-          tabIndex={-1}
-        >
-          {expanded ? (
-            <ChevronUp className="w-4 h-4" />
-          ) : (
-            <ChevronDown className="w-4 h-4" />
-          )}
-        </button>
-      </div>
-
-      {/* Expanded explanation */}
-      <AnimatePresence>
-        {expanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25, ease: 'easeInOut' }}
-            className={`overflow-hidden border-t border-slate-100 ${style.bg}`}
-          >
-            <div className="px-4 py-3 space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-text-secondary">
-                Explanation
-              </p>
-              <p className="text-[13px] text-text-primary leading-relaxed">
-                {clause.explanation}
-              </p>
-              {clause.clause_text && (
-                <>
-                  <p className="text-[11px] font-semibold uppercase tracking-widest text-text-secondary pt-1">
-                    Excerpt
-                  </p>
-                  <p className="text-[12px] text-text-secondary italic leading-relaxed border-l-2 border-slate-300 pl-3">
-                    {clause.clause_text.trim().slice(0, 400)}
-                    {clause.clause_text.length > 400 ? '…' : ''}
-                  </p>
-                </>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
-}
-
-// ── Main Page ─────────────────────────────────────────────────────────────
-
-interface AnalysisResult {
-  upload: UploadResponse;
-  simplify: SimplifyResponse;
-  risk: RiskResponse;
-}
+// ── Main Analyze Page Component ───────────────────────────────────────────
 
 export default function AnalyzePage() {
   const { language, setLanguage, setDocumentData } = useDocument();
+
+  // Mode: 'file' or 'text'
   const [mode, setMode] = useState<'file' | 'text'>('file');
   const [pastedText, setPastedText] = useState('');
   const [file, setFile] = useState<File | null>(null);
+
+  // Loading & Stages
   const [stage, setStage] = useState<StageKey | null>(null);
+  const [completedStages, setCompletedStages] = useState<StageKey[]>([]);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Dropzone ──────────────────────────────────────────────────────────
-
+  // Dropzone Setup
   const onDrop = useCallback((accepted: File[]) => {
-    if (accepted[0]) setFile(accepted[0]);
+    if (accepted[0]) {
+      setFile(accepted[0]);
+      setError(null);
+    }
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -301,528 +204,557 @@ export default function AnalyzePage() {
     accept: { 'application/pdf': ['.pdf'] },
     maxFiles: 1,
     maxSize: 5 * 1024 * 1024,
-    onDropRejected: (fileRejections) => {
-      const msg = fileRejections[0]?.errors[0]?.message ?? 'File rejected';
-      setError(msg.includes('size') ? 'File exceeds 5 MB limit.' : msg);
+    onDropRejected: (rejections) => {
+      const msg = rejections[0]?.errors[0]?.message || 'File rejected';
+      setError(msg.includes('size') ? 'File size exceeds maximum allowed limit of 5MB.' : 'Only PDF documents are supported.');
     },
   });
 
-  // ── Submit flow ───────────────────────────────────────────────────────
+  const handleLoadSample = () => {
+    setMode('text');
+    setPastedText(SAMPLE_CONTRACT);
+    setFile(null);
+    setError(null);
+  };
 
+  // Submit Handler
   async function handleSubmit() {
     setError(null);
     setResult(null);
 
-    const hasInput = mode === 'file' ? !!file : pastedText.trim().length > 50;
+    const hasInput = mode === 'file' ? !!file : pastedText.trim().length >= 30;
     if (!hasInput) {
-      setError(mode === 'file' ? 'Please drop or select a PDF.' : 'Please paste at least 50 characters of text.');
+      setError(mode === 'file' ? 'Please upload a PDF document.' : 'Please enter or paste at least 30 characters of text.');
       return;
     }
 
     try {
-      // Stage 1: Upload
+      setCompletedStages([]);
+
+      // Stage 1: Upload / Extract
       setStage('uploading');
-      const upload =
-        mode === 'file' ? await uploadFile(file!) : await uploadText(pastedText.trim());
+      const uploadRes = mode === 'file' ? await uploadFile(file!) : await uploadText(pastedText.trim());
+      setCompletedStages(['uploading']);
 
       // Stage 2: Simplify
       setStage('simplifying');
-      const simplify = await simplifyDocument(upload.document_id, upload.full_text, language);
+      const simplifyRes = await simplifyDocument(uploadRes.document_id, uploadRes.full_text, language);
+      setCompletedStages(['uploading', 'simplifying']);
 
-      // Stage 3: Risk
+      // Stage 3: Risk Classification
       setStage('risks');
-      const risk = await analyzeRisk(upload.document_id, upload.full_text, language);
+      const riskRes = await analyzeRisk(uploadRes.document_id, uploadRes.full_text, language);
+      setCompletedStages(['uploading', 'simplifying', 'risks']);
 
       setStage(null);
-      setResult({ upload, simplify, risk });
+      const fullAnalysis: AnalysisResult = {
+        upload: uploadRes,
+        simplify: simplifyRes,
+        risk: riskRes,
+      };
+      setResult(fullAnalysis);
+
+      // Save to shared Document Context
       setDocumentData({
-        documentId: upload.document_id,
-        documentType: simplify.document_type,
-        fullText: upload.full_text,
-        simplifyResult: simplify,
-        riskResult: risk,
+        documentId: uploadRes.document_id,
+        documentType: simplifyRes.document_type,
+        fullText: uploadRes.full_text,
+        simplifyResult: simplifyRes,
+        riskResult: riskRes,
       });
-    } catch (err: unknown) {
+    } catch (err: any) {
       setStage(null);
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
+      setError(err.message || 'Analysis failed. Please check your document and try again.');
     }
   }
 
-  function reset() {
+  const handleReset = () => {
     setResult(null);
     setError(null);
     setFile(null);
     setPastedText('');
     setStage(null);
-  }
+    setCompletedStages([]);
+  };
 
   const isLoading = stage !== null;
   const riskCount = result?.risk.clauses.filter((c) => clauseLevel(c) === 'risk').length ?? 0;
   const attentionCount = result?.risk.clauses.filter((c) => clauseLevel(c) === 'attention').length ?? 0;
+  const standardCount = result?.risk.clauses.filter((c) => clauseLevel(c) === 'standard').length ?? 0;
 
   return (
-    <main className="min-h-screen bg-background">
-
-      {/* ── Top nav bar ──────────────────────────────────────────────── */}
-      <nav className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200/70">
-        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+    <main className="min-h-screen bg-clay-canvas text-clay-foreground pb-24">
+      {/* ── STICKY TOP NAVIGATION BAR ─────────────────────────────────── */}
+      <header className="sticky top-0 z-30 bg-white/70 backdrop-blur-xl border-b border-white/80 px-4 sm:px-6 py-3.5 shadow-clayCard">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-text-secondary hover:text-primary transition-colors"
+              className="p-2 rounded-xl bg-white shadow-clayButton text-clay-muted hover:text-clay-accent transition-colors"
+              title="Home"
             >
               <ArrowLeft className="w-4 h-4" />
-              Home
             </Link>
-            <Link
-              href="/compare"
-              className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-text-secondary hover:text-accent transition-colors"
-            >
-              <Scale className="w-3.5 h-3.5" />
-              Compare Mode
-            </Link>
+            <div>
+              <h1 className="font-heading font-black text-sm text-clay-foreground tracking-tight">
+                Analyze Legal Document
+              </h1>
+              <p className="text-[11px] text-clay-muted">Plain-language summary &amp; risk matrix</p>
+            </div>
           </div>
 
+          {/* 6. Language selector: Pill-shaped dropdown matching clay button aesthetic */}
           <div className="flex items-center gap-2">
-            <Globe className="w-4 h-4 text-text-secondary" />
-            <select
-              id="language-select"
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className="text-sm font-medium text-text-primary bg-transparent border-none outline-none
-                         cursor-pointer hover:text-primary transition-colors"
-              aria-label="Output language"
-            >
-              {LANGUAGES.map((l) => (
-                <option key={l.value} value={l.value}>{l.label}</option>
-              ))}
-            </select>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white shadow-clayButton border border-white/80 text-xs font-heading font-bold text-clay-foreground">
+              <Globe className="w-3.5 h-3.5 text-clay-accent shrink-0" />
+              <select
+                id="language-select"
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                className="bg-transparent font-heading font-bold text-clay-foreground text-xs focus:outline-none cursor-pointer pr-1"
+                aria-label="Output Language"
+              >
+                {LANGUAGES.map((l) => (
+                  <option key={l.value} value={l.value}>
+                    {l.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
-      </nav>
+      </header>
 
-      <div className="max-w-4xl mx-auto px-4 py-10 pb-20">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-10">
 
-        {/* ── Page header ──────────────────────────────────────────────── */}
+        {/* ── PAGE HEADER (When idle) ─────────────────────────────────── */}
         {!result && !isLoading && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45 }}
-            className="text-center mb-10"
-          >
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-xs font-semibold text-primary mb-4">
-              <Sparkles className="w-3.5 h-3.5" />
-              AI Analysis
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-clay-accent/10 text-clay-accent text-xs font-heading font-bold mb-3 shadow-clayPressed">
+              <Sparkles className="w-3.5 h-3.5" /> High-Fidelity Document Scanner
             </div>
-            <h1 className="text-3xl font-bold text-text-primary mb-2 tracking-tight">
-              Analyze a Document
-            </h1>
-            <p className="text-text-secondary text-sm max-w-md mx-auto">
-              Upload a PDF or paste text to get a plain-language summary, risk flags, and clause analysis.
+            <h2 className="font-heading font-black text-3xl sm:text-4xl text-clay-foreground tracking-tight mb-2">
+              Upload or Paste Any Legal Agreement
+            </h2>
+            <p className="font-sans text-sm sm:text-base text-clay-muted max-w-lg mx-auto">
+              Extracts text locally in memory, generates transparent plain-language takeaways, and categorizes high-stakes risk clauses.
             </p>
-          </motion.div>
+
+            {/* Quick 1-Click Sample Trigger */}
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={handleLoadSample}
+                className="inline-flex items-center gap-1.5 text-xs font-heading font-bold text-clay-accent hover:text-clay-accent-alt bg-white shadow-clayButton hover:shadow-clayButtonHover active:scale-[0.95] px-4 py-2 rounded-full border border-white/80 transition-all cursor-pointer"
+              >
+                <Layers className="w-3.5 h-3.5 text-clay-accent" />
+                Load Sample Agreement (Residential Lease)
+              </button>
+            </div>
+          </div>
         )}
 
-        {/* ── Loading ───────────────────────────────────────────────────── */}
-        <AnimatePresence mode="wait">
-          {isLoading && (
-            <motion.div
-              key="loader"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white rounded-2xl border border-slate-200 shadow-card overflow-hidden"
-            >
-              <StagedLoader currentStage={stage!} />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* ── 1 & 2. INPUT & UPLOAD ZONE ─────────────────────────────── */}
+        {!result && !isLoading && (
+          <div className="space-y-6">
+            {/* Mode switch */}
+            <div className="flex bg-[#EFEBF5] p-1.5 rounded-2xl shadow-clayPressed max-w-xs mx-auto">
+              <button
+                type="button"
+                onClick={() => setMode('file')}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-heading font-bold transition-all ${
+                  mode === 'file'
+                    ? 'bg-white text-clay-foreground shadow-clayButton'
+                    : 'text-clay-muted hover:text-clay-foreground'
+                }`}
+              >
+                <Upload className="w-3.5 h-3.5" />
+                Upload PDF
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('text')}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-heading font-bold transition-all ${
+                  mode === 'text'
+                    ? 'bg-white text-clay-foreground shadow-clayButton'
+                    : 'text-clay-muted hover:text-clay-foreground'
+                }`}
+              >
+                <Type className="w-3.5 h-3.5" />
+                Paste Text
+              </button>
+            </div>
 
-        {/* ── Upload UI (shown when no result + not loading) ─────────── */}
-        <AnimatePresence>
-          {!result && !isLoading && (
-            <motion.div
-              key="upload-ui"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.4 }}
-              className="space-y-4"
-            >
-              {/* Mode toggle */}
-              <div className="flex rounded-xl bg-slate-100 p-1 max-w-xs mx-auto">
-                {(['file', 'text'] as const).map((m) => (
-                  <button
-                    key={m}
-                    onClick={() => setMode(m)}
-                    id={`mode-${m}`}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-sm font-semibold
-                                transition-all duration-200 ${
-                                  mode === m
-                                    ? 'bg-white text-primary shadow-sm'
-                                    : 'text-text-secondary hover:text-text-primary'
-                                }`}
+            {/* Mode File: 1. LARGE RECESSED / CONCAVE UPLOAD TRAY */}
+            {mode === 'file' ? (
+              <div>
+                {!file ? (
+                  <div
+                    {...getRootProps()}
+                    id="drop-zone"
+                    className={`relative rounded-[32px] p-12 text-center cursor-pointer transition-all duration-300 bg-[#EFEBF5] shadow-clayPressed border-2 border-dashed ${
+                      isDragActive
+                        ? 'border-clay-accent bg-clay-accent/5 ring-4 ring-clay-accent/20'
+                        : 'border-clay-accent/25 hover:border-clay-accent/60'
+                    }`}
                   >
-                    {m === 'file' ? <Upload className="w-3.5 h-3.5" /> : <Type className="w-3.5 h-3.5" />}
-                    {m === 'file' ? 'Upload PDF' : 'Paste Text'}
-                  </button>
-                ))}
-              </div>
+                    <input {...getInputProps()} />
 
-              {/* Dropzone */}
-              <AnimatePresence mode="wait">
-                {mode === 'file' ? (
-                  <motion.div
-                    key="dropzone"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.25 }}
-                  >
-                    <div
-                      {...getRootProps()}
-                      id="drop-zone"
-                      className={`relative rounded-2xl border-2 border-dashed p-10 text-center cursor-pointer
-                                  transition-all duration-250 group
-                                  ${
-                                    isDragActive
-                                      ? 'border-primary bg-blue-50/70 shadow-[0_0_0_4px_rgba(37,99,235,0.12),0_8px_32px_-8px_rgba(30,58,138,0.18)]'
-                                      : file
-                                      ? 'border-emerald-400 bg-emerald-50/40 shadow-[0_4px_20px_-4px_rgba(5,150,105,0.12),inset_0_1px_0_rgba(255,255,255,0.8)]'
-                                      : 'border-slate-300 bg-white hover:border-primary/60 hover:bg-blue-50/30 shadow-[0_4px_20px_-6px_rgba(15,23,42,0.06),0_2px_8px_-2px_rgba(15,23,42,0.04),inset_0_1px_0_rgba(255,255,255,0.9)]'
-                                  }`}
-                    >
-                      <input {...getInputProps()} />
-
-                      {/* 3D depth layers */}
-                      <div className="absolute inset-0 rounded-2xl pointer-events-none"
-                        style={{ boxShadow: 'inset 0 -3px 0 rgba(15,23,42,0.04)' }}
-                        aria-hidden="true"
-                      />
-
-                      <AnimatePresence mode="wait">
-                        {file ? (
-                          <motion.div
-                            key="file-selected"
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="flex flex-col items-center gap-3"
-                          >
-                            <div className="w-14 h-14 rounded-2xl bg-emerald-100 flex items-center justify-center">
-                              <CheckCircle2 className="w-7 h-7 text-emerald-600" />
-                            </div>
-                            <div>
-                              <p className="font-semibold text-emerald-800 text-sm">{file.name}</p>
-                              <p className="text-xs text-emerald-600 mt-0.5">
-                                {(file.size / 1024).toFixed(0)} KB — ready to analyze
-                              </p>
-                            </div>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setFile(null); }}
-                              className="text-xs text-text-secondary hover:text-red-500 transition-colors underline"
-                            >
-                              Remove
-                            </button>
-                          </motion.div>
-                        ) : (
-                          <motion.div
-                            key="drop-prompt"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="flex flex-col items-center gap-3"
-                          >
-                            <motion.div
-                              animate={isDragActive ? { scale: 1.15, y: -4 } : { scale: 1, y: 0 }}
-                              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                              className={`w-14 h-14 rounded-2xl flex items-center justify-center
-                                          ${isDragActive ? 'bg-blue-100' : 'bg-slate-100 group-hover:bg-blue-50'} transition-colors`}
-                            >
-                              <Upload className={`w-6 h-6 ${isDragActive ? 'text-primary' : 'text-text-secondary group-hover:text-primary'} transition-colors`} />
-                            </motion.div>
-
-                            <div>
-                              <p className="font-semibold text-text-primary text-sm">
-                                {isDragActive ? 'Drop it here…' : 'Drag & drop a PDF'}
-                              </p>
-                              <p className="text-xs text-text-secondary mt-1">
-                                or{' '}
-                                <span className="text-primary font-semibold underline underline-offset-2">
-                                  click to browse
-                                </span>
-                                {' '}· PDF only · max 5 MB
-                              </p>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                    {/* Gradient icon orb */}
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-purple-400 to-clay-accent text-white shadow-clayButton flex items-center justify-center">
+                      <Upload className="w-8 h-8" />
                     </div>
-                  </motion.div>
+
+                    <h3 className="font-heading font-black text-lg text-clay-foreground mb-1">
+                      {isDragActive ? 'Drop your PDF into the tray!' : 'Drag & drop a PDF contract here'}
+                    </h3>
+                    <p className="font-sans text-xs text-clay-muted">
+                      or <span className="text-clay-accent font-bold underline">browse your device</span> (PDF up to 5MB)
+                    </p>
+                  </div>
                 ) : (
-                  <motion.div
-                    key="textarea"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.25 }}
-                  >
-                    <div className="relative rounded-2xl bg-white border border-slate-200 overflow-hidden
-                                    shadow-[0_4px_20px_-6px_rgba(15,23,42,0.06),0_2px_8px_-2px_rgba(15,23,42,0.04),inset_0_-3px_0_rgba(15,23,42,0.04)]
-                                    focus-within:border-primary/60 focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1),0_4px_20px_-4px_rgba(30,58,138,0.12)] transition-all duration-200">
-                      <textarea
-                        id="paste-textarea"
-                        value={pastedText}
-                        onChange={(e) => setPastedText(e.target.value)}
-                        placeholder="Paste the full text of your legal document here…"
-                        rows={10}
-                        className="w-full p-5 text-sm text-text-primary bg-transparent resize-none outline-none
-                                   placeholder:text-text-secondary/50 leading-relaxed"
-                      />
-                      <div className="px-5 py-2.5 border-t border-slate-100 flex justify-between items-center bg-slate-50/50">
-                        <span className="text-[11px] text-text-secondary">
-                          {pastedText.length > 0 ? `${pastedText.length.toLocaleString()} characters` : 'Minimum 50 characters'}
-                        </span>
-                        {pastedText.length > 0 && (
-                          <button
-                            onClick={() => setPastedText('')}
-                            className="text-[11px] text-text-secondary hover:text-red-500 transition-colors"
-                          >
-                            Clear
-                          </button>
-                        )}
+                  /* File selected state */
+                  <div className="p-6 rounded-[32px] bg-white border border-white shadow-clayCard flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-clay-success/15 text-clay-success flex items-center justify-center shadow-clayPressed">
+                        <CheckCircle2 className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h4 className="font-heading font-bold text-sm text-clay-foreground">
+                          {file.name}
+                        </h4>
+                        <p className="text-xs text-clay-muted">
+                          {(file.size / 1024).toFixed(1)} KB · Ready to analyze
+                        </p>
                       </div>
                     </div>
-                  </motion.div>
+                    <button
+                      type="button"
+                      onClick={() => setFile(null)}
+                      className="text-xs font-bold text-clay-muted hover:text-red-500 underline transition-colors px-2 py-1"
+                    >
+                      Change File
+                    </button>
+                  </div>
                 )}
-              </AnimatePresence>
+              </div>
+            ) : (
+              /* Mode Text: 2. "Paste text instead" Textarea (Recessed/Concave) */
+              <div>
+                <Textarea
+                  value={pastedText}
+                  onChange={(e) => setPastedText(e.target.value)}
+                  placeholder="Paste the full text of your legal agreement here..."
+                  rows={8}
+                />
+                <div className="mt-2 flex items-center justify-between text-xs text-clay-muted px-2">
+                  <span>{pastedText.length} characters</span>
+                  {pastedText.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setPastedText('')}
+                      className="hover:text-red-500 transition-colors"
+                    >
+                      Clear Text
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
 
-              {/* Error */}
-              <AnimatePresence>
-                {error && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    className="flex items-center gap-2 p-3.5 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700"
-                  >
-                    <AlertTriangle className="w-4 h-4 shrink-0" />
-                    {error}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+            {/* Error Message */}
+            {error && (
+              <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-xs sm:text-sm text-red-700 flex items-center gap-2.5">
+                <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />
+                <span>{error}</span>
+              </div>
+            )}
 
-              {/* Submit */}
-              <motion.button
-                id="analyze-submit"
+            {/* Submit Action */}
+            <div className="flex justify-center pt-2">
+              <Button
+                variant="primary"
+                size="lg"
                 onClick={handleSubmit}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
                 disabled={isLoading}
-                className="w-full py-3.5 rounded-xl font-bold text-[15px] text-white
-                           bg-gradient-to-r from-primary to-primary-light
-                           shadow-[0_4px_20px_-4px_rgba(30,58,138,0.4)]
-                           hover:shadow-[0_6px_24px_-4px_rgba(30,58,138,0.5)]
-                           transition-shadow duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+                id="analyze-submit"
+                className="w-full sm:w-80 shadow-clayButton"
               >
                 Analyze Document
-              </motion.button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </div>
+          </div>
+        )}
 
-        {/* ── Results ───────────────────────────────────────────────────── */}
-        <AnimatePresence>
-          {result && !isLoading && (
-            <motion.div
-              key="results"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-            >
-              {/* Results header bar */}
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4 }}
-                className="flex items-center justify-between mb-8"
-              >
-                <div>
-                  <h2 className="text-xl font-bold text-text-primary">Analysis Complete</h2>
-                  <p className="text-sm text-text-secondary mt-0.5">
-                    {result.risk.clauses.length} clauses reviewed
-                    {riskCount > 0 && ` · `}
-                    {riskCount > 0 && (
-                      <span className="text-red-600 font-semibold">{riskCount} risk{riskCount !== 1 ? 's' : ''}</span>
-                    )}
-                    {attentionCount > 0 && ` · `}
-                    {attentionCount > 0 && (
-                      <span className="text-amber-600 font-semibold">{attentionCount} attention needed</span>
-                    )}
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Link
-                    href={`/checklist?doc=${result.upload.document_id}&type=${encodeURIComponent(result.simplify.document_type)}`}
-                    className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-accent bg-amber-50 hover:bg-amber-100 border border-amber-200 hover:shadow-xs transition-all px-3.5 py-2 rounded-xl"
-                  >
-                    <ClipboardList className="w-4 h-4" />
-                    Checklist
-                  </Link>
-                  <Link
-                    href={`/ask?doc=${result.upload.document_id}&type=${encodeURIComponent(result.simplify.document_type)}`}
-                    className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-primary to-primary-light hover:shadow-md hover:shadow-primary/20 transition-all px-3.5 py-2 rounded-xl"
-                  >
-                    <MessageSquare className="w-4 h-4" />
-                    Ask Questions
-                  </Link>
-                  <button
-                    id="analyze-reset"
-                    onClick={reset}
-                    className="text-xs sm:text-sm font-medium text-text-secondary hover:text-primary transition-colors border border-slate-200 px-3 py-2 rounded-xl hover:border-primary/30 hover:bg-blue-50/50"
-                  >
-                    Analyze Another
-                  </button>
-                </div>
-              </motion.div>
+        {/* ── 3. STAGED LOADING SEQUENCE (3 Sequential Status Cards) ───── */}
+        {isLoading && (
+          <div className="py-8 space-y-4 max-w-xl mx-auto">
+            <div className="text-center mb-6">
+              <h3 className="font-heading font-black text-2xl text-clay-foreground">
+                Analyzing Contract
+              </h3>
+              <p className="font-sans text-xs text-clay-muted mt-1">
+                Executing 3-stage privacy-first analysis in local memory...
+              </p>
+            </div>
 
-              <motion.div
-                variants={staggerContainer}
-                initial="hidden"
-                animate="visible"
-                className="space-y-6"
-              >
-                {/* 1. Document Type Badge & Ask Questions Quick Action */}
-                <motion.div variants={scaleIn} className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 shadow-sm">
-                    <FileText className="w-4 h-4 text-primary" />
-                    <span className="text-sm font-semibold text-primary">
-                      {result.simplify.document_type}
-                    </span>
-                  </div>
+            {LOADING_STAGES.map((s, idx) => {
+              const isCurrent = stage === s.key;
+              const isDone = completedStages.includes(s.key);
+              const isPending = !isCurrent && !isDone;
+              const IconComp = s.icon;
 
-                  <div className="flex items-center gap-2">
-                    <Link
-                      href={`/checklist?doc=${result.upload.document_id}&type=${encodeURIComponent(result.simplify.document_type)}`}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent hover:text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 px-3 py-1.5 rounded-full transition-colors"
-                    >
-                      <ClipboardList className="w-3.5 h-3.5" />
-                      <span>Action Checklist</span>
-                    </Link>
-                    <Link
-                      href={`/ask?doc=${result.upload.document_id}&type=${encodeURIComponent(result.simplify.document_type)}`}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary-light bg-blue-50 hover:bg-blue-100 border border-blue-200/80 px-3 py-1.5 rounded-full transition-colors"
-                    >
-                      <MessageSquare className="w-3.5 h-3.5" />
-                      <span>Chat with AI &rarr;</span>
-                    </Link>
-                  </div>
-                </motion.div>
-
-                {/* 2. Plain Summary */}
-                <motion.div
-                  variants={fadeSlide}
-                  className="bg-white rounded-2xl border border-slate-200/70 p-6
-                             shadow-[0_4px_20px_-6px_rgba(15,23,42,0.06)]"
+              return (
+                <Card
+                  key={s.key}
+                  variant="glass"
+                  className={`p-5 transition-all duration-300 border ${
+                    isCurrent
+                      ? 'border-clay-accent shadow-deepClay bg-white'
+                      : isDone
+                      ? 'border-clay-success/40 bg-white/90 shadow-clayCard'
+                      : 'border-slate-200/60 bg-white/40 opacity-50 shadow-none'
+                  }`}
                 >
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-                      <BookOpen className="w-4 h-4 text-primary" />
-                    </div>
-                    <h3 className="font-700 text-text-primary" style={{ fontWeight: 700 }}>Plain-Language Summary</h3>
-                  </div>
-                  <p className="text-[14px] text-text-primary leading-relaxed whitespace-pre-line">
-                    {result.simplify.plain_summary}
-                  </p>
-                </motion.div>
-
-                {/* 3. Key Points */}
-                {result.simplify.key_points?.length > 0 && (
-                  <motion.div
-                    variants={fadeSlide}
-                    className="bg-white rounded-2xl border border-slate-200/70 p-6
-                               shadow-[0_4px_20px_-6px_rgba(15,23,42,0.06)]"
-                  >
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center">
-                        <ClipboardList className="w-4 h-4 text-violet-600" />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      {/* Icon with clay-breathe animation while active */}
+                      <div
+                        className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shrink-0 ${
+                          isDone
+                            ? 'bg-clay-success shadow-clayPressed'
+                            : isCurrent
+                            ? `bg-gradient-to-br ${s.color} animate-clay-breathe shadow-clayButton`
+                            : 'bg-slate-300'
+                        }`}
+                      >
+                        {isDone ? (
+                          <CheckCircle2 className="w-6 h-6 text-white" />
+                        ) : (
+                          <IconComp className="w-6 h-6" />
+                        )}
                       </div>
-                      <h3 className="font-700 text-text-primary" style={{ fontWeight: 700 }}>Key Points</h3>
-                    </div>
-                    <motion.ul
-                      variants={staggerContainer}
-                      className="space-y-2.5"
-                    >
-                      {result.simplify.key_points.map((pt, i) => (
-                        <motion.li
-                          key={i}
-                          variants={fadeSlide}
-                          custom={i}
-                          className="flex items-start gap-2.5 text-[13px] text-text-primary leading-relaxed"
-                        >
-                          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                          <span>{pt}</span>
-                        </motion.li>
-                      ))}
-                    </motion.ul>
-                  </motion.div>
-                )}
 
-                {/* 4. Clause Analysis */}
-                {result.risk.clauses.length > 0 && (
-                  <motion.div variants={fadeSlide}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center">
-                        <ShieldAlert className="w-4 h-4 text-red-500" />
-                      </div>
-                      <h3 className="font-700 text-text-primary" style={{ fontWeight: 700 }}>Clause Analysis</h3>
-                    </div>
-
-                    {/* Legend */}
-                    <div className="flex flex-wrap gap-2 mb-4 p-3 bg-slate-50 rounded-xl border border-slate-200/70">
-                      <span className="text-[11px] font-semibold text-text-secondary uppercase tracking-wide mr-1 self-center">Legend:</span>
-                      {(Object.entries(SEVERITY_STYLES) as [keyof typeof SEVERITY_STYLES, typeof SEVERITY_STYLES[keyof typeof SEVERITY_STYLES]][]).map(([key, s]) => (
-                        <span
-                          key={key}
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${s.badge}`}
-                        >
-                          <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold text-clay-muted uppercase tracking-wider font-heading">
+                            Stage {idx + 1}
+                          </span>
+                          {isCurrent && (
+                            <span className="inline-flex px-2 py-0.5 rounded-full text-[9px] font-black bg-clay-accent/15 text-clay-accent uppercase font-heading animate-pulse">
+                              Processing
+                            </span>
+                          )}
+                        </div>
+                        <h4 className="font-heading font-bold text-base text-clay-foreground">
                           {s.label}
-                        </span>
-                      ))}
-                      <span className="text-[11px] text-text-secondary self-center ml-auto flex items-center gap-1">
-                        <Info className="w-3 h-3" /> Click any clause to expand
-                      </span>
+                        </h4>
+                        <p className="text-xs text-clay-muted">
+                          {s.desc}
+                        </p>
+                      </div>
                     </div>
 
-                    <motion.div
-                      variants={staggerContainer}
-                      className="space-y-2.5"
-                    >
-                      {result.risk.clauses.map((clause, i) => (
-                        <ClauseCard key={i} clause={clause} index={i} />
-                      ))}
-                    </motion.div>
-                  </motion.div>
-                )}
+                    {isDone && (
+                      <span className="text-xs font-bold text-clay-success flex items-center gap-1 font-heading">
+                        Done
+                      </span>
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
 
-                {/* Disclaimer */}
-                <motion.div
-                  variants={fadeSlide}
-                  className="flex items-start gap-3 p-4 rounded-xl bg-amber-50/70 border border-amber-200/70"
-                >
-                  <AlertTriangle className="w-4 h-4 text-accent shrink-0 mt-0.5" />
-                  <p className="text-[12px] text-amber-800 leading-relaxed">
-                    <strong>Reminder:</strong> This analysis is informational only and does not
-                    constitute legal advice. All explanations use phrasing like{' '}
-                    <em>"this may be worth clarifying"</em>. Consult a qualified attorney before
-                    making any legally significant decisions.
+        {/* ── 4. STAGGERED RESULTS SECTION ────────────────────────────── */}
+        {result && !isLoading && (
+          <div className="space-y-8 animate-fade-in">
+            {/* Action Bar */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/60">
+              <div>
+                <h2 className="font-heading font-black text-2xl text-clay-foreground">
+                  Document Analysis Complete
+                </h2>
+                <p className="font-sans text-xs text-clay-muted mt-0.5">
+                  {result.risk.clauses.length} clauses analyzed · {riskCount} risk flags · {attentionCount} attention items
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button variant="secondary" size="sm" onClick={handleReset}>
+                  <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+                  Analyze Another
+                </Button>
+              </div>
+            </div>
+
+            {/* 4a. Document Type Badge & Fast Navigation Links */}
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-clay-accent to-clay-accent-alt text-white font-heading font-black text-xs shadow-clayButton">
+                <FileText className="w-4 h-4" />
+                <span>{result.simplify.document_type}</span>
+              </div>
+
+              {/* Fast links to other pages */}
+              <div className="flex items-center gap-2">
+                <Link href={`/ask?doc=${result.upload.document_id}`}>
+                  <Button variant="outline" size="sm" className="bg-white/80">
+                    <MessageSquare className="w-3.5 h-3.5 mr-1.5" />
+                    Ask Questions
+                  </Button>
+                </Link>
+
+                <Link href={`/checklist?doc=${result.upload.document_id}`}>
+                  <Button variant="outline" size="sm" className="bg-white/80">
+                    <ClipboardList className="w-3.5 h-3.5 mr-1.5" />
+                    Action Checklist
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            {/* 4b. Plain-Language Summary (Solid variant Card) */}
+            <Card variant="solid" className="p-8">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-2xl bg-clay-accent/15 text-clay-accent flex items-center justify-center shadow-clayPressed">
+                  <BookOpen className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-clay-accent font-heading">
+                    Clear Translation
+                  </span>
+                  <h3 className="font-heading font-black text-xl text-clay-foreground">
+                    Plain-Language Summary
+                  </h3>
+                </div>
+              </div>
+              <p className="font-sans text-sm sm:text-base text-clay-foreground leading-relaxed whitespace-pre-line">
+                {result.simplify.plain_summary}
+              </p>
+            </Card>
+
+            {/* 4c. Key Points List (Card with emerald checkmarks) */}
+            {result.simplify.key_points && result.simplify.key_points.length > 0 && (
+              <Card variant="solid" className="p-8">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 rounded-2xl bg-clay-success/15 text-clay-success flex items-center justify-center shadow-clayPressed">
+                    <CheckCircle2 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-clay-success font-heading">
+                      Executive Takeaways
+                    </span>
+                    <h3 className="font-heading font-black text-xl text-clay-foreground">
+                      Key Points &amp; Critical Terms
+                    </h3>
+                  </div>
+                </div>
+
+                <ul className="space-y-3">
+                  {result.simplify.key_points.map((pt, i) => (
+                    <li
+                      key={i}
+                      className="flex items-start gap-3 text-xs sm:text-sm text-clay-foreground font-medium leading-relaxed p-2.5 rounded-xl hover:bg-slate-50 transition-colors"
+                      style={{ animationDelay: `${i * 100}ms` }}
+                    >
+                      <div className="w-6 h-6 rounded-full bg-clay-success/15 text-clay-success flex items-center justify-center shrink-0 mt-0.5 shadow-clayPressed">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                      </div>
+                      <span>{pt}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            )}
+
+            {/* 4d & 5. Clause Analysis & Colored Legend Card */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-pink-400 to-pink-600 text-white flex items-center justify-center shadow-clayButton">
+                    <ShieldAlert className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-pink-600 font-heading">
+                      Protection Audit
+                    </span>
+                    <h3 className="font-heading font-black text-xl text-clay-foreground">
+                      Clause Risk Classification
+                    </h3>
+                  </div>
+                </div>
+
+                <span className="text-xs font-bold text-clay-muted">
+                  {result.risk.clauses.length} evaluated
+                </span>
+              </div>
+
+              {/* 5. LEGEND CARD at top of Clause Analysis */}
+              <Card variant="glass" className="p-4 mb-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
+                  <div className="flex flex-wrap items-center gap-5">
+                    <span className="text-[11px] font-bold text-clay-muted uppercase tracking-wider font-heading">
+                      Classification:
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="w-3 h-3 rounded-full bg-[#10B981] shadow-clayPressed" />
+                      <span className="font-bold text-clay-foreground text-xs">Standard Terms ({standardCount})</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-3 h-3 rounded-full bg-[#F59E0B] shadow-clayPressed" />
+                      <span className="font-bold text-clay-foreground text-xs">Attention Needed ({attentionCount})</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-3 h-3 rounded-full bg-[#DB2777] shadow-clayPressed" />
+                      <span className="font-bold text-clay-foreground text-xs">Potential Risk ({riskCount})</span>
+                    </div>
+                  </div>
+
+                  <span className="text-[11px] text-clay-muted flex items-center gap-1">
+                    <Info className="w-3.5 h-3.5 text-clay-accent" /> Click any clause to view full explanation
+                  </span>
+                </div>
+              </Card>
+
+              {/* Clause List: Each as its own rounded-[24px] Card with colored left border */}
+              <div className="space-y-3">
+                {result.risk.clauses.map((clause, i) => (
+                  <ClauseItem key={i} clause={clause} index={i} />
+                ))}
+              </div>
+            </div>
+
+            {/* Bottom Actions Banner */}
+            <Card variant="hero" className="p-8 sm:p-10 border border-clay-accent/30 bg-white/80">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+                <div>
+                  <h3 className="font-heading font-black text-xl text-clay-foreground mb-1">
+                    Ready for Next Steps?
+                  </h3>
+                  <p className="font-sans text-xs sm:text-sm text-clay-muted">
+                    Generate an attorney consultation brief or ask grounded questions about your agreement.
                   </p>
-                </motion.div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                </div>
+                <div className="flex flex-wrap items-center gap-3 shrink-0">
+                  <Link href={`/ask?doc=${result.upload.document_id}`}>
+                    <Button variant="secondary" size="md">
+                      Ask Questions
+                    </Button>
+                  </Link>
+                  <Link href={`/checklist?doc=${result.upload.document_id}`}>
+                    <Button variant="primary" size="md">
+                      Generate Checklist &rarr;
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </Card>
+
+          </div>
+        )}
+
       </div>
     </main>
   );
