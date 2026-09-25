@@ -24,55 +24,65 @@ interface NavItem {
   name: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
-  requiresDoc?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
   { name: 'Home', href: '/', icon: Sparkles },
   { name: 'Analyze', href: '/analyze', icon: Search },
-  { name: 'Ask Questions', href: '/ask', icon: MessageSquare, requiresDoc: true },
+  { name: 'Ask', href: '/ask', icon: MessageSquare },
   { name: 'Compare', href: '/compare', icon: Scale },
-  { name: 'Checklist', href: '/checklist', icon: ClipboardList, requiresDoc: true },
-  { name: 'Lawyer-Prep', href: '/lawyer-prep', icon: FileCheck2, requiresDoc: true },
+  { name: 'Checklist', href: '/checklist', icon: ClipboardList },
+  { name: 'Lawyer-Prep', href: '/lawyer-prep', icon: FileCheck2 },
 ];
 
 const LANGUAGES = [
   { value: 'en', label: 'English' },
-  { value: 'hi', label: 'हिन्दी (Hindi)' },
-  { value: 'gu', label: 'ગુજરાતી (Gujarati)' },
+  { value: 'hi', label: 'हिन्दी' },
+  { value: 'gu', label: 'ગુજરાતી' },
 ];
 
+/**
+ * Floating Claymorphic Navigation Island Component
+ * - Floating rounded island (rounded-[32px], mx-4 mt-4, shadow-clayCard, bg-white/80 backdrop-blur-xl)
+ * - Active links render with recessed concave pill background (shadow-clayPressed, bg-[#EFEBF5])
+ * - Responsive heights: h-16 on mobile, sm:h-20 on desktop
+ * - Mobile hamburger menu with slide-down clay panel (rounded-[32px] bottom edge)
+ * - Pill-shaped language selector (shadow-clayButton, rounded-full)
+ */
 export default function NavBar() {
   const pathname = usePathname();
   const { language, setLanguage, documentId, documentType, hasDocument } = useDocument();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <nav className="sticky top-0 z-40 bg-surface/90 backdrop-blur-md border-b border-slate-200/80 shadow-xs transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo / Brand */}
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-primary to-primary-light flex items-center justify-center text-white shadow-sm shadow-primary/20 group-hover:scale-105 transition-transform">
-              <FileText className="w-4 h-4" />
+    <header className="sticky top-0 z-50 px-3 sm:px-6 pt-3 sm:pt-4 pointer-events-none">
+      <div className="max-w-7xl mx-auto pointer-events-auto">
+        {/* Floating Rounded Island */}
+        <nav className="h-16 sm:h-20 rounded-[24px] sm:rounded-[32px] bg-white/80 backdrop-blur-xl shadow-clayCard border border-white/90 px-4 sm:px-6 flex items-center justify-between transition-all duration-300">
+          {/* Logo / Brand Header */}
+          <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group shrink-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] flex items-center justify-center text-white shadow-clayButton group-hover:-translate-y-0.5 group-active:scale-[0.92] transition-all">
+              <FileText className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-sm font-bold text-text-primary tracking-tight" style={{ fontWeight: 800 }}>
+              <span className="font-heading font-black text-sm sm:text-base text-clay-foreground tracking-tight block">
                 Legal Assistant
               </span>
               {hasDocument ? (
-                <div className="flex items-center gap-1.5 text-[10px] text-emerald-600 font-medium">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="truncate max-w-[120px]">{documentType}</span>
+                <div className="flex items-center gap-1.5 text-[10px] text-clay-success font-heading font-bold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-clay-success animate-pulse" />
+                  <span className="truncate max-w-[110px] sm:max-w-[140px]">{documentType}</span>
                 </div>
               ) : (
-                <p className="text-[10px] text-text-secondary leading-none">Plain-language AI</p>
+                <p className="text-[10px] text-clay-muted font-sans leading-none hidden sm:block">
+                  Plain-Language AI
+                </p>
               )}
             </div>
           </Link>
 
-          {/* Desktop Navigation Links */}
-          <div className="hidden md:flex items-center gap-1">
+          {/* Desktop Navigation Links (md and above) */}
+          <div className="hidden md:flex items-center gap-1 lg:gap-1.5">
             {NAV_ITEMS.map((item) => {
               const isActive =
                 item.href === '/'
@@ -84,37 +94,28 @@ export default function NavBar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`relative px-3 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                  className={`inline-flex items-center gap-1.5 transition-all select-none ${
                     isActive
-                      ? 'text-primary'
-                      : 'text-text-secondary hover:text-text-primary hover:bg-slate-50'
+                      ? 'px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-heading font-black text-clay-accent shadow-clayPressed rounded-full bg-[#EFEBF5] border border-white/70'
+                      : 'px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-heading font-bold text-clay-muted hover:text-clay-foreground hover:bg-white/60 rounded-full'
                   }`}
                 >
-                  <Icon className="w-3.5 h-3.5" />
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-clay-accent' : 'text-clay-muted'}`} />
                   <span>{item.name}</span>
-
-                  {/* Animated sliding underline */}
-                  {isActive && (
-                    <motion.div
-                      layoutId="nav-underline"
-                      className="absolute bottom-0 left-2 right-2 h-0.5 bg-gradient-to-r from-primary to-primary-light rounded-full"
-                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                    />
-                  )}
                 </Link>
               );
             })}
           </div>
 
-          {/* Right Action: Global Language Selector & Mobile Toggle */}
-          <div className="flex items-center gap-3">
-            {/* Language Selector */}
-            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/80 rounded-xl px-2.5 py-1.5 text-xs shadow-2xs">
-              <Globe className="w-3.5 h-3.5 text-text-secondary shrink-0" />
+          {/* Right Action: Language Selector & Mobile Hamburger */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* 4. Language Selector: small pill-shaped dropdown (shadow-clayButton, rounded-full) */}
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white shadow-clayButton border border-white/90 text-xs font-heading font-bold text-clay-foreground cursor-pointer select-none active:scale-[0.95] transition-all">
+              <Globe className="w-3.5 h-3.5 text-clay-accent shrink-0" />
               <select
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
-                className="bg-transparent font-medium text-text-primary text-xs focus:outline-none cursor-pointer pr-1"
+                className="bg-transparent font-heading font-bold text-xs text-clay-foreground focus:outline-none cursor-pointer pr-1"
                 aria-label="Select Language"
               >
                 {LANGUAGES.map((l) => (
@@ -125,69 +126,79 @@ export default function NavBar() {
               </select>
             </div>
 
-            {/* Mobile Hamburger Toggle */}
+            {/* 3. Mobile Hamburger Button (styled as a small clay button, shadow-clayButton) */}
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-xl text-text-secondary hover:text-text-primary hover:bg-slate-100 transition-colors"
-              aria-label="Toggle navigation menu"
+              className="md:hidden w-10 h-10 rounded-2xl bg-white shadow-clayButton flex items-center justify-center text-clay-foreground hover:text-clay-accent active:scale-[0.92] active:shadow-clayPressed transition-all border border-white/80"
+              aria-label="Toggle Navigation Menu"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
-        </div>
+        </nav>
+
+        {/* 3. Mobile Slide-down Panel (Card styling, rounded-[32px] at bottom edge) */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.98 }}
+              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              className="md:hidden mt-2 p-5 rounded-[32px] bg-white/95 backdrop-blur-2xl shadow-deepClay border border-white/90 space-y-1.5 overflow-hidden"
+            >
+              {NAV_ITEMS.map((item) => {
+                const isActive =
+                  item.href === '/'
+                    ? pathname === '/'
+                    : pathname === item.href || pathname.startsWith(`${item.href}/`);
+                const Icon = item.icon;
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-heading font-bold transition-all ${
+                      isActive
+                        ? 'bg-[#EFEBF5] shadow-clayPressed text-clay-accent font-black border border-white/80'
+                        : 'text-clay-muted hover:text-clay-foreground hover:bg-clay-canvas/60'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-7 h-7 rounded-xl flex items-center justify-center ${
+                          isActive
+                            ? 'bg-clay-accent/15 text-clay-accent shadow-clayPressed'
+                            : 'bg-white shadow-clayButton text-clay-muted'
+                        }`}
+                      >
+                        <Icon className="w-3.5 h-3.5" />
+                      </div>
+                      <span>{item.name}</span>
+                    </div>
+                    {isActive && <ChevronRight className="w-4 h-4 text-clay-accent" />}
+                  </Link>
+                );
+              })}
+
+              {/* Document status footer inside mobile menu */}
+              {hasDocument && (
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-heading font-bold text-clay-muted">
+                  <span className="flex items-center gap-1.5 text-clay-success">
+                    <ShieldCheck className="w-4 h-4" />
+                    Loaded: {documentType}
+                  </span>
+                  <span className="font-mono text-[10px] text-clay-muted/70">
+                    ID: {documentId?.substring(0, 8)}…
+                  </span>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-
-      {/* Mobile Collapsible Menu */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            className="md:hidden border-t border-slate-200/80 bg-surface/95 backdrop-blur-lg px-4 pt-2 pb-4 space-y-1 shadow-lg overflow-hidden"
-          >
-            {NAV_ITEMS.map((item) => {
-              const isActive =
-                item.href === '/'
-                  ? pathname === '/'
-                  : pathname === item.href || pathname.startsWith(`${item.href}/`);
-              const Icon = item.icon;
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                    isActive
-                      ? 'bg-blue-50/80 text-primary border border-blue-100'
-                      : 'text-text-secondary hover:text-text-primary hover:bg-slate-50'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Icon className={`w-4 h-4 ${isActive ? 'text-primary' : 'text-slate-400'}`} />
-                    <span>{item.name}</span>
-                  </div>
-                  {isActive && <ChevronRight className="w-4 h-4 text-primary" />}
-                </Link>
-              );
-            })}
-
-            {hasDocument && (
-              <div className="mt-3 p-3 bg-emerald-50/60 rounded-xl border border-emerald-200/60 text-xs flex items-center justify-between">
-                <span className="font-semibold text-emerald-800 truncate">
-                  Loaded: {documentType}
-                </span>
-                <span className="text-[10px] text-emerald-600 bg-white px-2 py-0.5 rounded-full border border-emerald-200 font-mono">
-                  {documentId?.substring(0, 6)}…
-                </span>
-              </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </nav>
+    </header>
   );
 }
