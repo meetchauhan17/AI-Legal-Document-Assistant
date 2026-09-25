@@ -312,7 +312,7 @@ function ChecklistContent() {
 
           <Card variant="hero" className="text-center p-10 sm:p-14">
             {/* Friendly Icon in Large Gradient Orb */}
-            <div className="w-20 h-20 rounded-[28px] bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] text-white shadow-clayButton flex items-center justify-center mx-auto mb-6">
+            <div className="w-20 h-20 rounded-[28px] bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] text-white shadow-clayButton flex items-center justify-center mx-auto mb-6">
               <ClipboardList className="w-10 h-10" />
             </div>
 
@@ -586,7 +586,7 @@ function ChecklistContent() {
                   >
                     <div className="flex items-start gap-4">
                       {/* Rounded-full gradient number badge */}
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#F472B6] to-[#DB2777] text-white shadow-clayButton flex items-center justify-center font-heading font-black text-xs shrink-0 mt-0.5">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#E879F9] to-[#C026D3] text-white shadow-clayButton flex items-center justify-center font-heading font-black text-xs shrink-0 mt-0.5">
                         {String(qIdx + 1).padStart(2, '0')}
                       </div>
 

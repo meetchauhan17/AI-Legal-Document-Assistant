@@ -150,7 +150,7 @@ function exportToPDF({
   const drawHeader = () => {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
-    doc.setTextColor(124, 58, 237);
+    doc.setTextColor(109, 40, 217);
     doc.text('AI LEGAL DOCUMENT ASSISTANT — CONSULTATION BRIEF', margin, 12);
     doc.setDrawColor(226, 232, 240);
     doc.setLineWidth(0.3);
@@ -158,7 +158,7 @@ function exportToPDF({
   };
 
   // 1. Header Banner
-  doc.setFillColor(124, 58, 237); // Clay Accent Purple (#7C3AED)
+  doc.setFillColor(109, 40, 217); // Clay Accent Violet (#6D28D9)
   doc.rect(margin, y, contentWidth, 22, 'F');
 
   doc.setFont('helvetica', 'bold');
@@ -483,7 +483,7 @@ function LawyerPrepContent() {
         {/* ── 2. MAIN PREVIEW: LARGE CARD STYLED AS CLEAN PRINTED PAGE ─────── */}
         <Card
           variant="solid"
-          className="max-w-3xl mx-auto bg-white p-8 sm:p-14 rounded-[32px] shadow-deepClay border border-white/90 overflow-hidden"
+          className="max-w-3xl mx-auto bg-white p-8 sm:p-14 rounded-[32px] shadow-deepClay border border-white/90 overflow-hidden clay-grain"
         >
           {/* Top Document Header */}
           <div className="border-b-2 border-clay-accent pb-6 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

@@ -278,7 +278,7 @@ function AskPageContent() {
           {/* Centered Hero Variant Card with larger padding */}
           <Card variant="hero" className="text-center p-10 sm:p-14">
             {/* Friendly icon in large gradient orb */}
-            <div className="w-20 h-20 rounded-[28px] bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] text-white shadow-clayButton flex items-center justify-center mx-auto mb-6">
+            <div className="w-20 h-20 rounded-[28px] bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] text-white shadow-clayButton flex items-center justify-center mx-auto mb-6">
               <FileQuestion className="w-10 h-10" />
             </div>
 
@@ -417,7 +417,7 @@ function AskPageContent() {
             >
               {msg.role === 'user' ? (
                 /* USER MESSAGE: Right-aligned, primary gradient, rounded-[24px] rounded-br-[8px] */
-                <div className="bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] text-white px-5 py-3.5 rounded-[24px] rounded-br-[8px] shadow-clayButton max-w-[85%] sm:max-w-[75%] text-sm leading-relaxed">
+                <div className="bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] text-white px-5 py-3.5 rounded-[24px] rounded-br-[8px] shadow-clayButton max-w-[85%] sm:max-w-[75%] text-sm leading-relaxed">
                   <p className="whitespace-pre-wrap font-sans font-medium">{msg.content}</p>
                   <span className="block text-[10px] text-white/90 mt-1.5 text-right font-mono font-medium">
                     {msg.timestamp}

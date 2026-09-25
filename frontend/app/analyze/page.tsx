@@ -61,9 +61,9 @@ const LANGUAGES = [
 ];
 
 const LOADING_STAGES = [
-  { key: 'uploading', label: 'Reading document…', desc: 'Extracting text and establishing in-memory session', icon: Upload, color: 'from-blue-400 to-blue-600' },
-  { key: 'simplifying', label: 'Simplifying language…', desc: 'Translating legalese into plain English and key takeaways', icon: BookOpen, color: 'from-purple-400 to-clay-accent' },
-  { key: 'risks', label: 'Scanning for risks…', desc: 'Evaluating one-sided clauses, liability waivers, and hidden traps', icon: ShieldAlert, color: 'from-pink-400 to-pink-600' },
+  { key: 'uploading', label: 'Reading document…', desc: 'Extracting text and establishing in-memory session', icon: Upload, color: 'from-[#4338CA] to-[#6366F1]' },
+  { key: 'simplifying', label: 'Simplifying language…', desc: 'Translating legalese into plain English and key takeaways', icon: BookOpen, color: 'from-[#8B5CF6] to-[#6D28D9]' },
+  { key: 'risks', label: 'Scanning for risks…', desc: 'Evaluating one-sided clauses, liability waivers, and hidden traps', icon: ShieldAlert, color: 'from-[#F97316] to-[#FB923C]' },
 ] as const;
 
 type StageKey = typeof LOADING_STAGES[number]['key'];
@@ -401,7 +401,7 @@ export default function AnalyzePage() {
                     <input {...getInputProps()} />
 
                     {/* Gradient icon orb (8px less than dropzone rounded-[32px]) */}
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-[24px] bg-gradient-to-br from-purple-400 to-clay-accent text-white shadow-clayButton flex items-center justify-center">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-[24px] bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] text-white shadow-clayButton flex items-center justify-center">
                       <Upload className="w-8 h-8" />
                     </div>
 

@@ -34,7 +34,7 @@ export default function Button({
   // Variant visual styles and physics
   const variantStyles = {
     primary:
-      'bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] text-white shadow-clayButton hover:shadow-clayButtonHover hover:-translate-y-1 active:scale-[0.92] active:shadow-clayPressed',
+      'bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] text-white shadow-clayButton hover:shadow-clayButtonHover hover:-translate-y-1 active:scale-[0.92] active:shadow-clayPressed',
     secondary:
       'bg-white text-clay-foreground shadow-clayButton hover:shadow-clayButtonHover hover:-translate-y-1 active:scale-[0.92] active:shadow-clayPressed border border-white/80',
     outline:

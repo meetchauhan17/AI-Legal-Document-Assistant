@@ -45,7 +45,7 @@ export default function Home() {
       <ClayBlobs />
 
       {/* ── 2. HERO SECTION ─────────────────────────────────────────── */}
-      <section className="relative min-h-[85vh] flex flex-col items-center justify-center px-6 pt-16 pb-20 text-center">
+      <section className="relative min-h-[85vh] flex flex-col items-center justify-center px-6 pt-16 pb-20 text-center clay-grain overflow-hidden">
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -151,7 +151,7 @@ export default function Home() {
         {/* Bento Grid: grid-cols-1 md:grid-cols-2 lg:grid-cols-3 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-          {/* CARD 1 (HERO BENTO CARD): "Simplify Documents" spanning md:col-span-2 md:row-span-2 */}
+          {/* CARD 1 (HERO BENTO CARD): "Simplify Documents" - INDIGO PALETTE */}
           <div className="md:col-span-2 md:row-span-2">
             <Card
               variant="hero"
@@ -163,11 +163,11 @@ export default function Home() {
                 {/* Header row with gradient icon orb */}
                 <div className="flex items-start justify-between gap-4 mb-6">
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white shadow-clayButton shrink-0">
+                    <div className="w-16 h-16 rounded-[24px] bg-gradient-to-br from-[#4338CA] to-[#6366F1] flex items-center justify-center text-white shadow-clayButton shrink-0">
                       <FileText className="w-8 h-8" />
                     </div>
                     <div>
-                      <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-blue-100 text-blue-700 font-heading">
+                      <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-800 font-heading">
                         Core Feature
                       </span>
                       <h3 className="font-heading font-black text-2xl sm:text-3xl text-clay-foreground mt-1">
@@ -228,7 +228,7 @@ export default function Home() {
             </Card>
           </div>
 
-          {/* CARD 2: "Risk Detection" */}
+          {/* CARD 2: "Risk Detection" - CORAL PALETTE */}
           <Card
             variant="glass"
             interactive
@@ -236,13 +236,13 @@ export default function Home() {
             className="flex flex-col justify-between"
           >
             <div>
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-400 to-pink-600 flex items-center justify-center text-white shadow-clayButton mb-5">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#F97316] to-[#FB923C] flex items-center justify-center text-white shadow-clayButton mb-5">
                 <ShieldAlert className="w-7 h-7" />
               </div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-pink-600 font-heading">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-orange-800 font-heading bg-orange-100 px-2.5 py-0.5 rounded-full inline-block">
                 Safety First
               </span>
-              <h3 className="font-heading font-black text-xl text-clay-foreground mt-1 mb-2">
+              <h3 className="font-heading font-black text-xl text-clay-foreground mt-2 mb-2">
                 Clause Risk Classification
               </h3>
               <p className="font-sans text-sm text-clay-muted leading-relaxed">
@@ -250,13 +250,13 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold font-heading text-pink-600">
+            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold font-heading text-orange-800">
               <span>View Sample Risks</span>
               <ArrowRight className="w-4 h-4" />
             </div>
           </Card>
 
-          {/* CARD 3: "Ask Questions" */}
+          {/* CARD 3: "Ask Questions" - VIOLET / MAGENTA PALETTE */}
           <Card
             variant="glass"
             interactive
@@ -264,13 +264,13 @@ export default function Home() {
             className="flex flex-col justify-between"
           >
             <div>
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white shadow-clayButton mb-5">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#8B5CF6] to-[#C026D3] flex items-center justify-center text-white shadow-clayButton mb-5">
                 <MessageSquareText className="w-7 h-7" />
               </div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-purple-600 font-heading">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-purple-800 font-heading bg-purple-100 px-2.5 py-0.5 rounded-full inline-block">
                 Grounded Q&amp;A
               </span>
-              <h3 className="font-heading font-black text-xl text-clay-foreground mt-1 mb-2">
+              <h3 className="font-heading font-black text-xl text-clay-foreground mt-2 mb-2">
                 Ask Document Questions
               </h3>
               <p className="font-sans text-sm text-clay-muted leading-relaxed">
@@ -278,13 +278,13 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold font-heading text-purple-600">
+            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold font-heading text-purple-800">
               <span>Try In-Scope Q&amp;A</span>
               <ArrowRight className="w-4 h-4" />
             </div>
           </Card>
 
-          {/* CARD 4: "Compare Documents" */}
+          {/* CARD 4: "Compare Documents" - TEAL PALETTE */}
           <Card
             variant="glass"
             interactive
@@ -292,13 +292,13 @@ export default function Home() {
             className="flex flex-col justify-between"
           >
             <div>
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white shadow-clayButton mb-5">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#0D9488] to-[#14B8A6] flex items-center justify-center text-white shadow-clayButton mb-5">
                 <Scale className="w-7 h-7" />
               </div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 font-heading">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-teal-800 font-heading bg-teal-100 px-2.5 py-0.5 rounded-full inline-block">
                 Side-by-Side
               </span>
-              <h3 className="font-heading font-black text-xl text-clay-foreground mt-1 mb-2">
+              <h3 className="font-heading font-black text-xl text-clay-foreground mt-2 mb-2">
                 Compare Two Contracts
               </h3>
               <p className="font-sans text-sm text-clay-muted leading-relaxed">
@@ -306,7 +306,7 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold font-heading text-blue-600">
+            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold font-heading text-teal-800">
               <Link href="/compare" className="flex items-center justify-between w-full">
                 <span>Compare Contracts</span>
                 <ArrowRight className="w-4 h-4" />
@@ -314,7 +314,7 @@ export default function Home() {
             </div>
           </Card>
 
-          {/* CARD 5: "Checklist & Lawyer Prep" */}
+          {/* CARD 5: "Checklist & Lawyer Prep" - EMERALD PALETTE */}
           <Card
             variant="glass"
             interactive
@@ -322,13 +322,13 @@ export default function Home() {
             className="flex flex-col justify-between"
           >
             <div>
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white shadow-clayButton mb-5">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#10B981] to-[#059669] flex items-center justify-center text-white shadow-clayButton mb-5">
                 <CheckSquare className="w-7 h-7" />
               </div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 font-heading">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 font-heading bg-emerald-100 px-2.5 py-0.5 rounded-full inline-block">
                 Action Plan
               </span>
-              <h3 className="font-heading font-black text-xl text-clay-foreground mt-1 mb-2">
+              <h3 className="font-heading font-black text-xl text-clay-foreground mt-2 mb-2">
                 Pre-Signing Checklist
               </h3>
               <p className="font-sans text-sm text-clay-muted leading-relaxed">
@@ -336,7 +336,7 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold font-heading text-emerald-600">
+            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold font-heading text-emerald-800">
               <Link href="/checklist" className="flex items-center justify-between w-full">
                 <span>View Checklist</span>
                 <ArrowRight className="w-4 h-4" />

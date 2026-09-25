@@ -435,8 +435,8 @@ export default function ComparePage() {
               <DocInputZone
                 label="Document A"
                 badgeLabel="A"
-                badgeGradient="bg-gradient-to-br from-[#A78BFA] to-[#7C3AED]"
-                accentColor="from-[#A78BFA] to-[#7C3AED]"
+                badgeGradient="bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9]"
+                accentColor="from-[#8B5CF6] to-[#6D28D9]"
                 text={textA}
                 file={fileA}
                 mode={modeA}
@@ -474,8 +474,8 @@ export default function ComparePage() {
               <DocInputZone
                 label="Document B"
                 badgeLabel="B"
-                badgeGradient="bg-gradient-to-br from-[#F472B6] to-[#DB2777]"
-                accentColor="from-[#F472B6] to-[#DB2777]"
+                badgeGradient="bg-gradient-to-br from-[#E879F9] to-[#C026D3]"
+                accentColor="from-[#E879F9] to-[#C026D3]"
                 text={textB}
                 file={fileB}
                 mode={modeB}
@@ -557,7 +557,7 @@ export default function ComparePage() {
               className="p-8 sm:p-10 border border-clay-accent/20 bg-gradient-to-br from-clay-accent/5 via-white/80 to-clay-accent-alt/5 shadow-clayCard"
             >
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-[24px] bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] text-white flex items-center justify-center shadow-clayButton">
+                <div className="w-10 h-10 rounded-[24px] bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] text-white flex items-center justify-center shadow-clayButton">
                   <Sparkles className="w-5 h-5" />
                 </div>
                 <div>

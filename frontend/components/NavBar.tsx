@@ -61,7 +61,7 @@ export default function NavBar() {
         <nav className="h-16 sm:h-20 rounded-[24px] sm:rounded-[32px] bg-white/80 backdrop-blur-xl shadow-clayCard border border-white/90 px-4 sm:px-6 flex items-center justify-between transition-all duration-300">
           {/* Logo / Brand Header */}
           <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group shrink-0">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] flex items-center justify-center text-white shadow-clayButton group-hover:-translate-y-0.5 group-active:scale-[0.92] transition-all">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] flex items-center justify-center text-white shadow-clayButton group-hover:-translate-y-0.5 group-active:scale-[0.92] transition-all">
               <FileText className="w-5 h-5" />
             </div>
             <div>

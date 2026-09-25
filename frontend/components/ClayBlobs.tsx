@@ -14,12 +14,12 @@ export default function ClayBlobs() {
       className="fixed inset-0 pointer-events-none overflow-hidden -z-10"
       aria-hidden="true"
     >
-      {/* Blob 1: Clay Accent (#7C3AED) - Top Left Bleed */}
+      {/* Blob 1: Clay Accent (#6D28D9) - Top Left Bleed */}
       <div
         className="absolute -top-24 -left-24 h-[60vh] w-[60vh] rounded-full blur-3xl bg-clay-accent/10 animate-clay-float"
       />
 
-      {/* Blob 2: Clay Accent Alt (#DB2777) - Bottom Right Bleed */}
+      {/* Blob 2: Clay Accent Alt (#C026D3) - Bottom Right Bleed */}
       <div
         className="absolute -bottom-28 -right-28 h-[60vh] w-[60vh] rounded-full blur-3xl bg-clay-accent-alt/10 animate-clay-float-delayed animation-delay-2000"
       />
