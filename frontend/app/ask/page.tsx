@@ -3,7 +3,6 @@
 import React, { Suspense, useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
   FileText,
@@ -13,19 +12,21 @@ import {
   ChevronUp,
   Globe,
   RotateCcw,
-  CheckCircle2,
-  AlertTriangle,
-  HelpCircle,
   ShieldCheck,
-  ShieldAlert,
+  AlertTriangle,
   Info,
-  CornerDownLeft,
+  HelpCircle,
+  FileQuestion,
+  Layers,
+  ArrowRight,
 } from 'lucide-react';
-import { askQuestion, type QAResponse } from '@/lib/api';
-import Document3D from '@/components/3d/Document3D';
+import { askQuestion, uploadText, type QAResponse } from '@/lib/api';
 import { useDocument } from '@/context/DocumentContext';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 
-// ── Types ─────────────────────────────────────────────────────────────────
+// ── Types & Constants ─────────────────────────────────────────────────────
 
 interface Message {
   id: string;
@@ -43,105 +44,84 @@ const LANGUAGES = [
 ];
 
 const SAMPLE_QUESTIONS = [
-  'What are the termination conditions?',
-  'What is the payment amount and schedule?',
-  'What penalties or late fees apply?',
-  'Who is responsible for maintenance or repairs?',
-  'Are there any automatic renewal clauses?',
+  'What is the monthly rent and late fee grace period?',
+  'Under what conditions can the security deposit be withheld?',
+  'Who is responsible for HVAC and plumbing repairs?',
+  'How many days notice is required before automatic renewal?',
+  'Can the landlord enter the property without notice?',
 ];
 
-// ── Animation Variants ───────────────────────────────────────────────────
+const SAMPLE_LEASE_TEXT = `RESIDENTIAL LEASE AGREEMENT
+1. PARTIES & PREMISES: Greenfield Properties LLC ("Landlord") leases to Alex Mercer ("Tenant") the premises at 742 Evergreen Terrace.
+2. MONTHLY RENT: $2,200.00 payable in advance on or before the 1st of each month. A late fee of $75.00 applies after a 3-day grace period.
+3. SECURITY DEPOSIT: Tenant shall deposit $4,400.00. Landlord retains unilateral authority to withhold deposits without receipts within 60 days.
+4. AUTO-RENEWAL: Automatically renews for 12 months unless written notice is given 90 days in advance.
+5. MAINTENANCE & REPAIRS: Tenant is responsible for all plumbing and HVAC servicing regardless of cause.
+6. TERMINATION: Landlord may terminate this lease with 3 days notice upon any minor rule violation.`;
 
-const messageAnimation = {
-  hidden: { opacity: 0, y: 14, scale: 0.98 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] },
-  },
-};
-
-const expandAnimation = {
-  hidden: { opacity: 0, height: 0, overflow: 'hidden' },
-  visible: {
-    opacity: 1,
-    height: 'auto',
-    overflow: 'hidden',
-    transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
-  },
-  exit: {
-    opacity: 0,
-    height: 0,
-    overflow: 'hidden',
-    transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] },
-  },
-};
-
-// ── Sub-components ───────────────────────────────────────────────────────
+// ── Typing Indicator Component ────────────────────────────────────────────
 
 function TypingIndicator() {
   return (
-    <motion.div
-      variants={messageAnimation}
-      initial="hidden"
-      animate="visible"
-      exit="hidden"
-      className="flex items-center gap-1.5 px-4 py-3 bg-white border border-slate-200/80 rounded-2xl rounded-tl-sm shadow-soft max-w-[120px]"
-    >
-      <span className="text-[12px] text-text-secondary font-medium mr-1">AI</span>
-      {[0, 1, 2].map((i) => (
-        <motion.span
-          key={i}
-          animate={{ y: [0, -5, 0] }}
-          transition={{
-            repeat: Infinity,
-            duration: 0.6,
-            delay: i * 0.15,
-            ease: 'easeInOut',
-          }}
-          className="w-1.5 h-1.5 rounded-full bg-primary"
+    <div className="flex items-center gap-2">
+      <div className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-[#EFEBF5] shadow-clayPressed">
+        <span className="text-[11px] font-heading font-bold text-clay-muted mr-1">AI Thinking</span>
+        <span
+          className="w-2 h-2 rounded-full bg-clay-accent animate-clay-breathe"
+          style={{ animationDuration: '1.2s' }}
         />
-      ))}
-    </motion.div>
+        <span
+          className="w-2 h-2 rounded-full bg-clay-accent animate-clay-breathe"
+          style={{ animationDuration: '1.2s', animationDelay: '0.25s' }}
+        />
+        <span
+          className="w-2 h-2 rounded-full bg-clay-accent animate-clay-breathe"
+          style={{ animationDuration: '1.2s', animationDelay: '0.5s' }}
+        />
+      </div>
+    </div>
   );
 }
+
+// ── Confidence Badge Component ────────────────────────────────────────────
 
 function ConfidenceBadge({ confidence }: { confidence?: 'high' | 'medium' | 'low' }) {
   if (!confidence) return null;
 
-  const config = {
+  const cfg = {
     high: {
       label: 'High Grounding',
       icon: ShieldCheck,
-      classes: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      classes: 'bg-emerald-100 text-emerald-800 shadow-clayPressed',
     },
     medium: {
       label: 'Medium Grounding',
       icon: Info,
-      classes: 'bg-amber-50 text-amber-700 border-amber-200',
+      classes: 'bg-amber-100 text-amber-800 shadow-clayPressed',
     },
     low: {
-      label: 'Low Grounding',
+      label: 'Low / Out of Scope',
       icon: AlertTriangle,
-      classes: 'bg-slate-100 text-slate-600 border-slate-200',
+      classes: 'bg-slate-200 text-clay-muted shadow-clayPressed',
     },
   }[confidence];
 
-  const Icon = config.icon;
+  const IconComp = cfg.icon;
 
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide border ${config.classes}`}
+      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-heading font-bold tracking-wider uppercase ${cfg.classes}`}
     >
-      <Icon className="w-3 h-3" />
-      {config.label}
+      <IconComp className="w-3 h-3" />
+      {cfg.label}
     </span>
   );
 }
 
-function SourceExcerpt({ excerpt }: { excerpt: string }) {
-  const [isOpen, setIsOpen] = useState(false);
+// ── Expandable Source Excerpt Component ───────────────────────────────────
+
+function SourceSection({ excerpt }: { excerpt: string }) {
+  const [open, setOpen] = useState(false);
 
   if (!excerpt || excerpt.trim() === '' || excerpt.includes('None')) return null;
 
@@ -149,50 +129,41 @@ function SourceExcerpt({ excerpt }: { excerpt: string }) {
     <div className="mt-3 pt-2.5 border-t border-slate-100">
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 text-[12px] font-medium text-primary hover:text-primary-light transition-colors group cursor-pointer select-none"
+        onClick={() => setOpen(!open)}
+        className="inline-flex items-center gap-1.5 text-xs font-heading font-bold text-clay-accent hover:text-clay-accent-alt transition-colors cursor-pointer select-none"
       >
-        <span className="w-1.5 h-1.5 rounded-full bg-primary group-hover:scale-125 transition-transform" />
-        <span>{isOpen ? 'Hide Source Excerpt' : 'View Source Excerpt'}</span>
-        {isOpen ? (
-          <ChevronUp className="w-3.5 h-3.5 transition-transform" />
-        ) : (
-          <ChevronDown className="w-3.5 h-3.5 transition-transform" />
-        )}
+        <span>{open ? 'Hide source ▴' : 'Show source ▾'}</span>
       </button>
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            variants={expandAnimation}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-          >
-            <div className="mt-2 p-3 bg-slate-50 border-l-2 border-primary rounded-r-lg text-[12px] text-slate-700 font-mono italic leading-relaxed whitespace-pre-wrap">
-              "{excerpt}"
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {open && (
+        <div className="mt-2 p-3.5 rounded-2xl bg-[#EFEBF5] shadow-clayPressed border border-white font-mono text-xs text-clay-muted italic leading-relaxed whitespace-pre-wrap">
+          &quot;{excerpt}&quot;
+        </div>
+      )}
     </div>
   );
 }
 
-// ── Main Ask Content Component ───────────────────────────────────────────
+// ── Main Page Content ─────────────────────────────────────────────────────
 
 function AskPageContent() {
   const searchParams = useSearchParams();
-  const { documentId: ctxDocId, documentType: ctxDocType, language, setLanguage } = useDocument();
-  
+  const {
+    documentId: ctxDocId,
+    documentType: ctxDocType,
+    language,
+    setLanguage,
+    setDocumentData,
+  } = useDocument();
+
   const documentId = searchParams.get('doc') || searchParams.get('document_id') || ctxDocId || '';
-  const docTypeParam = searchParams.get('type') || (ctxDocId ? ctxDocType : '') || 'Document';
+  const docTypeParam = searchParams.get('type') || (ctxDocId ? ctxDocType : '') || 'Legal Document';
 
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
       role: 'assistant',
-      content: `Hello! I have indexed your document (${docTypeParam}). Ask me any specific question about terms, payment obligations, cancellation clauses, or liability, and I will ground my response in the exact excerpts.`,
+      content: `Hello! I have indexed your contract (${docTypeParam}). Ask me any specific question about rent amounts, termination penalties, liabilities, or deadlines. I will ground every answer strictly in your document's excerpts.`,
       confidence: 'high',
       timestamp: 'Just now',
     },
@@ -201,7 +172,6 @@ function AskPageContent() {
   const [isLoading, setIsLoading] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -210,6 +180,32 @@ function AskPageContent() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isLoading]);
+
+  // Quick 1-click sample loader for empty state
+  const handleLoadSampleAgreement = async () => {
+    setIsLoading(true);
+    try {
+      const res = await uploadText(SAMPLE_LEASE_TEXT);
+      setDocumentData({
+        documentId: res.document_id,
+        documentType: 'Residential Lease Agreement',
+        fullText: res.full_text,
+      });
+      setMessages([
+        {
+          id: 'welcome-sample',
+          role: 'assistant',
+          content: 'Sample Residential Lease Agreement loaded and indexed. Ask me about rent, security deposit forfeiture, or renewal terms!',
+          confidence: 'high',
+          timestamp: 'Just now',
+        },
+      ]);
+    } catch (err: any) {
+      alert('Failed to load sample: ' + err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSend = async (questionText?: string) => {
     const q = (questionText ?? input).trim();
@@ -243,244 +239,230 @@ function AskPageContent() {
       const errorMessage: Message = {
         id: `err-${Date.now()}`,
         role: 'assistant',
-        content: `I ran into an issue finding the answer: ${err.message || 'Server error'}. Please try rephrasing your question.`,
+        content: `Could not retrieve the answer: ${err.message || 'Server error'}. Please try rephrasing your question.`,
         confidence: 'low',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
-      setTimeout(() => inputRef.current?.focus(), 50);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
       e.preventDefault();
       handleSend();
     }
   };
 
-  // ── 1. Empty State (No Document Loaded) ─────────────────────────────────
+  // ── 5. EMPTY STATE (No document loaded) ──────────────────────────────────
   if (!documentId) {
     return (
-      <main className="min-h-screen bg-background flex flex-col justify-between py-8 px-4 sm:px-6">
-        <div className="max-w-2xl mx-auto w-full pt-6">
-          {/* Back Navigation */}
+      <main className="min-h-screen bg-clay-canvas text-clay-foreground py-12 px-4 sm:px-6 flex flex-col justify-between">
+        <div className="max-w-2xl mx-auto w-full pt-4">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-sm text-text-secondary hover:text-primary transition-colors mb-6 group font-medium"
+            className="inline-flex items-center gap-2 text-sm font-heading font-bold text-clay-muted hover:text-clay-accent transition-colors mb-6"
           >
-            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-            Back to Home
+            <ArrowLeft className="w-4 h-4" /> Back to Home
           </Link>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="bg-surface rounded-2xl border border-slate-200/80 shadow-soft p-8 sm:p-12 text-center"
-          >
-            {/* 3D Illustration Canvas */}
-            <div className="w-44 h-44 mx-auto mb-6">
-              <Document3D className="w-full h-full" />
+          {/* Centered Hero Variant Card with larger padding */}
+          <Card variant="hero" className="text-center p-10 sm:p-14">
+            {/* Friendly icon in large gradient orb */}
+            <div className="w-20 h-20 rounded-[28px] bg-gradient-to-br from-purple-400 to-clay-accent text-white shadow-clayButton flex items-center justify-center mx-auto mb-6">
+              <FileQuestion className="w-10 h-10" />
             </div>
 
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold bg-primary/10 text-primary mb-4">
-              <FileText className="w-3.5 h-3.5" />
-              Document Q&A
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-heading font-bold text-clay-accent bg-clay-accent/10 mb-4 shadow-clayPressed">
+              <Sparkles className="w-3.5 h-3.5" />
+              Document Grounded Q&amp;A
             </span>
 
-            <h1 className="text-2xl sm:text-3xl font-bold text-text-primary mb-3" style={{ fontWeight: 700 }}>
+            <h1 className="font-heading font-black text-3xl sm:text-4xl text-clay-foreground tracking-tight mb-3">
               No Document Currently Loaded
             </h1>
 
-            <p className="text-text-secondary text-sm sm:text-base leading-relaxed max-w-md mx-auto mb-8">
-              To ask questions and receive answers grounded in specific clauses, please upload or paste your legal document for analysis first.
+            <p className="font-sans text-sm sm:text-base text-clay-muted leading-relaxed max-w-md mx-auto mb-8">
+              To ask questions and receive answers strictly grounded in contract clauses, please upload or paste your legal document for analysis first.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/analyze">
-                <motion.button
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-primary to-primary-light text-white font-semibold rounded-xl shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all flex items-center justify-center gap-2 cursor-pointer text-sm"
-                >
-                  <Sparkles className="w-4 h-4" />
+                <Button variant="primary" size="lg" className="w-full sm:w-auto shadow-clayButton">
+                  <Sparkles className="w-4 h-4 mr-2" />
                   Analyze a Document First
-                </motion.button>
+                </Button>
               </Link>
-              <Link href="/">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full sm:w-auto px-5 py-3 bg-slate-100 hover:bg-slate-200 text-text-primary font-medium rounded-xl transition-colors text-sm"
-                >
-                  Return to Home
-                </motion.button>
-              </Link>
+
+              <Button
+                variant="secondary"
+                size="lg"
+                onClick={handleLoadSampleAgreement}
+                disabled={isLoading}
+                className="w-full sm:w-auto"
+              >
+                <Layers className="w-4 h-4 mr-2 text-clay-accent" />
+                Load Sample Contract
+              </Button>
             </div>
-          </motion.div>
+          </Card>
         </div>
 
-        <div className="text-center text-[11px] text-text-secondary pt-8 pb-4">
-          Legal Document Assistant · Grounded Clause-level Question Answering
+        <div className="text-center text-xs text-clay-muted/70 py-6">
+          Grounded Clause-Level Question Answering · In-Memory Privacy
         </div>
       </main>
     );
   }
 
-  // ── 2. Active Chat Interface ─────────────────────────────────────────────
+  // ── ACTIVE CHAT INTERFACE ────────────────────────────────────────────────
   return (
-    <main className="min-h-screen bg-background flex flex-col justify-between">
-      {/* Top Persistent Header */}
-      <header className="sticky top-0 z-30 bg-surface/90 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 py-3 shadow-xs">
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          {/* Left: Document Info */}
-          <div className="flex items-center gap-3">
-            <Link
-              href="/analyze"
-              className="p-1.5 rounded-lg hover:bg-slate-100 text-text-secondary hover:text-text-primary transition-colors"
-              title="Back to Document Analysis"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
-
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                <FileText className="w-4 h-4" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-text-primary tracking-tight" style={{ fontWeight: 700 }}>
-                    {docTypeParam}
-                  </span>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Ready
-                  </span>
+    <main className="min-h-screen bg-clay-canvas text-clay-foreground flex flex-col justify-between">
+      {/* ── 1. TOP CONFIRMATION BAR (Slim Glass Card) ────────────────────── */}
+      <div className="sticky top-0 z-30 px-4 sm:px-6 pt-4 pb-2 bg-clay-canvas/80 backdrop-blur-md">
+        <div className="max-w-4xl mx-auto">
+          <Card variant="glass" className="p-3 sm:p-4 shadow-clayCard border border-white/80">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              {/* Document Type + Badge */}
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-2xl bg-clay-accent/15 text-clay-accent flex items-center justify-center shadow-clayPressed shrink-0">
+                  <FileText className="w-5 h-5" />
                 </div>
-                <div className="text-[11px] text-text-secondary font-mono flex items-center gap-2">
-                  <span>ID: {documentId.substring(0, 8)}…</span>
-                  <span>·</span>
-                  <Link
-                    href="/analyze"
-                    className="text-primary hover:underline font-sans font-medium"
-                  >
-                    Change Document
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right: Language Selector */}
-          <div className="flex items-center gap-2 self-end sm:self-center">
-            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/80 rounded-xl px-2.5 py-1 text-xs">
-              <Globe className="w-3.5 h-3.5 text-text-secondary" />
-              <select
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                className="bg-transparent font-medium text-text-primary focus:outline-none cursor-pointer pr-1"
-              >
-                {LANGUAGES.map((l) => (
-                  <option key={l.value} value={l.value}>
-                    {l.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                setMessages([
-                  {
-                    id: 'welcome-reset',
-                    role: 'assistant',
-                    content: `Conversation reset. Ask me anything regarding ${docTypeParam}.`,
-                    confidence: 'high',
-                    timestamp: 'Just now',
-                  },
-                ]);
-              }}
-              className="p-1.5 text-text-secondary hover:text-text-primary rounded-lg hover:bg-slate-100 transition-colors"
-              title="Reset Conversation"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Chat Area */}
-      <div className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 flex flex-col justify-between">
-        {/* Messages Feed */}
-        <div className="space-y-4 pb-6">
-          <AnimatePresence initial={false}>
-            {messages.map((msg) => (
-              <motion.div
-                key={msg.id}
-                variants={messageAnimation}
-                initial="hidden"
-                animate="visible"
-                className={`flex flex-col ${
-                  msg.role === 'user' ? 'items-end' : 'items-start'
-                }`}
-              >
-                {msg.role === 'user' ? (
-                  // User Message
-                  <div className="bg-primary text-white px-4 py-3 rounded-2xl rounded-tr-sm shadow-sm max-w-[85%] sm:max-w-[75%] text-[13.5px] leading-relaxed">
-                    <p className="whitespace-pre-wrap">{msg.content}</p>
-                    <span className="block text-[10px] text-blue-200 mt-1 text-right">
-                      {msg.timestamp}
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-heading font-black text-sm text-clay-foreground tracking-tight">
+                      {docTypeParam}
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-heading font-black bg-emerald-100 text-emerald-800 shadow-clayPressed uppercase">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                      Loaded
                     </span>
                   </div>
-                ) : (
-                  // AI Assistant Message
-                  <div className="bg-white border border-slate-200/80 rounded-2xl rounded-tl-sm shadow-soft p-4 sm:p-5 max-w-[92%] sm:max-w-[85%] text-[13.5px] leading-relaxed">
-                    {/* Header with confidence */}
-                    <div className="flex items-center justify-between gap-3 mb-2">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center">
-                          <Sparkles className="w-3 h-3 text-primary" />
+                  <span className="text-[11px] text-clay-muted font-mono">
+                    ID: {documentId.substring(0, 10)}…
+                  </span>
+                </div>
+              </div>
+
+              {/* Actions: Change Document Ghost Button + Language Dropdown */}
+              <div className="flex items-center gap-2 self-end sm:self-center">
+                {/* Language Selector */}
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white shadow-clayButton border border-white text-xs font-heading font-bold text-clay-foreground">
+                  <Globe className="w-3.5 h-3.5 text-clay-accent shrink-0" />
+                  <select
+                    value={language}
+                    onChange={(e) => setLanguage(e.target.value)}
+                    className="bg-transparent font-heading font-bold text-xs text-clay-foreground focus:outline-none cursor-pointer pr-1"
+                  >
+                    {LANGUAGES.map((l) => (
+                      <option key={l.value} value={l.value}>
+                        {l.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Change Document: ghost-variant Button */}
+                <Link href="/analyze">
+                  <Button variant="ghost" size="sm" className="text-xs">
+                    Change Document
+                  </Button>
+                </Link>
+
+                {/* Reset Chat */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMessages([
+                      {
+                        id: 'reset',
+                        role: 'assistant',
+                        content: `Conversation reset. Ask any question about ${docTypeParam}.`,
+                        confidence: 'high',
+                        timestamp: 'Just now',
+                      },
+                    ]);
+                  }}
+                  className="p-2 rounded-xl bg-white shadow-clayButton text-clay-muted hover:text-clay-accent transition-colors"
+                  title="Reset Chat"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+
+      {/* ── 2. CHAT AREA ─────────────────────────────────────────────────── */}
+      <div className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 flex flex-col justify-between">
+        <div className="space-y-5 pb-6">
+          {messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`flex flex-col ${
+                msg.role === 'user' ? 'items-end' : 'items-start'
+              }`}
+            >
+              {msg.role === 'user' ? (
+                /* USER MESSAGE: Right-aligned, primary gradient, rounded-[24px] rounded-br-[8px] */
+                <div className="bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] text-white px-5 py-3.5 rounded-[24px] rounded-br-[8px] shadow-clayButton max-w-[85%] sm:max-w-[75%] text-sm leading-relaxed">
+                  <p className="whitespace-pre-wrap font-sans font-medium">{msg.content}</p>
+                  <span className="block text-[10px] text-white/70 mt-1.5 text-right font-mono">
+                    {msg.timestamp}
+                  </span>
+                </div>
+              ) : (
+                /* AI RESPONSE: Left-aligned Card (solid), rounded-[24px] rounded-bl-[8px] */
+                <div className="max-w-[92%] sm:max-w-[85%]">
+                  <Card
+                    variant="solid"
+                    className="p-5 sm:p-6 shadow-clayCard border border-white/90 rounded-[24px] rounded-bl-[8px]"
+                  >
+                    {/* Header with confidence pill */}
+                    <div className="flex items-center justify-between gap-3 mb-2.5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-clay-accent/15 text-clay-accent flex items-center justify-center shadow-clayPressed">
+                          <Sparkles className="w-3.5 h-3.5" />
                         </div>
-                        <span className="text-[12px] font-bold text-text-primary" style={{ fontWeight: 700 }}>
+                        <span className="font-heading font-black text-xs text-clay-foreground">
                           Legal Assistant
                         </span>
                       </div>
                       <ConfidenceBadge confidence={msg.confidence} />
                     </div>
 
-                    {/* Answer content */}
-                    <div className="text-text-primary leading-relaxed whitespace-pre-wrap">
+                    {/* Answer Text in DM Sans */}
+                    <p className="font-sans text-sm sm:text-[14.5px] text-clay-foreground leading-relaxed whitespace-pre-wrap">
                       {msg.content}
-                    </div>
+                    </p>
 
-                    {/* Expandable Source Excerpt */}
-                    {msg.source_excerpt && <SourceExcerpt excerpt={msg.source_excerpt} />}
+                    {/* Expandable Source Excerpt Section */}
+                    {msg.source_excerpt && <SourceSection excerpt={msg.source_excerpt} />}
 
-                    <span className="block text-[10px] text-text-secondary mt-2">
+                    <span className="block text-[10px] text-clay-muted/70 mt-2 font-mono">
                       {msg.timestamp}
                     </span>
-                  </div>
-                )}
-              </motion.div>
-            ))}
+                  </Card>
+                </div>
+              )}
+            </div>
+          ))}
 
-            {/* Typing indicator */}
-            {isLoading && <TypingIndicator key="typing" />}
-          </AnimatePresence>
+          {/* 3. TYPING INDICATOR */}
+          {isLoading && <TypingIndicator />}
 
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Quick Suggestion Chips (when 1 or few messages) */}
+        {/* Suggested Quick Question Chips */}
         {messages.length <= 2 && (
-          <div className="my-3">
-            <p className="text-[11px] font-semibold text-text-secondary uppercase tracking-wider mb-2 flex items-center gap-1">
-              <HelpCircle className="w-3 h-3" /> Suggested Questions
-            </p>
+          <div className="my-4">
+            <span className="text-[11px] font-heading font-bold uppercase tracking-wider text-clay-muted block mb-2 flex items-center gap-1.5">
+              <HelpCircle className="w-3.5 h-3.5 text-clay-accent" /> Suggested Inquiries
+            </span>
             <div className="flex flex-wrap gap-2">
               {SAMPLE_QUESTIONS.map((sq, i) => (
                 <button
@@ -488,7 +470,7 @@ function AskPageContent() {
                   type="button"
                   onClick={() => handleSend(sq)}
                   disabled={isLoading}
-                  className="px-3 py-1.5 bg-white border border-slate-200 hover:border-primary text-text-secondary hover:text-primary rounded-xl text-[12px] font-medium transition-all hover:shadow-xs cursor-pointer text-left"
+                  className="px-3.5 py-1.5 bg-white border border-white/90 shadow-clayCard hover:shadow-deepClay text-clay-foreground hover:text-clay-accent rounded-full text-xs font-sans font-medium transition-all cursor-pointer text-left active:scale-[0.96]"
                 >
                   {sq}
                 </button>
@@ -498,48 +480,40 @@ function AskPageContent() {
         )}
       </div>
 
-      {/* Sticky Bottom Input Bar */}
-      <footer className="sticky bottom-0 z-30 bg-surface/95 backdrop-blur-md border-t border-slate-200/80 px-4 sm:px-6 py-3.5 shadow-lg shadow-slate-200/30">
+      {/* ── 4. INPUT AREA AT BOTTOM (Concave Input + Attached Send Button) ── */}
+      <footer className="sticky bottom-0 z-30 bg-clay-canvas/90 backdrop-blur-xl border-t border-white/80 px-4 sm:px-6 py-4 shadow-clayCard">
         <div className="max-w-4xl mx-auto">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSend();
-            }}
-            className="flex items-end gap-2 bg-slate-50 border border-slate-200/80 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10 rounded-2xl p-2 transition-all"
-          >
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask any question about this document (e.g., What is the refund timeline?)..."
-              rows={1}
-              disabled={isLoading}
-              className="flex-1 bg-transparent px-3 py-1.5 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none resize-none max-h-32 min-h-[38px]"
-            />
+          <div className="flex items-center gap-3">
+            {/* Input component (recessed/concave transforming to raised-white on focus) */}
+            <div className="flex-1">
+              <Input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask about clauses, refund dates, penalties, or obligations..."
+                disabled={isLoading}
+                id="ask-input"
+              />
+            </div>
 
-            <motion.button
-              type="submit"
+            {/* Attached Send Button (primary variant, matching height and squish physics) */}
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => handleSend()}
               disabled={!input.trim() || isLoading}
-              whileHover={{ scale: input.trim() && !isLoading ? 1.05 : 1 }}
-              whileTap={{ scale: input.trim() && !isLoading ? 0.95 : 1 }}
-              className={`p-2.5 rounded-xl font-medium transition-all flex items-center justify-center cursor-pointer ${
-                input.trim() && !isLoading
-                  ? 'bg-primary text-white shadow-sm shadow-primary/30 hover:bg-primary-light'
-                  : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-              }`}
-              title="Send question (Enter)"
+              id="ask-submit"
+              className="h-16 px-6 shrink-0 shadow-clayButton rounded-2xl"
+              title="Send (Enter)"
             >
-              <Send className="w-4 h-4" />
-            </motion.button>
-          </form>
+              <Send className="w-5 h-5 mr-1" />
+              <span className="hidden sm:inline">Send</span>
+            </Button>
+          </div>
 
-          <div className="flex items-center justify-between px-2 pt-2 text-[11px] text-text-secondary">
-            <span className="flex items-center gap-1">
-              <CornerDownLeft className="w-3 h-3" /> Press <strong>Enter</strong> to send, <strong>Shift+Enter</strong> for newline
-            </span>
-            <span>Grounded in document excerpts</span>
+          <div className="flex items-center justify-between px-2 pt-2 text-[11px] text-clay-muted font-sans">
+            <span>Press <strong>Enter</strong> to send question</span>
+            <span className="text-clay-accent font-medium">Grounded strictly in contract excerpts</span>
           </div>
         </div>
       </footer>
@@ -553,10 +527,10 @@ export default function AskPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="min-h-screen bg-clay-canvas flex items-center justify-center">
           <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-            <span className="text-sm font-medium text-text-secondary">Loading document chat…</span>
+            <div className="w-8 h-8 rounded-full border-2 border-clay-accent border-t-transparent animate-spin" />
+            <span className="text-sm font-heading font-bold text-clay-muted">Loading document Q&amp;A…</span>
           </div>
         </div>
       }
