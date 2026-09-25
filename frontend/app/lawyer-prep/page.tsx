@@ -3,7 +3,6 @@
 import React, { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
 import jsPDF from 'jspdf';
 import {
   ArrowLeft,
@@ -11,17 +10,16 @@ import {
   CheckCircle2,
   AlertTriangle,
   ShieldAlert,
-  ShieldCheck,
   FileText,
   Scale,
   Sparkles,
   HelpCircle,
   Printer,
   ChevronRight,
-  ExternalLink,
   MessageSquare,
   ClipboardList,
   Check,
+  Layers,
 } from 'lucide-react';
 import {
   simplifyDocument,
@@ -32,50 +30,82 @@ import {
   type Clause,
   type ChecklistResponse,
 } from '@/lib/api';
-import Document3D from '@/components/3d/Document3D';
 import { useDocument } from '@/context/DocumentContext';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
+import ClayBlobs from '@/components/ClayBlobs';
 
-// ── 3D Card Stack Paperwork Illustration Component ───────────────────────
+// ── Sample Data for Instant Preview / Testing ────────────────────────────
 
-function PaperworkStack3D() {
+const SAMPLE_PREP_DATA = {
+  documentType: 'Residential Lease Agreement',
+  summary:
+    'This is a standard 12-month residential lease for 742 Evergreen Terrace between Greenfield Properties LLC and Tenant Alex Mercer. Rent is $2,200/month with a 3-day grace period and $75 late penalty. Key attention areas include a non-refundable $4,400 deposit clause, 90-day automatic renewal notice, and a unilateral clause shifting all plumbing/HVAC maintenance costs to the tenant.',
+  keyPoints: [
+    'Monthly Rent: $2,200.00 payable in advance on the 1st of each month',
+    'Late Fee: $75.00 flat penalty applied after a 3-day grace period',
+    'Security Deposit: $4,400.00 (landlord reserves right to retain without receipts)',
+    'Auto-Renewal: 12-month automatic rollover requiring 90 days advance written notice',
+    'Maintenance: Tenant bears 100% cost of all HVAC and plumbing repairs regardless of cause',
+  ],
+  clauses: [
+    {
+      category: 'Unilateral Security Deposit Forfeiture',
+      category_level: 'risk',
+      explanation:
+        'Clause 3 permits the landlord to retain the $4,400 deposit without presenting itemized contractor receipts within 60 days, contrary to standard statutory deposit protections.',
+      clause_text: 'Landlord retains unilateral authority to withhold deposits without receipts within 60 days.',
+    },
+    {
+      category: 'HVAC & Plumbing Structural Maintenance Shift',
+      category_level: 'risk',
+      explanation:
+        'Clause 5 forces the tenant to pay for major structural plumbing and HVAC repairs regardless of who caused the issue or normal wear and tear.',
+      clause_text: 'Tenant is responsible for all plumbing and HVAC servicing regardless of cause.',
+    },
+    {
+      category: 'Extended 90-Day Auto-Renewal Notice Window',
+      category_level: 'attention',
+      explanation:
+        'Clause 4 requires 90 days advance written notice to prevent automatic 12-month rollover, which is significantly longer than standard 30-day statutory notice.',
+      clause_text: 'Automatically renews for 12 months unless written notice is given 90 days in advance.',
+    },
+  ],
+  questions: [
+    'Can the 90-day automatic renewal window be negotiated down to 30 days or convert to a month-to-month tenancy?',
+    'What specific statutory protections exist in my jurisdiction against unilateral deposit forfeiture without itemized receipts?',
+    'Under local habitability laws, can a landlord legally shift structural HVAC and plumbing maintenance obligations to a residential tenant?',
+    'Does the 3-day termination for any minor rule violation constitute an enforceable lease termination provision?',
+  ],
+};
+
+// ── 1. Paper-Stack Pure CSS Decorative Element ───────────────────────────
+
+function PaperStackDecoration() {
   return (
-    <div className="relative w-48 h-36 mx-auto flex items-center justify-center [perspective:1000px]">
-      {/* Back Page 2 */}
+    <div className="relative w-24 h-20 mx-auto mb-4 flex items-center justify-center">
+      {/* Layer 3: Back Paper (rotate-6) */}
       <div
-        className="absolute w-36 h-48 bg-slate-200/90 rounded-xl border border-slate-300 shadow-md transform -rotate-12 translate-x-4 -translate-y-2 opacity-60"
+        className="absolute w-16 h-20 bg-white/70 rounded-[16px] shadow-clayCard border border-white/80 transform rotate-6 translate-x-2 -translate-y-1 z-0"
         aria-hidden="true"
       />
-      {/* Back Page 1 */}
+      {/* Layer 2: Middle Paper (-rotate-3) */}
       <div
-        className="absolute w-36 h-48 bg-slate-100 rounded-xl border border-slate-300 shadow-lg transform rotate-6 -translate-x-3 translate-y-1 opacity-80"
+        className="absolute w-16 h-20 bg-white/85 rounded-[16px] shadow-clayCard border border-white/80 transform -rotate-3 -translate-x-1.5 translate-y-0.5 z-10"
         aria-hidden="true"
       />
-      {/* Front Hero Document */}
-      <motion.div
-        whileHover={{ rotateY: 0, rotateX: 0, scale: 1.05 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-        className="relative w-38 h-50 bg-white rounded-xl border border-slate-300/80 shadow-2xl p-4 flex flex-col justify-between transform [transform:rotateY(-14deg)_rotateX(10deg)] cursor-pointer"
-      >
-        <div>
-          {/* Header Bar */}
-          <div className="w-12 h-2 rounded bg-primary mb-3" />
-          {/* Faux text lines */}
-          <div className="space-y-1.5">
-            <div className="w-full h-1.5 bg-slate-200 rounded" />
-            <div className="w-4/5 h-1.5 bg-slate-200 rounded" />
-            <div className="w-full h-1.5 bg-slate-200 rounded" />
-            <div className="w-3/4 h-1.5 bg-slate-200 rounded" />
-          </div>
+      {/* Layer 1: Front Top Paper */}
+      <div className="relative w-16 h-20 bg-white rounded-[16px] shadow-clayCard border border-white/90 p-2.5 flex flex-col justify-between z-20">
+        <div className="w-5 h-1.5 rounded-full bg-clay-accent/40" />
+        <div className="space-y-1">
+          <div className="w-full h-1 bg-slate-200 rounded-full" />
+          <div className="w-3/4 h-1 bg-slate-200 rounded-full" />
+          <div className="w-5/6 h-1 bg-slate-200 rounded-full" />
         </div>
-
-        {/* Golden Stamp Badge */}
-        <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-          <div className="w-5 h-5 rounded-full bg-accent/20 border border-accent flex items-center justify-center text-[8px] font-bold text-accent">
-            ★
-          </div>
-          <span className="text-[8px] font-bold text-primary font-mono">LEGAL BRIEF</span>
+        <div className="w-3.5 h-3.5 rounded-full bg-clay-accent/15 self-end flex items-center justify-center">
+          <div className="w-1.5 h-1.5 rounded-full bg-clay-accent" />
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }
@@ -120,25 +150,25 @@ function exportToPDF({
   const drawHeader = () => {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
-    doc.setTextColor(100, 116, 139);
-    doc.text('LEGAL DOCUMENT ASSISTANT — LAWYER CONSULTATION BRIEF', margin, 12);
+    doc.setTextColor(124, 58, 237);
+    doc.text('AI LEGAL DOCUMENT ASSISTANT — CONSULTATION BRIEF', margin, 12);
     doc.setDrawColor(226, 232, 240);
     doc.setLineWidth(0.3);
     doc.line(margin, 14, pageWidth - margin, 14);
   };
 
-  // 1. Title Banner
-  doc.setFillColor(30, 58, 138); // Primary Deep Blue
+  // 1. Header Banner
+  doc.setFillColor(124, 58, 237); // Clay Accent Purple (#7C3AED)
   doc.rect(margin, y, contentWidth, 22, 'F');
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
+  doc.setFontSize(13);
   doc.setTextColor(255, 255, 255);
   doc.text('LAWYER CONSULTATION PREPARATION BRIEF', margin + 6, y + 9);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
-  doc.setTextColor(219, 234, 254);
+  doc.setTextColor(237, 233, 254);
   doc.text(`Document Type: ${documentType}  |  Date: ${new Date().toLocaleDateString()}`, margin + 6, y + 16);
 
   y += 28;
@@ -146,30 +176,30 @@ function exportToPDF({
   // 2. Executive Summary Section
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
-  doc.setTextColor(15, 23, 42);
+  doc.setTextColor(51, 47, 58);
   doc.text('1. Executive Plain-Language Summary', margin, y);
   y += 6;
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
-  doc.setTextColor(51, 65, 85);
+  doc.setTextColor(99, 95, 105);
   const summaryLines = doc.splitTextToSize(summary || 'No summary available.', contentWidth);
   checkPageBreak(summaryLines.length * 4.5);
   doc.text(summaryLines, margin, y);
   y += summaryLines.length * 4.5 + 4;
 
-  // Key Points
+  // Key Commitments
   if (keyPoints && keyPoints.length > 0) {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9.5);
-    doc.setTextColor(15, 23, 42);
+    doc.setTextColor(51, 47, 58);
     checkPageBreak(6);
-    doc.text('Key Takeaways & Core Obligations:', margin, y);
+    doc.text('Key Commitments & Takeaways:', margin, y);
     y += 5;
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8.5);
-    doc.setTextColor(51, 65, 85);
+    doc.setTextColor(99, 95, 105);
     keyPoints.slice(0, 6).forEach((pt) => {
       const ptLines = doc.splitTextToSize(`• ${pt}`, contentWidth - 4);
       checkPageBreak(ptLines.length * 4 + 2);
@@ -179,43 +209,50 @@ function exportToPDF({
     y += 4;
   }
 
-  // 3. Risk & Attention Clauses Section
+  // 3. Risk & Attention Clauses Section (Only risk/attention items)
   checkPageBreak(12);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
-  doc.setTextColor(15, 23, 42);
-  doc.text('2. Flagged Risk & Attention Clauses', margin, y);
+  doc.setTextColor(51, 47, 58);
+  doc.text('2. Clauses to Discuss (Flagged Risk & Attention Items)', margin, y);
   y += 6;
 
-  if (clauses && clauses.length > 0) {
-    clauses.forEach((c, idx) => {
+  const flaggedClauses = clauses.filter((c) => {
+    const cat = (c.category_level ?? c.category ?? '').toLowerCase();
+    return cat.includes('risk') || cat.includes('attention') || cat.includes('concern');
+  });
+
+  const displayClauses = flaggedClauses.length > 0 ? flaggedClauses : clauses.slice(0, 3);
+
+  if (displayClauses && displayClauses.length > 0) {
+    displayClauses.forEach((c) => {
       const isRisk = (c.category_level ?? c.category ?? '').toLowerCase().includes('risk');
       checkPageBreak(22);
 
       // Card boundary box
       doc.setFillColor(isRisk ? 254 : 255, isRisk ? 242 : 251, isRisk ? 242 : 235);
-      doc.setDrawColor(isRisk ? 248 : 251, isRisk ? 113 : 191, isRisk ? 113 : 36);
-      doc.setLineWidth(0.3);
+      doc.setDrawColor(isRisk ? 239 : 245, isRisk ? 68 : 158, isRisk ? 68 : 11);
+      doc.setLineWidth(0.4);
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8.5);
       doc.setTextColor(isRisk ? 185 : 180, isRisk ? 28 : 83, isRisk ? 28 : 9);
-      doc.text(`[${isRisk ? 'RISK' : 'ATTENTION'}] ${c.category || 'Clause Review'}`, margin + 3, y + 4);
+      doc.text(`[${isRisk ? 'RISK ITEM' : 'ATTENTION'}] ${c.category || 'Clause Review'}`, margin + 4, y + 5);
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
-      doc.setTextColor(51, 65, 85);
-      const expLines = doc.splitTextToSize(`Explanation: ${c.explanation}`, contentWidth - 6);
-      doc.text(expLines, margin + 3, y + 9);
+      doc.setTextColor(51, 47, 58);
+      const expLines = doc.splitTextToSize(`Explanation: ${c.explanation}`, contentWidth - 8);
+      doc.text(expLines, margin + 4, y + 10);
 
-      const blockHeight = 11 + expLines.length * 3.8;
+      const blockHeight = 13 + expLines.length * 3.8;
       doc.rect(margin, y, contentWidth, blockHeight, 'S');
-      y += blockHeight + 3;
+      y += blockHeight + 4;
     });
   } else {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8.5);
-    doc.text('No significant one-sided risk clauses were detected.', margin, y);
+    doc.text('No critical one-sided clauses detected in this agreement.', margin, y);
     y += 6;
   }
 
@@ -225,14 +262,14 @@ function exportToPDF({
   checkPageBreak(12);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
-  doc.setTextColor(15, 23, 42);
-  doc.text('3. Recommended Questions for Legal Counsel', margin, y);
+  doc.setTextColor(51, 47, 58);
+  doc.text('3. Targeted Questions to Ask Legal Counsel', margin, y);
   y += 6;
 
   if (questions && questions.length > 0) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8.5);
-    doc.setTextColor(51, 65, 85);
+    doc.setTextColor(99, 95, 105);
     questions.forEach((q, i) => {
       const qLines = doc.splitTextToSize(`Q${i + 1}: ${q}`, contentWidth - 4);
       checkPageBreak(qLines.length * 4 + 2);
@@ -241,25 +278,25 @@ function exportToPDF({
     });
   }
 
-  // 5. Disclaimer Footer (Required exact string)
-  checkPageBreak(20);
+  // 5. Disclaimer Footer
+  checkPageBreak(18);
   y = Math.max(y + 6, pageHeight - margin - 12);
-  doc.setDrawColor(203, 213, 225);
+  doc.setDrawColor(226, 232, 240);
   doc.line(margin, y - 2, pageWidth - margin, y - 2);
 
   doc.setFont('helvetica', 'italic');
   doc.setFontSize(7.5);
-  doc.setTextColor(100, 116, 139);
+  doc.setTextColor(99, 95, 105);
   const disclaimer =
     'This is an AI-generated summary to help you prepare for a discussion with a qualified legal professional. It is not legal advice.';
   const discLines = doc.splitTextToSize(disclaimer, contentWidth);
   doc.text(discLines, margin, y + 2);
 
-  // Save PDF
+  // Save PDF file
   doc.save(`Lawyer_Prep_Brief_${documentType.replace(/\s+/g, '_')}.pdf`);
 }
 
-// ── Main Lawyer-Prep Page Content ────────────────────────────────────────
+// ── Main Lawyer-Prep Content Component ───────────────────────────────────
 
 function LawyerPrepContent() {
   const searchParams = useSearchParams();
@@ -287,7 +324,6 @@ function LawyerPrepContent() {
 
     let isMounted = true;
     async function fetchAllData() {
-      // If we already have all data in context, use it directly
       if (ctxSimplify && ctxRisk && ctxChecklist) {
         setSummaryData(ctxSimplify);
         setRiskData(ctxRisk);
@@ -322,241 +358,174 @@ function LawyerPrepContent() {
     };
   }, [documentId, language, ctxSimplify, ctxRisk, ctxChecklist]);
 
+  // Fallback to sample data for instant test drive if visited directly
+  const activeDocumentType = summaryData?.document_type || (documentId ? docTypeParam : SAMPLE_PREP_DATA.documentType);
+  const activeSummary = summaryData?.plain_summary || SAMPLE_PREP_DATA.summary;
+  const activeKeyPoints = summaryData?.key_points || SAMPLE_PREP_DATA.keyPoints;
+  const activeClauses = riskData?.clauses || (SAMPLE_PREP_DATA.clauses as Clause[]);
+  const activeQuestions = checklistData?.questions_to_ask || SAMPLE_PREP_DATA.questions;
+
+  // Filter only risk/attention items
+  const flaggedClauses = activeClauses.filter((c) => {
+    const cat = (c.category_level ?? c.category ?? '').toLowerCase();
+    return cat.includes('risk') || cat.includes('attention') || cat.includes('concern');
+  });
+  const displayClauses = flaggedClauses.length > 0 ? flaggedClauses : activeClauses.slice(0, 3);
+
   const handleDownloadPDF = () => {
     exportToPDF({
-      documentType: summaryData?.document_type || docTypeParam,
-      documentId,
-      summary: summaryData?.plain_summary || 'Analysis summary not available.',
-      keyPoints: summaryData?.key_points || [],
-      clauses: riskData?.clauses || [],
-      questions: checklistData?.questions_to_ask || [
-        'Are there any terms in this agreement that are unusual or disadvantageous?',
-        'What are the exact obligations and deadlines I must comply with?',
-      ],
+      documentType: activeDocumentType,
+      documentId: documentId || 'sample-contract',
+      summary: activeSummary,
+      keyPoints: activeKeyPoints,
+      clauses: displayClauses,
+      questions: activeQuestions,
     });
 
+    // 4. Transform button to success state for ~2 seconds
     setDownloadSuccess(true);
-    setTimeout(() => setDownloadSuccess(false), 3500);
+    setTimeout(() => {
+      setDownloadSuccess(false);
+    }, 2000);
   };
 
-  // ── 1. Empty State (No Document Loaded) ─────────────────────────────────
-  if (!documentId) {
-    return (
-      <main className="min-h-screen bg-background flex flex-col justify-between py-8 px-4 sm:px-6">
-        <div className="max-w-2xl mx-auto w-full pt-6">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-sm text-text-secondary hover:text-primary transition-colors mb-6 group font-medium"
-          >
-            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-            Back to Home
-          </Link>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="bg-surface rounded-2xl border border-slate-200/80 shadow-soft p-8 sm:p-12 text-center"
-          >
-            <div className="w-44 h-44 mx-auto mb-6">
-              <Document3D className="w-full h-full" />
-            </div>
-
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold bg-primary/10 text-primary mb-4">
-              <Scale className="w-3.5 h-3.5" />
-              Lawyer Consultation Prep
-            </span>
-
-            <h1 className="text-2xl sm:text-3xl font-bold text-text-primary mb-3" style={{ fontWeight: 700 }}>
-              No Document Currently Loaded
-            </h1>
-
-            <p className="text-text-secondary text-sm sm:text-base leading-relaxed max-w-md mx-auto mb-8">
-              Analyze a contract or agreement first. We will compile a professional, printable PDF preparation brief formatted for your legal consultation.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link href="/analyze">
-                <motion.button
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-primary to-primary-light text-white font-semibold rounded-xl shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all flex items-center justify-center gap-2 cursor-pointer text-sm"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Analyze a Document First
-                </motion.button>
-              </Link>
-              <Link href="/">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full sm:w-auto px-5 py-3 bg-slate-100 hover:bg-slate-200 text-text-primary font-medium rounded-xl transition-colors text-sm"
-                >
-                  Return to Home
-                </motion.button>
-              </Link>
-            </div>
-          </motion.div>
-        </div>
-
-        <div className="text-center text-[11px] text-text-secondary pt-8 pb-4">
-          Legal Document Assistant · Attorney Consultation Brief
-        </div>
-      </main>
-    );
-  }
-
-  // ── 2. Active Lawyer-Prep Interface ──────────────────────────────────────
   return (
-    <main className="min-h-screen bg-background pb-20">
-      {/* Sticky Header */}
-      <header className="sticky top-0 z-30 bg-surface/90 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 py-3.5 shadow-xs">
+    <main className="min-h-screen bg-clay-canvas text-clay-foreground pb-24 relative overflow-hidden">
+      <ClayBlobs />
+
+      {/* Top Persistent Navigation Header */}
+      <header className="sticky top-0 z-30 bg-clay-canvas/80 backdrop-blur-md px-4 sm:px-6 py-3.5">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
               href="/analyze"
-              className="p-1.5 rounded-lg hover:bg-slate-100 text-text-secondary hover:text-text-primary transition-colors"
+              className="p-2 rounded-xl bg-white shadow-clayButton text-clay-muted hover:text-clay-accent transition-colors"
               title="Back to Analysis"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                <Scale className="w-4 h-4" />
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-2xl bg-clay-accent/15 flex items-center justify-center text-clay-accent shadow-clayPressed">
+                <Scale className="w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-sm font-bold text-text-primary tracking-tight" style={{ fontWeight: 700 }}>
+                <h1 className="font-heading font-black text-sm text-clay-foreground tracking-tight">
                   Lawyer Consultation Prep
                 </h1>
-                <p className="text-[11px] text-text-secondary">Printable brief & PDF exporter</p>
+                <p className="text-[11px] text-clay-muted font-sans">
+                  Printable brief &amp; client PDF export
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Right actions */}
-          <div className="flex items-center gap-2.5">
+          {/* Right Action Links */}
+          <div className="flex items-center gap-2">
             <Link
               href={`/ask?doc=${documentId}&type=${encodeURIComponent(docTypeParam)}`}
-              className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-text-secondary hover:text-primary px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors"
+              className="hidden sm:inline-block"
             >
-              <MessageSquare className="w-3.5 h-3.5" />
-              Q&A Chat
+              <Button variant="ghost" size="sm" className="text-xs">
+                <MessageSquare className="w-3.5 h-3.5 mr-1 text-clay-accent" />
+                Q&amp;A Chat
+              </Button>
             </Link>
             <Link
               href={`/checklist?doc=${documentId}&type=${encodeURIComponent(docTypeParam)}`}
-              className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-text-secondary hover:text-accent px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors"
+              className="hidden sm:inline-block"
             >
-              <ClipboardList className="w-3.5 h-3.5" />
-              Checklist
+              <Button variant="ghost" size="sm" className="text-xs">
+                <ClipboardList className="w-3.5 h-3.5 mr-1 text-clay-accent-alt" />
+                Checklist
+              </Button>
             </Link>
           </div>
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-8">
-        {/* Top Hero with 3D Paperwork Stack */}
-        <div className="text-center max-w-2xl mx-auto mb-8">
-          <div className="mb-4">
-            <PaperworkStack3D />
-          </div>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-6 relative z-10">
+        {/* ── 1. PAGE HEADING WITH PAPER-STACK DECORATION ─────────────────── */}
+        <div className="text-center max-w-2xl mx-auto mb-10">
+          <PaperStackDecoration />
 
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold bg-primary/10 text-primary mb-3">
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-heading font-bold text-clay-accent bg-clay-accent/10 mb-3 shadow-clayPressed">
             <Scale className="w-3.5 h-3.5" />
             Structured Legal Consultation Export
           </span>
-          <h2 className="text-2xl sm:text-3xl font-bold text-text-primary mb-2" style={{ fontWeight: 700 }}>
+
+          <h1 className="font-heading font-black text-3xl sm:text-4xl text-clay-foreground tracking-tight mb-3">
             Lawyer Consultation Preparation Brief
-          </h2>
-          <p className="text-sm text-text-secondary leading-relaxed">
-            Preview the generated consultation summary below. Download as a formatted PDF to share directly with your attorney or retain for your pre-signing review.
+          </h1>
+
+          <p className="font-sans text-sm sm:text-base text-clay-muted leading-relaxed">
+            Preview your generated consultation brief below. Download as a clean, structured PDF to share directly with your attorney or retain for pre-signing negotiations.
           </p>
-
-          {/* Action Bar */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <motion.button
-              type="button"
-              onClick={handleDownloadPDF}
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.98 }}
-              className="px-6 py-3 bg-gradient-to-r from-primary to-primary-light text-white font-bold text-sm rounded-xl shadow-md shadow-primary/25 hover:shadow-lg hover:shadow-primary/35 transition-all flex items-center gap-2 cursor-pointer"
-            >
-              <Download className="w-4 h-4" />
-              Download PDF Brief
-            </motion.button>
-
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="px-4 py-3 bg-white border border-slate-200 text-text-primary hover:bg-slate-50 font-semibold text-sm rounded-xl shadow-xs transition-colors flex items-center gap-2 cursor-pointer"
-            >
-              <Printer className="w-4 h-4 text-text-secondary" />
-              Print Preview
-            </button>
-          </div>
-
-          {/* Success Animated Confirmation */}
-          <AnimatePresence>
-            {downloadSuccess && (
-              <motion.div
-                initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-full text-xs font-bold text-emerald-700 shadow-sm"
-              >
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-                  className="w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center"
-                >
-                  <Check className="w-3 h-3 stroke-[3]" />
-                </motion.div>
-                PDF Brief Successfully Downloaded!
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
 
-        {/* ── On-Screen Printed Page Preview Card ─────────────────────────── */}
-        <div className="relative max-w-3xl mx-auto bg-white rounded-2xl border border-slate-300 shadow-2xl p-6 sm:p-12 overflow-hidden transition-all">
+        {/* Loading Indicator */}
+        {isLoading && (
+          <div className="py-12 flex flex-col items-center justify-center gap-4 text-center">
+            <div className="w-10 h-10 rounded-full border-3 border-clay-accent border-t-transparent animate-spin" />
+            <p className="font-heading font-bold text-sm text-clay-muted">
+              Compiling consultation summary &amp; risk items…
+            </p>
+          </div>
+        )}
+
+        {/* Error Alert */}
+        {error && !isLoading && (
+          <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2.5 shadow-clayPressed">
+            <AlertTriangle className="w-5 h-5 shrink-0 text-red-500" />
+            <span className="font-sans">{error}</span>
+          </div>
+        )}
+
+        {/* ── 2. MAIN PREVIEW: LARGE CARD STYLED AS CLEAN PRINTED PAGE ─────── */}
+        <Card
+          variant="solid"
+          className="max-w-3xl mx-auto bg-white p-8 sm:p-14 rounded-[32px] shadow-deepClay border border-white/90 overflow-hidden"
+        >
           {/* Top Document Header */}
-          <div className="border-b-2 border-primary pb-5 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="border-b-2 border-clay-accent pb-6 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 rounded bg-primary text-white">
-                  CONFIDENTIAL BRIEF
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="text-[10px] font-heading font-black tracking-widest uppercase px-2.5 py-0.5 rounded-full bg-clay-accent text-white shadow-clayPressed">
+                  CONFIDENTIAL LEGAL BRIEF
                 </span>
-                <span className="text-[11px] font-mono text-text-secondary">
-                  Ref: {documentId.substring(0, 8)}
+                <span className="text-xs font-mono text-clay-muted">
+                  Ref: {documentId ? documentId.substring(0, 8) : 'SAMPLE-DOC'}
                 </span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-text-primary" style={{ fontWeight: 800 }}>
-                {summaryData?.document_type || docTypeParam}
+              <h2 className="font-heading font-black text-2xl sm:text-3xl text-clay-foreground tracking-tight">
+                {activeDocumentType}
               </h2>
             </div>
-            <div className="text-left sm:text-right text-xs text-text-secondary">
-              <p className="font-semibold text-text-primary">Prepared for Legal Review</p>
+
+            <div className="text-left sm:text-right text-xs text-clay-muted font-sans">
+              <p className="font-heading font-bold text-clay-foreground">Prepared for Legal Review</p>
               <p>{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
           </div>
 
-          {/* Section 1: Plain Summary */}
+          {/* Section 1: Plain Summary Paragraph & Key Points */}
           <section className="mb-8">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-text-secondary mb-3 pb-1 border-b border-slate-100 flex items-center gap-1.5">
-              <FileText className="w-3.5 h-3.5 text-primary" />
+            <h3 className="font-heading font-black text-xs uppercase tracking-wider text-clay-muted mb-3 pb-1 border-b border-slate-100 flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5 text-clay-accent" />
               1. Executive Plain-Language Summary
             </h3>
-            <p className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap">
-              {summaryData?.plain_summary || 'Analyzing document summary…'}
+            <p className="font-sans text-sm sm:text-[15px] text-clay-foreground leading-relaxed whitespace-pre-wrap">
+              {activeSummary}
             </p>
 
-            {summaryData?.key_points && summaryData.key_points.length > 0 && (
-              <div className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
-                <p className="text-xs font-bold text-text-primary">Key Commitments & Figures:</p>
-                <ul className="space-y-1.5 text-xs text-text-secondary">
-                  {summaryData.key_points.slice(0, 6).map((pt, i) => (
+            {activeKeyPoints && activeKeyPoints.length > 0 && (
+              <div className="mt-4 p-4 sm:p-5 rounded-2xl bg-[#EFEBF5] shadow-clayPressed border border-white space-y-2">
+                <p className="font-heading font-bold text-xs text-clay-foreground">
+                  Key Commitments &amp; Takeaways:
+                </p>
+                <ul className="space-y-1.5 text-xs font-sans text-clay-muted">
+                  {activeKeyPoints.slice(0, 6).map((pt, i) => (
                     <li key={i} className="flex items-start gap-2">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                      <CheckCircle2 className="w-3.5 h-3.5 text-clay-success shrink-0 mt-0.5" />
                       <span>{pt}</span>
                     </li>
                   ))}
@@ -565,47 +534,54 @@ function LawyerPrepContent() {
             )}
           </section>
 
-          {/* Section 2: Flagged Risk & Attention Clauses */}
+          {/* Section 2: Clauses to Discuss (Flagged Risk & Attention Items Only) */}
           <section className="mb-8">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-text-secondary mb-3 pb-1 border-b border-slate-100 flex items-center gap-1.5">
+            <h3 className="font-heading font-black text-xs uppercase tracking-wider text-clay-muted mb-3 pb-1 border-b border-slate-100 flex items-center gap-1.5">
               <ShieldAlert className="w-3.5 h-3.5 text-red-500" />
-              2. Flagged Risk & Attention Clauses
+              2. Clauses to Discuss (Flagged Risk &amp; Attention Items)
             </h3>
 
-            {riskData?.clauses && riskData.clauses.length > 0 ? (
-              <div className="space-y-3">
-                {riskData.clauses.map((c, i) => {
+            {displayClauses && displayClauses.length > 0 ? (
+              <div className="space-y-3.5">
+                {displayClauses.map((c, i) => {
                   const isRisk = (c.category_level ?? c.category ?? '').toLowerCase().includes('risk');
+
                   return (
                     <div
                       key={i}
-                      className={`p-4 rounded-xl border text-xs leading-relaxed ${
+                      className={`p-4 sm:p-5 rounded-2xl border transition-none ${
                         isRisk
-                          ? 'bg-red-50/70 border-red-200/80 text-red-950'
-                          : 'bg-amber-50/70 border-amber-200/80 text-amber-950'
+                          ? 'border-l-4 border-l-red-500 bg-red-50/50 border-red-200/60 shadow-clayPressed'
+                          : 'border-l-4 border-l-amber-500 bg-amber-50/50 border-amber-200/60 shadow-clayPressed'
                       }`}
                     >
-                      <div className="flex items-center justify-between gap-2 mb-1.5">
-                        <span className="font-bold text-[12px] flex items-center gap-1.5">
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span className="font-heading font-black text-xs sm:text-sm text-clay-foreground flex items-center gap-1.5">
                           {isRisk ? (
-                            <ShieldAlert className="w-3.5 h-3.5 text-red-600" />
+                            <ShieldAlert className="w-4 h-4 text-red-600" />
                           ) : (
-                            <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                            <AlertTriangle className="w-4 h-4 text-amber-600" />
                           )}
                           {c.category || 'Clause Review'}
                         </span>
                         <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
-                            isRisk ? 'bg-red-200/80 text-red-800' : 'bg-amber-200/80 text-amber-800'
+                          className={`text-[10px] font-heading font-black px-2.5 py-0.5 rounded-full uppercase shadow-sm ${
+                            isRisk
+                              ? 'bg-red-100 text-red-800 border border-red-200'
+                              : 'bg-amber-100 text-amber-800 border border-amber-200'
                           }`}
                         >
                           {isRisk ? 'Risk Item' : 'Attention'}
                         </span>
                       </div>
-                      <p className="text-slate-700 leading-relaxed">{c.explanation}</p>
+
+                      <p className="font-sans text-xs sm:text-sm text-clay-foreground leading-relaxed">
+                        {c.explanation}
+                      </p>
+
                       {c.clause_text && (
-                        <p className="mt-2 text-[11px] font-mono italic text-slate-500 border-l-2 border-slate-300 pl-2 line-clamp-2">
-                          "{c.clause_text.trim()}"
+                        <p className="mt-2.5 text-xs font-mono italic text-clay-muted border-l-2 border-slate-300 pl-2.5 line-clamp-2">
+                          &quot;{c.clause_text.trim()}&quot;
                         </p>
                       )}
                     </div>
@@ -613,49 +589,76 @@ function LawyerPrepContent() {
                 })}
               </div>
             ) : (
-              <p className="text-xs text-text-secondary italic">No specific risk clauses flagged.</p>
+              <p className="font-sans text-xs text-clay-muted italic">
+                No high-risk clauses were flagged for this document.
+              </p>
             )}
           </section>
 
-          {/* Section 3: Recommended Questions for Attorney */}
+          {/* Section 3: Questions to Ask Numbered List */}
           <section className="mb-8">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-text-secondary mb-3 pb-1 border-b border-slate-100 flex items-center gap-1.5">
-              <HelpCircle className="w-3.5 h-3.5 text-accent" />
-              3. Recommended Questions to Ask Legal Counsel
+            <h3 className="font-heading font-black text-xs uppercase tracking-wider text-clay-muted mb-3 pb-1 border-b border-slate-100 flex items-center gap-1.5">
+              <HelpCircle className="w-3.5 h-3.5 text-clay-accent-alt" />
+              3. Questions to Ask Legal Counsel
             </h3>
 
-            {checklistData?.questions_to_ask && checklistData.questions_to_ask.length > 0 ? (
-              <div className="space-y-2">
-                {checklistData.questions_to_ask.map((q, i) => (
-                  <div
-                    key={i}
-                    className="p-3 bg-amber-50/40 rounded-xl border border-amber-200/60 flex items-start gap-2.5 text-xs text-text-primary"
-                  >
-                    <span className="font-bold text-accent shrink-0 mt-0.5">Q{i + 1}:</span>
-                    <span className="font-medium leading-relaxed">{q}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <div className="p-3 bg-amber-50/40 rounded-xl border border-amber-200/60 text-xs">
-                  <span className="font-bold text-accent mr-1">Q1:</span>
-                  <span>Can any of the one-sided clauses identified in this agreement be renegotiated before signing?</span>
+            <div className="space-y-2.5">
+              {activeQuestions.map((q, i) => (
+                <div
+                  key={i}
+                  className="p-3.5 rounded-2xl bg-[#EFEBF5] shadow-clayPressed border border-white flex items-start gap-3 text-xs sm:text-sm text-clay-foreground font-sans"
+                >
+                  <span className="w-6 h-6 rounded-full bg-white shadow-clayButton text-clay-accent font-heading font-black text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    {i + 1}
+                  </span>
+                  <span className="font-medium leading-relaxed pt-0.5">{q}</span>
                 </div>
-                <div className="p-3 bg-amber-50/40 rounded-xl border border-amber-200/60 text-xs">
-                  <span className="font-bold text-accent mr-1">Q2:</span>
-                  <span>What is the notice requirement and dispute resolution process for breach?</span>
-                </div>
-              </div>
-            )}
+              ))}
+            </div>
           </section>
 
-          {/* Footer Required Legal Disclaimer */}
-          <footer className="pt-6 border-t border-slate-200 text-center">
-            <p className="text-[11px] text-slate-500 italic leading-relaxed max-w-xl mx-auto">
+          {/* Footer Mandatory Legal Disclaimer */}
+          <footer className="pt-6 border-t border-slate-100 text-center">
+            <p className="text-[11px] font-sans text-clay-muted italic leading-relaxed max-w-xl mx-auto">
               This is an AI-generated summary to help you prepare for a discussion with a qualified legal professional. It is not legal advice.
             </p>
           </footer>
+        </Card>
+
+        {/* ── 3. & 4. PRIMARY BUTTON WITH TRANSFORMATION TO SUCCESS STATE ───── */}
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <Button
+            variant={downloadSuccess ? 'secondary' : 'primary'}
+            size="lg"
+            onClick={handleDownloadPDF}
+            className={`w-full sm:w-80 shadow-clayButton transition-all duration-300 ${
+              downloadSuccess
+                ? '!bg-clay-success !text-white !shadow-clayButton hover:!bg-clay-success hover:-translate-y-0'
+                : ''
+            }`}
+          >
+            {downloadSuccess ? (
+              <>
+                <Check className="w-5 h-5 mr-2 stroke-[3]" />
+                <span>Downloaded!</span>
+              </>
+            ) : (
+              <>
+                <Download className="w-5 h-5 mr-2" />
+                <span>Download PDF Report</span>
+              </>
+            )}
+          </Button>
+
+          <Button
+            variant="secondary"
+            size="lg"
+            onClick={() => window.print()}
+            className="w-full sm:w-auto shadow-clayButton"
+          >
+            <Printer className="w-4 h-4 mr-2 text-clay-accent" />
+            Print Page
+          </Button>
         </div>
       </div>
     </main>
@@ -668,10 +671,10 @@ export default function LawyerPrepPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="min-h-screen bg-clay-canvas flex items-center justify-center">
           <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-            <span className="text-sm font-medium text-text-secondary">Loading consultation brief…</span>
+            <div className="w-8 h-8 rounded-full border-2 border-clay-accent border-t-transparent animate-spin" />
+            <span className="text-sm font-heading font-bold text-clay-muted">Loading consultation brief…</span>
           </div>
         </div>
       }
