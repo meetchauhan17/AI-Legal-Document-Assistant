@@ -2,7 +2,6 @@
 
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -14,7 +13,6 @@ import {
   Scale,
   Sparkles,
   Layers,
-  ArrowRight,
   Globe,
   RotateCcw,
   Check,
@@ -29,8 +27,11 @@ import {
   type CompareResponse,
   type ComparisonPoint,
 } from '@/lib/api';
-import VsBadge3D from '@/components/3d/VsBadge3D';
 import { useDocument } from '@/context/DocumentContext';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
+import { Textarea } from '@/components/ui/Input';
+import ClayBlobs from '@/components/ClayBlobs';
 
 // ── Sample Documents for Quick Testing ───────────────────────────────────
 
@@ -64,27 +65,6 @@ const LANGUAGES = [
   { value: 'gu', label: 'ગુજરાતી (Gujarati)' },
 ];
 
-// ── Animation Variants ───────────────────────────────────────────────────
-
-const fadeSlide = {
-  hidden: { opacity: 0, y: 22 },
-  visible: (i = 0) => ({
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1], delay: i * 0.08 },
-  }),
-};
-
-const staggerContainer = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
-};
-
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.9 },
-  visible: { opacity: 1, scale: 1, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } },
-};
-
 // ── Helper for Favorability ──────────────────────────────────────────────
 
 function normalizeFavorable(fav: string): 'a' | 'b' | 'neutral' {
@@ -98,11 +78,13 @@ function normalizeFavorable(fav: string): 'a' | 'b' | 'neutral' {
   return 'neutral';
 }
 
-// ── Document Input Card Component ────────────────────────────────────────
+// ── Document Input Card Component (Recessed Dropzone & Textarea) ──────────
 
 interface DocInputProps {
   label: string;
-  badgeColor: string;
+  badgeLabel: string;
+  badgeGradient: string;
+  accentColor: string;
   text: string;
   file: File | null;
   mode: 'file' | 'text';
@@ -114,7 +96,9 @@ interface DocInputProps {
 
 function DocInputZone({
   label,
-  badgeColor,
+  badgeLabel,
+  badgeGradient,
+  accentColor,
   text,
   file,
   mode,
@@ -140,30 +124,38 @@ function DocInputZone({
   const hasContent = mode === 'file' ? file !== null : text.trim().length > 0;
 
   return (
-    <div className="flex-1 bg-surface rounded-2xl border border-slate-200/80 shadow-soft p-5 sm:p-6 flex flex-col justify-between transition-all">
+    <Card
+      variant="solid"
+      className="p-6 sm:p-8 flex flex-col justify-between relative z-10 shadow-clayCard border border-white/80"
+    >
       <div>
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
+        {/* Header with Label and Mode Switch */}
+        <div className="flex items-center justify-between mb-5 pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-3">
             <span
-              className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs text-white ${badgeColor}`}
+              className={`w-9 h-9 rounded-2xl flex items-center justify-center font-heading font-black text-xs text-white shadow-clayButton ${badgeGradient}`}
             >
-              {label.split(' ')[1] || 'A'}
+              {badgeLabel}
             </span>
-            <span className="font-bold text-sm text-text-primary" style={{ fontWeight: 700 }}>
-              {label}
-            </span>
+            <div>
+              <span className="font-heading font-black text-base text-clay-foreground tracking-tight block">
+                {label}
+              </span>
+              <span className="text-[11px] text-clay-muted">
+                {mode === 'file' ? 'PDF File Upload' : 'Direct Text Input'}
+              </span>
+            </div>
           </div>
 
-          {/* Mode Switch */}
-          <div className="flex bg-slate-100 p-0.5 rounded-lg text-xs">
+          {/* Mode Switch Tabs */}
+          <div className="flex bg-[#EFEBF5] p-1 rounded-2xl shadow-clayPressed text-xs font-heading font-bold">
             <button
               type="button"
               onClick={() => onModeChange('file')}
-              className={`px-2.5 py-1 rounded-md font-medium transition-all ${
+              className={`px-3 py-1.5 rounded-xl transition-all ${
                 mode === 'file'
-                  ? 'bg-white text-text-primary shadow-xs'
-                  : 'text-text-secondary hover:text-text-primary'
+                  ? 'bg-white text-clay-foreground shadow-clayButton'
+                  : 'text-clay-muted hover:text-clay-foreground'
               }`}
             >
               Upload PDF
@@ -171,10 +163,10 @@ function DocInputZone({
             <button
               type="button"
               onClick={() => onModeChange('text')}
-              className={`px-2.5 py-1 rounded-md font-medium transition-all ${
+              className={`px-3 py-1.5 rounded-xl transition-all ${
                 mode === 'text'
-                  ? 'bg-white text-text-primary shadow-xs'
-                  : 'text-text-secondary hover:text-text-primary'
+                  ? 'bg-white text-clay-foreground shadow-clayButton'
+                  : 'text-clay-muted hover:text-clay-foreground'
               }`}
             >
               Paste Text
@@ -182,36 +174,46 @@ function DocInputZone({
           </div>
         </div>
 
-        {/* Input Area */}
+        {/* Input Area: Dropzone or Textarea */}
         {mode === 'file' ? (
           <div>
             {!file ? (
               <div
                 {...getRootProps()}
-                className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
+                className={`relative rounded-[28px] p-8 sm:p-10 text-center cursor-pointer transition-all duration-300 bg-[#EFEBF5] shadow-clayPressed border-2 border-dashed ${
                   isDragActive
-                    ? 'border-primary bg-blue-50/50 shadow-inner'
-                    : 'border-slate-200 hover:border-primary/50 hover:bg-slate-50/50'
+                    ? 'border-clay-accent bg-clay-accent/5 ring-4 ring-clay-accent/20'
+                    : 'border-clay-accent/25 hover:border-clay-accent/60'
                 }`}
               >
                 <input {...getInputProps()} />
-                <div className="w-10 h-10 mx-auto mb-2.5 rounded-xl bg-blue-50 flex items-center justify-center text-primary">
-                  <Upload className="w-5 h-5" />
+
+                {/* Gradient Upload Orb */}
+                <div
+                  className={`w-14 h-14 mx-auto mb-3 rounded-2xl bg-gradient-to-br ${accentColor} text-white shadow-clayButton flex items-center justify-center`}
+                >
+                  <Upload className="w-7 h-7" />
                 </div>
-                <p className="text-xs font-semibold text-text-primary">
-                  {isDragActive ? 'Drop PDF here' : 'Click or drag PDF here'}
+
+                <h4 className="font-heading font-black text-base text-clay-foreground mb-1">
+                  {isDragActive ? 'Drop PDF into tray!' : `Drop ${label} PDF here`}
+                </h4>
+                <p className="font-sans text-xs text-clay-muted">
+                  or <span className="text-clay-accent font-bold underline">browse files</span> (up to 5MB)
                 </p>
-                <p className="text-[11px] text-text-secondary mt-1">PDF up to 5MB</p>
               </div>
             ) : (
-              <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4 flex items-center justify-between">
+              /* File selected state */
+              <div className="p-5 rounded-2xl bg-[#EFEBF5] shadow-clayPressed border border-white flex items-center justify-between">
                 <div className="flex items-center gap-3 overflow-hidden">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                    <FileText className="w-4 h-4" />
+                  <div className="w-10 h-10 rounded-xl bg-clay-success/15 text-clay-success flex items-center justify-center shadow-clayPressed shrink-0">
+                    <CheckCircle2 className="w-5 h-5" />
                   </div>
                   <div className="overflow-hidden">
-                    <p className="text-xs font-bold text-text-primary truncate">{file.name}</p>
-                    <p className="text-[10px] text-text-secondary">
+                    <p className="font-heading font-bold text-xs sm:text-sm text-clay-foreground truncate">
+                      {file.name}
+                    </p>
+                    <p className="text-[11px] text-clay-muted font-mono">
                       {(file.size / 1024).toFixed(1)} KB · PDF Ready
                     </p>
                   </div>
@@ -219,7 +221,7 @@ function DocInputZone({
                 <button
                   type="button"
                   onClick={onClear}
-                  className="text-xs text-text-secondary hover:text-red-500 font-medium px-2 py-1"
+                  className="text-xs font-heading font-bold text-clay-muted hover:text-red-500 underline transition-colors px-2 py-1"
                 >
                   Change
                 </button>
@@ -228,127 +230,34 @@ function DocInputZone({
           </div>
         ) : (
           <div>
-            <textarea
+            <Textarea
               value={text}
               onChange={(e) => onTextChange(e.target.value)}
-              placeholder={`Paste the full text of ${label} here...`}
-              rows={7}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none font-mono"
+              placeholder={`Paste the clauses, terms, or full text of ${label} here...`}
+              rows={8}
+              className="text-xs sm:text-sm font-sans"
             />
           </div>
         )}
       </div>
 
-      {/* Mini preview snippet footer if text available */}
+      {/* Ready Indicator Footer */}
       {hasContent && (
-        <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-text-secondary">
-          <span className="flex items-center gap-1 text-emerald-600 font-medium">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            Document Ready
+        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-heading font-bold">
+          <span className="flex items-center gap-1.5 text-clay-success">
+            <CheckCircle2 className="w-4 h-4" />
+            {label} Ready
           </span>
           <button
             type="button"
             onClick={onClear}
-            className="hover:text-red-500 transition-colors"
+            className="text-clay-muted hover:text-red-500 transition-colors"
           >
             Clear
           </button>
         </div>
       )}
-    </div>
-  );
-}
-
-// ── Comparison Table Row Component ───────────────────────────────────────
-
-function ComparisonRow({ point, index }: { point: ComparisonPoint; index: number }) {
-  const favorable = normalizeFavorable(point.more_favorable);
-
-  return (
-    <motion.tr
-      variants={fadeSlide}
-      custom={index}
-      className="border-b border-slate-100 hover:bg-slate-50/70 transition-colors"
-    >
-      {/* Aspect */}
-      <td className="py-4 px-4 sm:px-6 align-top w-[25%] sm:w-[22%]">
-        <div className="font-bold text-xs sm:text-sm text-text-primary" style={{ fontWeight: 700 }}>
-          {point.aspect}
-        </div>
-        {(point.note || point.explanation) && (
-          <p className="text-[11px] text-text-secondary mt-1 leading-relaxed">
-            {point.note || point.explanation}
-          </p>
-        )}
-      </td>
-
-      {/* Document A Value */}
-      <td className="py-4 px-4 sm:px-6 align-top w-[35%] sm:w-[36%]">
-        <div
-          className={`p-3 rounded-xl border text-xs sm:text-[13px] leading-relaxed transition-all ${
-            favorable === 'a'
-              ? 'bg-emerald-50/70 border-emerald-300 text-emerald-950 font-medium shadow-xs ring-1 ring-emerald-400/30'
-              : 'bg-white border-slate-200/80 text-text-primary'
-          }`}
-        >
-          <div className="flex items-start justify-between gap-2">
-            <span>{point.document_a_value}</span>
-            {favorable === 'a' && (
-              <motion.span
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-600 text-white shadow-xs"
-              >
-                <Check className="w-3 h-3 stroke-[3]" />
-                More Favorable
-              </motion.span>
-            )}
-          </div>
-        </div>
-      </td>
-
-      {/* Document B Value */}
-      <td className="py-4 px-4 sm:px-6 align-top w-[35%] sm:w-[36%]">
-        <div
-          className={`p-3 rounded-xl border text-xs sm:text-[13px] leading-relaxed transition-all ${
-            favorable === 'b'
-              ? 'bg-emerald-50/70 border-emerald-300 text-emerald-950 font-medium shadow-xs ring-1 ring-emerald-400/30'
-              : 'bg-white border-slate-200/80 text-text-primary'
-          }`}
-        >
-          <div className="flex items-start justify-between gap-2">
-            <span>{point.document_b_value}</span>
-            {favorable === 'b' && (
-              <motion.span
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-600 text-white shadow-xs"
-              >
-                <Check className="w-3 h-3 stroke-[3]" />
-                More Favorable
-              </motion.span>
-            )}
-          </div>
-        </div>
-      </td>
-
-      {/* Status indicator icon column */}
-      <td className="py-4 px-2 sm:px-4 align-middle text-center w-[5%] sm:w-[6%]">
-        {favorable === 'neutral' ? (
-          <span className="inline-flex p-1.5 rounded-full bg-slate-100 text-slate-400" title="Neutral / Equal">
-            <Equal className="w-3.5 h-3.5" />
-          </span>
-        ) : favorable === 'a' ? (
-          <span className="inline-flex p-1.5 rounded-full bg-blue-100 text-primary font-bold text-xs" title="Doc A Advantage">
-            A
-          </span>
-        ) : (
-          <span className="inline-flex p-1.5 rounded-full bg-amber-100 text-accent font-bold text-xs" title="Doc B Advantage">
-            B
-          </span>
-        )}
-      </td>
-    </motion.tr>
+    </Card>
   );
 }
 
@@ -432,39 +341,44 @@ export default function ComparePage() {
     (modeB === 'file' ? fileB !== null : textB.trim().length > 0);
 
   return (
-    <main className="min-h-screen bg-background pb-16">
-      {/* Sticky Header */}
-      <header className="sticky top-0 z-30 bg-surface/90 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 py-3.5 shadow-xs">
+    <main className="min-h-screen bg-clay-canvas text-clay-foreground pb-20 relative overflow-hidden">
+      {/* Ambient background blobs */}
+      <ClayBlobs />
+
+      {/* ── Top Navigation Bar ────────────────────────────────────────────── */}
+      <header className="sticky top-0 z-30 bg-clay-canvas/80 backdrop-blur-md px-4 sm:px-6 py-3.5">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
               href="/"
-              className="p-1.5 rounded-lg hover:bg-slate-100 text-text-secondary hover:text-text-primary transition-colors"
+              className="p-2 rounded-xl bg-white shadow-clayButton text-clay-muted hover:text-clay-accent transition-colors"
               title="Home"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center text-accent">
-                <Scale className="w-4 h-4" />
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-2xl bg-clay-accent/15 flex items-center justify-center text-clay-accent shadow-clayPressed">
+                <Scale className="w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-sm font-bold text-text-primary tracking-tight" style={{ fontWeight: 700 }}>
+                <h1 className="font-heading font-black text-sm text-clay-foreground tracking-tight">
                   Compare Legal Documents
                 </h1>
-                <p className="text-[11px] text-text-secondary">Side-by-side term & liability evaluation</p>
+                <p className="text-[11px] text-clay-muted font-sans">
+                  Side-by-side term &amp; liability evaluation
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Right actions */}
+          {/* Right Actions: Language Selector & Analyze Link */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/80 rounded-xl px-2.5 py-1 text-xs">
-              <Globe className="w-3.5 h-3.5 text-text-secondary" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white shadow-clayButton border border-white text-xs font-heading font-bold text-clay-foreground">
+              <Globe className="w-3.5 h-3.5 text-clay-accent shrink-0" />
               <select
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
-                className="bg-transparent font-medium text-text-primary focus:outline-none cursor-pointer pr-1"
+                className="bg-transparent font-heading font-bold text-xs text-clay-foreground focus:outline-none cursor-pointer pr-1"
               >
                 {LANGUAGES.map((l) => (
                   <option key={l.value} value={l.value}>
@@ -474,53 +388,55 @@ export default function ComparePage() {
               </select>
             </div>
 
-            <Link
-              href="/analyze"
-              className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-text-secondary hover:text-primary transition-colors"
-            >
-              Single Document Analysis &rarr;
+            <Link href="/analyze" className="hidden sm:inline-block">
+              <Button variant="ghost" size="sm" className="text-xs">
+                Single Document Analysis &rarr;
+              </Button>
             </Link>
           </div>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-8">
-        {/* Page Hero Description */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 relative z-10">
+        {/* ── Page Intro Header ───────────────────────────────────────────── */}
         {!result && (
-          <div className="text-center max-w-2xl mx-auto mb-8">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold bg-accent/10 text-accent mb-3">
+          <div className="text-center max-w-2xl mx-auto mb-10">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-heading font-bold text-clay-accent bg-clay-accent/10 mb-4 shadow-clayPressed">
               <Sparkles className="w-3.5 h-3.5" />
-              Intelligent Difference & Favorability Detection
+              Intelligent Difference &amp; Favorability Detection
             </span>
-            <h2 className="text-2xl sm:text-3xl font-bold text-text-primary mb-2" style={{ fontWeight: 700 }}>
+            <h2 className="font-heading font-black text-3xl sm:text-4xl text-clay-foreground tracking-tight mb-3">
               Compare Two Contracts Side-by-Side
             </h2>
-            <p className="text-sm text-text-secondary leading-relaxed">
-              Upload two versions of a contract or competing proposals. Our AI highlights key differences in pricing, liability, notice windows, and identifies which terms are more favorable.
+            <p className="font-sans text-sm sm:text-base text-clay-muted leading-relaxed">
+              Upload two versions of an agreement or competing proposals. Our AI highlights key differences in rent, liabilities, notice windows, and identifies which terms are more favorable.
             </p>
 
-            {/* Quick Demo Trigger */}
-            <div className="mt-4">
-              <button
-                type="button"
+            {/* Quick Sample Trigger */}
+            <div className="mt-5">
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={handleLoadSample}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary-light bg-blue-50 hover:bg-blue-100 border border-blue-200 px-3.5 py-1.5 rounded-full transition-colors cursor-pointer"
+                className="shadow-clayButton text-xs"
               >
-                <Layers className="w-3.5 h-3.5" />
+                <Layers className="w-4 h-4 mr-2 text-clay-accent" />
                 Load Sample Comparison (Contract A vs Contract B)
-              </button>
+              </Button>
             </div>
           </div>
         )}
 
-        {/* ── Upload & Input Section ──────────────────────────────────────── */}
+        {/* ── 1. & 2. Two Side-by-Side Upload Zones + Floating "VS" Badge ──── */}
         {!result && (
-          <div className="relative mb-8">
-            <div className="flex flex-col lg:flex-row items-stretch gap-6">
+          <div className="relative mb-10">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch relative">
               {/* Document A Zone */}
               <DocInputZone
                 label="Document A"
-                badgeColor="bg-primary"
+                badgeLabel="A"
+                badgeGradient="bg-gradient-to-br from-[#A78BFA] to-[#7C3AED]"
+                accentColor="from-[#A78BFA] to-[#7C3AED]"
                 text={textA}
                 file={fileA}
                 mode={modeA}
@@ -533,25 +449,33 @@ export default function ComparePage() {
                 }}
               />
 
-              {/* Central 3D VS Divider */}
-              <div className="flex lg:flex-col items-center justify-center my-2 lg:my-0">
-                <div className="relative flex items-center justify-center">
-                  <div className="w-20 h-20 sm:w-24 sm:h-24">
-                    <VsBadge3D className="w-full h-full" />
-                  </div>
-                  <motion.div
-                    whileHover={{ scale: 1.1, rotate: 5 }}
-                    className="absolute z-10 w-9 h-9 rounded-full bg-gradient-to-tr from-primary to-accent text-white font-extrabold text-xs flex items-center justify-center shadow-md border-2 border-white pointer-events-auto cursor-default"
-                  >
-                    VS
-                  </motion.div>
+              {/* 2. CIRCULAR "VS" BADGE (FLOATING AT CENTER ON DESKTOP, INLINE ON MOBILE) */}
+              {/* Desktop Floating VS Badge */}
+              <div className="hidden lg:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
+                <div
+                  className="w-16 h-16 rounded-full bg-gradient-to-br from-clay-accent to-clay-accent-alt text-white shadow-clayButton border-4 border-white flex items-center justify-center font-heading font-black text-lg tracking-wider animate-clay-breathe"
+                  style={{ animationDuration: '3s' }}
+                >
+                  VS
+                </div>
+              </div>
+
+              {/* Mobile Inline VS Badge */}
+              <div className="flex lg:hidden justify-center items-center -my-3 relative z-20">
+                <div
+                  className="w-14 h-14 rounded-full bg-gradient-to-br from-clay-accent to-clay-accent-alt text-white shadow-clayButton border-4 border-white flex items-center justify-center font-heading font-black text-base tracking-wider animate-clay-breathe"
+                  style={{ animationDuration: '3s' }}
+                >
+                  VS
                 </div>
               </div>
 
               {/* Document B Zone */}
               <DocInputZone
                 label="Document B"
-                badgeColor="bg-accent"
+                badgeLabel="B"
+                badgeGradient="bg-gradient-to-br from-[#F472B6] to-[#DB2777]"
+                accentColor="from-[#F472B6] to-[#DB2777]"
                 text={textB}
                 file={fileB}
                 mode={modeB}
@@ -565,162 +489,207 @@ export default function ComparePage() {
               />
             </div>
 
-            {/* Error banner */}
-            <AnimatePresence>
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  className="mt-4 flex items-center gap-2 p-3.5 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700"
-                >
-                  <AlertTriangle className="w-4 h-4 shrink-0" />
-                  {error}
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {/* Error Banner */}
+            {error && (
+              <div className="mt-6 flex items-center gap-2.5 p-4 rounded-2xl bg-red-50 border border-red-200 text-sm text-red-700 shadow-clayPressed">
+                <AlertTriangle className="w-5 h-5 shrink-0 text-red-500" />
+                <span className="font-sans">{error}</span>
+              </div>
+            )}
 
-            {/* Compare Button */}
-            <div className="mt-6 flex justify-center">
-              <motion.button
+            {/* Compare Action Button */}
+            <div className="mt-8 flex justify-center">
+              <Button
+                variant="primary"
+                size="lg"
                 onClick={handleCompare}
                 disabled={!hasBothDocs || isLoading}
-                whileHover={{ scale: hasBothDocs && !isLoading ? 1.03 : 1 }}
-                whileTap={{ scale: hasBothDocs && !isLoading ? 0.98 : 1 }}
-                className={`w-full sm:w-80 py-3.5 rounded-xl font-bold text-sm sm:text-base text-white flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                  hasBothDocs && !isLoading
-                    ? 'bg-gradient-to-r from-primary via-primary-light to-accent shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/35'
-                    : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
-                }`}
+                className="w-full sm:w-80 shadow-clayButton"
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                     <span>{loadingStage}</span>
                   </>
                 ) : (
                   <>
-                    <Scale className="w-5 h-5" />
+                    <Scale className="w-5 h-5 mr-2" />
                     <span>Compare Documents</span>
                   </>
                 )}
-              </motion.button>
+              </Button>
             </div>
           </div>
         )}
 
-        {/* ── Results Section ─────────────────────────────────────────────── */}
-        <AnimatePresence>
-          {result && !isLoading && (
-            <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              animate="visible"
-              className="space-y-6"
-            >
-              {/* Results Top Action Bar */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-bold text-text-primary" style={{ fontWeight: 700 }}>
-                    Comparison Analysis
-                  </h2>
-                  <p className="text-xs text-text-secondary mt-0.5">
-                    {result.comparison_points.length} key aspects evaluated across Document A & Document B
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  className="text-xs font-semibold text-text-secondary hover:text-primary transition-colors border border-slate-200 px-3.5 py-2 rounded-xl hover:bg-slate-50 flex items-center gap-1.5"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  Compare Different Documents
-                </button>
+        {/* ── 3. RESULTS SECTION ───────────────────────────────────────────── */}
+        {result && !isLoading && (
+          <div className="space-y-8 animate-fade-in">
+            {/* Top Action Bar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/60">
+              <div>
+                <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-heading font-black bg-clay-accent/10 text-clay-accent shadow-clayPressed uppercase mb-1">
+                  <Sparkles className="w-3 h-3" />
+                  Comparison Complete
+                </span>
+                <h2 className="font-heading font-black text-2xl sm:text-3xl text-clay-foreground tracking-tight">
+                  Detailed Clause Comparison
+                </h2>
+                <p className="font-sans text-xs sm:text-sm text-clay-muted">
+                  {result.comparison_points.length} key aspects evaluated across Document A &amp; Document B
+                </p>
               </div>
 
-              {/* 1. Overall Summary Card */}
-              <motion.div
-                variants={fadeSlide}
-                className="bg-gradient-to-br from-blue-50 via-white to-amber-50/60 rounded-2xl border border-blue-200/80 p-6 sm:p-7 shadow-soft"
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleReset}
+                className="shadow-clayButton shrink-0 self-start sm:self-auto"
               >
-                <div className="flex items-center gap-2 mb-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                    <Sparkles className="w-4 h-4" />
-                  </div>
-                  <h3 className="font-bold text-text-primary text-sm sm:text-base" style={{ fontWeight: 700 }}>
-                    Overall Executive Comparison Summary
+                <RotateCcw className="w-4 h-4 mr-1.5 text-clay-accent" />
+                Compare Different Documents
+              </Button>
+            </div>
+
+            {/* 3a. OVERALL SUMMARY IN HERO-VARIANT CARD WITH GRADIENT WASH */}
+            <Card
+              variant="hero"
+              className="p-8 sm:p-10 border border-clay-accent/20 bg-gradient-to-br from-clay-accent/5 via-white/80 to-clay-accent-alt/5 shadow-clayCard"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] text-white flex items-center justify-center shadow-clayButton">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-[11px] font-heading font-black uppercase tracking-wider text-clay-accent block">
+                    Executive Analysis
+                  </span>
+                  <h3 className="font-heading font-black text-lg sm:text-xl text-clay-foreground tracking-tight">
+                    Overall Comparison Summary
                   </h3>
                 </div>
-                <p className="text-text-primary text-sm sm:text-[14.5px] leading-relaxed">
-                  {result.overall_summary}
-                </p>
-              </motion.div>
+              </div>
+              <p className="font-sans text-sm sm:text-base text-clay-foreground leading-relaxed whitespace-pre-wrap">
+                {result.overall_summary}
+              </p>
+            </Card>
 
-              {/* 2. Side-by-Side Comparison Table */}
-              <motion.div
-                variants={fadeSlide}
-                className="bg-surface rounded-2xl border border-slate-200/80 shadow-soft overflow-hidden"
-              >
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-slate-50/90 border-b border-slate-200/80 text-[11px] font-bold uppercase tracking-wider text-text-secondary">
-                        <th className="py-3.5 px-4 sm:px-6">Aspect / Clause</th>
-                        <th className="py-3.5 px-4 sm:px-6">
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-100 text-primary">
+            {/* 3b. COMPARISON TABLE REBUILT AS STACKED LIST OF CARD COMPONENTS */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between px-2 pt-2">
+                <h3 className="font-heading font-black text-lg text-clay-foreground">
+                  Comparison Aspects ({result.comparison_points.length})
+                </h3>
+                <div className="flex items-center gap-3 text-xs font-sans text-clay-muted">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm" />
+                    Emerald Left Accent = Favorable
+                  </span>
+                </div>
+              </div>
+
+              {result.comparison_points.map((point, index) => {
+                const favorable = normalizeFavorable(point.more_favorable);
+
+                return (
+                  <Card
+                    key={index}
+                    variant="solid"
+                    className="!rounded-[24px] p-6 sm:p-7 shadow-clayCard border border-white/90"
+                  >
+                    {/* Aspect Label & Note */}
+                    <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 pb-3 border-b border-slate-100">
+                      <div>
+                        <span className="text-[10px] font-heading font-black uppercase tracking-wider text-clay-muted block">
+                          Aspect #{index + 1}
+                        </span>
+                        <h4 className="font-heading font-black text-base sm:text-lg text-clay-foreground tracking-tight">
+                          {point.aspect}
+                        </h4>
+                      </div>
+                      {(point.note || point.explanation) && (
+                        <p className="font-sans text-xs text-clay-muted sm:max-w-md sm:text-right">
+                          {point.note || point.explanation}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Side-by-Side Values (grid-cols-1 sm:grid-cols-2) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                      {/* Document A Value */}
+                      <div
+                        className={`p-4 sm:p-5 rounded-2xl transition-all ${
+                          favorable === 'a'
+                            ? 'bg-emerald-50/80 border-l-4 border-l-emerald-500 border border-emerald-200/60 shadow-clayPressed'
+                            : 'bg-[#F4F1FA]/60 border border-slate-200/60'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <span className="text-xs font-heading font-black text-clay-accent tracking-wider uppercase">
                             Document A
                           </span>
-                        </th>
-                        <th className="py-3.5 px-4 sm:px-6">
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-100 text-accent">
+                          {favorable === 'a' && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-heading font-black bg-emerald-100 text-emerald-800 shadow-clayPressed uppercase">
+                              <Check className="w-3 h-3 stroke-[3]" />
+                              More Favorable
+                            </span>
+                          )}
+                        </div>
+                        <p className="font-sans text-xs sm:text-sm text-clay-foreground leading-relaxed whitespace-pre-wrap">
+                          {point.document_a_value}
+                        </p>
+                      </div>
+
+                      {/* Document B Value */}
+                      <div
+                        className={`p-4 sm:p-5 rounded-2xl transition-all ${
+                          favorable === 'b'
+                            ? 'bg-emerald-50/80 border-l-4 border-l-emerald-500 border border-emerald-200/60 shadow-clayPressed'
+                            : 'bg-[#F4F1FA]/60 border border-slate-200/60'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <span className="text-xs font-heading font-black text-clay-accent-alt tracking-wider uppercase">
                             Document B
                           </span>
-                        </th>
-                        <th className="py-3.5 px-2 sm:px-4 text-center">Advantage</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {result.comparison_points.map((point, i) => (
-                        <ComparisonRow key={i} point={point} index={i} />
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                          {favorable === 'b' && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-heading font-black bg-emerald-100 text-emerald-800 shadow-clayPressed uppercase">
+                              <Check className="w-3 h-3 stroke-[3]" />
+                              More Favorable
+                            </span>
+                          )}
+                        </div>
+                        <p className="font-sans text-xs sm:text-sm text-clay-foreground leading-relaxed whitespace-pre-wrap">
+                          {point.document_b_value}
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
 
-                {/* Table Footer / Legend */}
-                <div className="p-4 bg-slate-50 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-[11px] text-text-secondary">
-                  <div className="flex items-center gap-4">
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                      Green highlight indicates more favorable term for tenant/party
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
-                      Neutral indicates balanced or equivalent terms
-                    </span>
-                  </div>
-                  <span>Informational legal comparison</span>
+            {/* Bottom Quick Links & Legal Guardrail */}
+            <Card variant="glass" className="p-5 sm:p-6 shadow-clayCard">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+                <div className="flex items-center gap-2 text-clay-muted font-sans">
+                  <Info className="w-4 h-4 text-clay-accent shrink-0" />
+                  <span>
+                    Favorability classifications are comparative heuristics and depend on whether you are the tenant, landlord, contractor, or hiring party.
+                  </span>
                 </div>
-              </motion.div>
-
-              {/* Bottom Quick Links / Disclaimer */}
-              <motion.div variants={fadeSlide} className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 text-xs text-text-secondary">
-                <div className="flex items-center gap-2">
-                  <Info className="w-4 h-4 text-accent shrink-0" />
-                  <span>Favorability assessments are automated and depend on your specific bargaining position.</span>
-                </div>
-                <div className="flex items-center gap-3 font-semibold">
-                  <Link href="/analyze" className="text-primary hover:underline flex items-center gap-1">
-                    Analyze Individual Contract <ChevronRight className="w-3 h-3" />
+                <div className="flex items-center gap-4 font-heading font-bold shrink-0">
+                  <Link href="/analyze" className="text-clay-accent hover:underline flex items-center gap-1">
+                    Analyze Individual Contract <ChevronRight className="w-3.5 h-3.5" />
                   </Link>
-                  <Link href="/ask" className="text-primary hover:underline flex items-center gap-1">
-                    Q&A Chat Assistant <ChevronRight className="w-3 h-3" />
+                  <Link href="/ask" className="text-clay-accent hover:underline flex items-center gap-1">
+                    Q&amp;A Chat Assistant <ChevronRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              </div>
+            </Card>
+          </div>
+        )}
       </div>
     </main>
   );
