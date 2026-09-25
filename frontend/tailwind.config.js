@@ -43,6 +43,11 @@ module.exports = {
         'text-secondary': '#635F69',
       },
       boxShadow: {
+        clayCard: '0 16px 32px -8px rgba(51, 47, 58, 0.10), inset 0 2px 4px 0 rgba(255, 255, 255, 0.9), inset 0 -4px 8px 0 rgba(124, 58, 237, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.8)',
+        clayButton: '0 8px 16px -4px rgba(124, 58, 237, 0.35), inset 0 2px 3px 0 rgba(255, 255, 255, 0.6), inset 0 -3px 6px 0 rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.3)',
+        clayButtonHover: '0 12px 24px -4px rgba(124, 58, 237, 0.45), inset 0 2px 4px 0 rgba(255, 255, 255, 0.7), inset 0 -4px 8px 0 rgba(0, 0, 0, 0.25), inset 0 0 0 1px rgba(255, 255, 255, 0.4)',
+        clayPressed: '0 2px 4px 0 rgba(51, 47, 58, 0.10), inset 0 4px 8px 0 rgba(0, 0, 0, 0.15), inset 0 -1px 2px 0 rgba(255, 255, 255, 0.5), inset 0 0 0 1px rgba(0, 0, 0, 0.05)',
+        deepClay: '0 24px 48px -12px rgba(51, 47, 58, 0.18), inset 0 2px 4px 0 rgba(255, 255, 255, 0.8), inset 0 -6px 12px 0 rgba(124, 58, 237, 0.12), inset 0 0 0 1.5px rgba(255, 255, 255, 0.6)',
         shadowDeepClay: '0 24px 48px -12px rgba(51, 47, 58, 0.18), inset 0 2px 4px 0 rgba(255, 255, 255, 0.8), inset 0 -6px 12px 0 rgba(124, 58, 237, 0.12), inset 0 0 0 1.5px rgba(255, 255, 255, 0.6)',
         shadowClayCard: '0 16px 32px -8px rgba(51, 47, 58, 0.10), inset 0 2px 4px 0 rgba(255, 255, 255, 0.9), inset 0 -4px 8px 0 rgba(124, 58, 237, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.8)',
         shadowClayButton: '0 8px 16px -4px rgba(124, 58, 237, 0.35), inset 0 2px 3px 0 rgba(255, 255, 255, 0.6), inset 0 -3px 6px 0 rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.3)',

@@ -2,11 +2,16 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Sparkles, Check, Heart, Shield } from 'lucide-react';
+import { ArrowLeft, Sparkles, Send, ShieldCheck, FileText, CheckCircle2 } from 'lucide-react';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
+import { Input, Textarea } from '@/components/ui/Input';
 
 export default function ClayTestPage() {
   const [reducedMotion, setReducedMotion] = useState(false);
-  const [buttonPressed, setButtonPressed] = useState(false);
+  const [sampleText, setSampleText] = useState('');
+  const [sampleDoc, setSampleDoc] = useState('');
+  const [clickCount, setClickCount] = useState(0);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -18,7 +23,7 @@ export default function ClayTestPage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-clay-canvas text-clay-foreground p-6 sm:p-12 max-w-5xl mx-auto">
+    <main className="min-h-screen bg-clay-canvas text-clay-foreground p-6 sm:p-12 max-w-5xl mx-auto pb-24">
       {/* Navigation */}
       <div className="mb-8">
         <Link
@@ -29,201 +34,266 @@ export default function ClayTestPage() {
         </Link>
       </div>
 
-      {/* Header with Nunito font */}
-      <div className="mb-12">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-clay-accent/10 text-clay-accent text-xs font-bold mb-4 shadowClayCard">
-          <Sparkles className="w-3.5 h-3.5" /> High-Fidelity Claymorphism Design System
+      {/* Header */}
+      <div className="mb-10">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-clay-accent/10 text-clay-accent text-xs font-bold mb-4 shadow-clayCard">
+          <Sparkles className="w-3.5 h-3.5" /> High-Fidelity Claymorphism Component Suite
         </div>
         <h1 className="font-heading font-black text-4xl sm:text-5xl text-clay-foreground tracking-tight mb-3">
-          Clay Design System Verification
+          Clay Component Library Isolation Test
         </h1>
         <p className="font-sans text-clay-muted text-base sm:text-lg max-w-2xl leading-relaxed">
-          Verifying canvas background color (<span className="font-mono text-xs bg-white px-2 py-0.5 rounded-md shadowClayPressed">#F4F1FA</span>),
-          Google Fonts (<strong>Nunito</strong> for headings, <strong>DM Sans</strong> for body),
-          multi-layer clay shadows, keyframe animations, and reduced-motion accessibility.
+          Verifying core UI primitives: <strong>Card</strong> (lift on hover, variants), <strong>Button</strong> (tactile click squish, 4 variants), and <strong>Input / Textarea</strong> (recessed-to-raised focus transformation).
         </p>
       </div>
 
-      {/* Reduced Motion Status Banner */}
-      <div className="mb-10 p-5 rounded-[24px] bg-white border border-white/80 shadowClayCard flex items-center justify-between">
-        <div>
-          <h3 className="font-heading font-bold text-sm text-clay-foreground">
-            Accessibility: prefers-reduced-motion
-          </h3>
-          <p className="font-sans text-xs text-clay-muted mt-0.5">
-            {reducedMotion
-              ? 'Reduced motion is ACTIVE — all clay floating animations are safely disabled.'
-              : 'Reduced motion is INACTIVE — smooth clay floating and breathing animations are enabled.'}
-          </p>
+      {/* SECTION 1: BUTTONS (Testing tactile squish physics & variants) */}
+      <section className="mb-14">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="font-heading font-black text-2xl text-clay-foreground">
+              1. Clay Buttons & Squish Physics
+            </h2>
+            <p className="text-xs text-clay-muted mt-1">
+              Test: Click each button to observe the tactile squish (<code className="font-mono bg-white/80 px-1 py-0.5 rounded">active:scale-[0.92]</code>) and shadow displacement.
+            </p>
+          </div>
+          <span className="text-xs font-bold bg-white px-3 py-1 rounded-full shadow-clayCard text-clay-accent">
+            Clicks: {clickCount}
+          </span>
         </div>
-        <span
-          className={`px-3 py-1 rounded-full text-xs font-bold ${
-            reducedMotion
-              ? 'bg-clay-warning/15 text-clay-warning'
-              : 'bg-clay-success/15 text-clay-success'
-          }`}
-        >
-          {reducedMotion ? 'Reduced Motion: ON' : 'Animations: RUNNING'}
-        </span>
-      </div>
 
-      {/* 5 Multi-Layer Clay Shadows Showcase */}
-      <section className="mb-12">
-        <h2 className="font-heading font-extrabold text-2xl mb-6 text-clay-foreground">
-          Tactile 4-Layer Clay Box Shadows
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* 1. shadowDeepClay */}
-          <div className="p-6 rounded-[32px] bg-clay-cardBg shadowDeepClay border border-white flex flex-col justify-between h-48 animate-clay-float">
+        <Card variant="solid" className="p-8">
+          <div className="space-y-8">
+            {/* 4 Variants */}
             <div>
-              <span className="text-[11px] font-mono font-bold text-clay-accent uppercase tracking-wider">
-                Elevation 1
+              <span className="text-xs font-bold uppercase tracking-wider text-clay-muted block mb-3">
+                Variants (Default Size: md / h-14)
               </span>
-              <h3 className="font-heading font-bold text-lg text-clay-foreground mt-1">
-                shadowDeepClay
-              </h3>
-              <p className="font-sans text-xs text-clay-muted mt-2">
-                4-layer stack: outer drop shadow, top-left highlight, inner purple reflection, inner rim light.
-              </p>
-            </div>
-            <div className="h-2 w-16 rounded-full bg-clay-accent/30" />
-          </div>
+              <div className="flex flex-wrap gap-4 items-center">
+                <Button
+                  variant="primary"
+                  onClick={() => setClickCount((c) => c + 1)}
+                  id="test-btn-primary"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" /> Primary Button (Squish Me)
+                </Button>
 
-          {/* 2. shadowClayCard */}
-          <div className="p-6 rounded-[28px] bg-clay-cardBg shadowClayCard border border-white flex flex-col justify-between h-48 animate-clay-float-delayed animation-delay-2000">
-            <div>
-              <span className="text-[11px] font-mono font-bold text-clay-tertiary uppercase tracking-wider">
-                Elevation 2
-              </span>
-              <h3 className="font-heading font-bold text-lg text-clay-foreground mt-1">
-                shadowClayCard
-              </h3>
-              <p className="font-sans text-xs text-clay-muted mt-2">
-                Soft pillow card elevation used for primary content containers and clause matrices.
-              </p>
-            </div>
-            <div className="h-2 w-16 rounded-full bg-clay-tertiary/30" />
-          </div>
+                <Button
+                  variant="secondary"
+                  onClick={() => setClickCount((c) => c + 1)}
+                  id="test-btn-secondary"
+                >
+                  Secondary Button
+                </Button>
 
-          {/* 3. shadowClayButton */}
-          <div className="p-6 rounded-[24px] bg-clay-cardBg shadowClayCard border border-white flex flex-col justify-between h-48 animate-clay-float-slow animation-delay-4000">
-            <div>
-              <span className="text-[11px] font-mono font-bold text-clay-accent-alt uppercase tracking-wider">
-                Action Element
-              </span>
-              <h3 className="font-heading font-bold text-lg text-clay-foreground mt-1">
-                shadowClayButton
-              </h3>
-              <p className="font-sans text-xs text-clay-muted mt-2">
-                Inflated tactile button shadow with outer glow and crisp top-edge highlight.
-              </p>
-            </div>
-            <button
-              type="button"
-              className="self-start px-4 py-2 rounded-[20px] bg-clay-accent text-white font-heading font-bold text-xs shadowClayButton hover:shadowClayButtonHover active:shadowClayPressed transition-all"
-            >
-              Interactive Button
-            </button>
-          </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setClickCount((c) => c + 1)}
+                  id="test-btn-outline"
+                >
+                  Outline Button
+                </Button>
 
-          {/* 4. shadowClayButtonHover */}
-          <div className="p-6 rounded-[24px] bg-clay-cardBg shadowClayCard border border-white flex flex-col justify-between h-48">
-            <div>
-              <span className="text-[11px] font-mono font-bold text-clay-success uppercase tracking-wider">
-                Hover State
-              </span>
-              <h3 className="font-heading font-bold text-lg text-clay-foreground mt-1">
-                shadowClayButtonHover
-              </h3>
-              <p className="font-sans text-xs text-clay-muted mt-2">
-                Higher displacement drop shadow with intensified highlight for hovered controls.
-              </p>
-            </div>
-            <div className="px-4 py-2 rounded-[20px] bg-clay-accent-alt text-white font-heading font-bold text-xs shadowClayButtonHover text-center w-max">
-              Hovered Effect
-            </div>
-          </div>
-
-          {/* 5. shadowClayPressed */}
-          <div className="p-6 rounded-[24px] bg-clay-cardBg shadowClayCard border border-white flex flex-col justify-between h-48">
-            <div>
-              <span className="text-[11px] font-mono font-bold text-clay-warning uppercase tracking-wider">
-                Pressed State
-              </span>
-              <h3 className="font-heading font-bold text-lg text-clay-foreground mt-1">
-                shadowClayPressed
-              </h3>
-              <p className="font-sans text-xs text-clay-muted mt-2">
-                Depressed inner bevel shadow simulating tactile finger press into soft clay.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setButtonPressed(!buttonPressed)}
-              className={`px-4 py-2 rounded-[20px] font-heading font-bold text-xs transition-all ${
-                buttonPressed
-                  ? 'bg-slate-100 text-clay-foreground shadowClayPressed'
-                  : 'bg-clay-tertiary text-white shadowClayButton'
-              }`}
-            >
-              {buttonPressed ? 'Pressed In!' : 'Click to Press'}
-            </button>
-          </div>
-
-          {/* Color Tokens Palette */}
-          <div className="p-6 rounded-[24px] bg-clay-cardBg shadowClayCard border border-white flex flex-col justify-between h-48">
-            <div>
-              <span className="text-[11px] font-mono font-bold text-clay-muted uppercase tracking-wider">
-                Palette Tokens
-              </span>
-              <h3 className="font-heading font-bold text-lg text-clay-foreground mt-1">
-                Clay Colors
-              </h3>
-              <div className="flex gap-2 mt-3">
-                <div className="w-7 h-7 rounded-full bg-clay-accent shadowClayPressed" title="clay-accent" />
-                <div className="w-7 h-7 rounded-full bg-clay-accent-alt shadowClayPressed" title="clay-accent-alt" />
-                <div className="w-7 h-7 rounded-full bg-clay-tertiary shadowClayPressed" title="clay-tertiary" />
-                <div className="w-7 h-7 rounded-full bg-clay-success shadowClayPressed" title="clay-success" />
-                <div className="w-7 h-7 rounded-full bg-clay-warning shadowClayPressed" title="clay-warning" />
+                <Button
+                  variant="ghost"
+                  onClick={() => setClickCount((c) => c + 1)}
+                  id="test-btn-ghost"
+                >
+                  Ghost Button
+                </Button>
               </div>
             </div>
-            <span className="text-[11px] text-clay-muted">Hex validated & verified</span>
+
+            {/* 3 Sizes */}
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-clay-muted block mb-3">
+                Sizes (sm: h-11, md: h-14, lg: h-16)
+              </span>
+              <div className="flex flex-wrap items-center gap-4">
+                <Button size="sm" variant="primary" onClick={() => setClickCount((c) => c + 1)}>
+                  Small (h-11)
+                </Button>
+                <Button size="md" variant="primary" onClick={() => setClickCount((c) => c + 1)}>
+                  Medium (h-14)
+                </Button>
+                <Button size="lg" variant="primary" onClick={() => setClickCount((c) => c + 1)}>
+                  Large (h-16)
+                </Button>
+                <Button size="md" variant="primary" disabled>
+                  Disabled State
+                </Button>
+              </div>
+            </div>
           </div>
+        </Card>
+      </section>
+
+      {/* SECTION 2: CARDS (Testing hover lift & variants) */}
+      <section className="mb-14">
+        <h2 className="font-heading font-black text-2xl text-clay-foreground mb-2">
+          2. Clay Cards & Hover Lift Physics
+        </h2>
+        <p className="text-xs text-clay-muted mb-6">
+          Test: Hover over interactive cards to verify smooth upward lift (<code className="font-mono bg-white/80 px-1 py-0.5 rounded">hover:-translate-y-2</code>) and deepened shadow.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Card: Variant Glass + Interactive */}
+          <Card
+            variant="glass"
+            interactive
+            id="test-card-glass"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-2xl bg-clay-accent/15 flex items-center justify-center text-clay-accent shadow-clayPressed">
+                <FileText className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[11px] font-bold text-clay-accent uppercase tracking-wider">
+                  Interactive
+                </span>
+                <h3 className="font-heading font-bold text-lg text-clay-foreground">
+                  Glass Card (Hover Me)
+                </h3>
+              </div>
+            </div>
+            <p className="font-sans text-xs text-clay-muted leading-relaxed mb-4">
+              Features <code className="bg-white/80 px-1 py-0.5 rounded">bg-white/60 backdrop-blur-xl</code> with smooth 500ms hover lift and deepened shadow.
+            </p>
+            <span className="mt-auto text-[11px] font-bold text-clay-accent flex items-center gap-1">
+              Lifts on hover &rarr;
+            </span>
+          </Card>
+
+          {/* Card: Variant Solid + Interactive */}
+          <Card
+            variant="solid"
+            interactive
+            id="test-card-solid"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-2xl bg-clay-tertiary/15 flex items-center justify-center text-clay-tertiary shadow-clayPressed">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[11px] font-bold text-clay-tertiary uppercase tracking-wider">
+                  Interactive
+                </span>
+                <h3 className="font-heading font-bold text-lg text-clay-foreground">
+                  Solid Card (Hover Me)
+                </h3>
+              </div>
+            </div>
+            <p className="font-sans text-xs text-clay-muted leading-relaxed mb-4">
+              Features pure <code className="bg-slate-100 px-1 py-0.5 rounded">bg-white</code> with 4-layer clay shadow stack and interactive physics.
+            </p>
+            <span className="mt-auto text-[11px] font-bold text-clay-tertiary flex items-center gap-1">
+              Lifts on hover &rarr;
+            </span>
+          </Card>
+
+          {/* Card: Static (Non-interactive) */}
+          <Card
+            variant="glass"
+            interactive={false}
+            id="test-card-static"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-2xl bg-clay-success/15 flex items-center justify-center text-clay-success shadow-clayPressed">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[11px] font-bold text-clay-success uppercase tracking-wider">
+                  Static
+                </span>
+                <h3 className="font-heading font-bold text-lg text-clay-foreground">
+                  Static Baseline Card
+                </h3>
+              </div>
+            </div>
+            <p className="font-sans text-xs text-clay-muted leading-relaxed">
+              Standard non-interactive card. Preserves tactile clay elevation without hover displacement.
+            </p>
+          </Card>
+        </div>
+
+        {/* Hero Card Variant */}
+        <div className="mt-6">
+          <Card variant="hero" interactive id="test-card-hero">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div>
+                <span className="inline-flex items-center gap-1 text-xs font-bold text-clay-accent uppercase tracking-wider mb-2">
+                  <Sparkles className="w-3.5 h-3.5" /> Hero Bento Card
+                </span>
+                <h3 className="font-heading font-black text-2xl sm:text-3xl text-clay-foreground mb-2">
+                  Variant: &quot;hero&quot; with Enhanced Padding
+                </h3>
+                <p className="font-sans text-sm text-clay-muted max-w-xl">
+                  Designed for high-impact bento grids and feature announcements. Features extra generous padding and responsive clay layout.
+                </p>
+              </div>
+              <Button variant="primary" size="lg" className="shrink-0">
+                Hero Action
+              </Button>
+            </div>
+          </Card>
         </div>
       </section>
 
-      {/* Typography Validation Section */}
-      <section className="p-8 rounded-[32px] bg-white border border-white/80 shadowDeepClay mb-12">
-        <h2 className="font-heading font-black text-2xl text-clay-foreground mb-4">
-          Typography Hierarchy (Nunito & DM Sans)
+      {/* SECTION 3: INPUT & TEXTAREA (Testing concave-to-raised focus transformation) */}
+      <section>
+        <h2 className="font-heading font-black text-2xl text-clay-foreground mb-2">
+          3. Clay Input & Textarea
         </h2>
-        <div className="space-y-4">
-          <div>
-            <span className="text-xs font-mono text-clay-muted">Nunito Weight 900 (Black):</span>
-            <p className="font-heading font-black text-3xl text-clay-foreground">
-              Empowering Legal Clarity for Everyone
-            </p>
+        <p className="text-xs text-clay-muted mb-6">
+          Test: Focus each input to verify transformation from recessed concave look (<code className="font-mono bg-white/80 px-1 py-0.5 rounded">bg-[#EFEBF5] shadow-clayPressed</code>) to raised-white (<code className="font-mono bg-white/80 px-1 py-0.5 rounded">focus:bg-white focus:ring-4</code>).
+        </p>
+
+        <Card variant="solid" className="p-8">
+          <div className="space-y-6 max-w-2xl">
+            {/* Input Component */}
+            <div>
+              <label
+                htmlFor="test-clay-input"
+                className="block text-xs font-bold uppercase tracking-wider text-clay-muted mb-2"
+              >
+                Document Question Input (h-16)
+              </label>
+              <div className="flex gap-3">
+                <Input
+                  id="test-clay-input"
+                  placeholder="e.g. What is the deposit refund timeline? (Click to focus)"
+                  value={sampleText}
+                  onChange={(e) => setSampleText(e.target.value)}
+                />
+                <Button variant="primary" size="md" className="shrink-0 h-16 w-16 p-0 rounded-2xl">
+                  <Send className="w-5 h-5" />
+                </Button>
+              </div>
+              <span className="text-[11px] text-clay-muted mt-1 block">
+                Notice how the input transforms from concave recessed clay to crisp raised-white when active.
+              </span>
+            </div>
+
+            {/* Textarea Component */}
+            <div>
+              <label
+                htmlFor="test-clay-textarea"
+                className="block text-xs font-bold uppercase tracking-wider text-clay-muted mb-2"
+              >
+                Contract Textarea (Multi-line)
+              </label>
+              <Textarea
+                id="test-clay-textarea"
+                placeholder="Paste contract clauses here... (Click to focus and watch it pop into raised-white)"
+                rows={4}
+                value={sampleDoc}
+                onChange={(e) => setSampleDoc(e.target.value)}
+              />
+            </div>
           </div>
-          <div>
-            <span className="text-xs font-mono text-clay-muted">Nunito Weight 800 (ExtraBold):</span>
-            <p className="font-heading font-extrabold text-2xl text-clay-foreground">
-              Automated Plain-Language Simplification & Risk Matrix
-            </p>
-          </div>
-          <div>
-            <span className="text-xs font-mono text-clay-muted">Nunito Weight 700 (Bold):</span>
-            <p className="font-heading font-bold text-xl text-clay-foreground">
-              Section 4: Limitation of Liability & Grace Periods
-            </p>
-          </div>
-          <div>
-            <span className="text-xs font-mono text-clay-muted">DM Sans Weight 400/500/700 (Body):</span>
-            <p className="font-sans text-sm sm:text-base text-clay-muted leading-relaxed">
-              This document preview demonstrates the clean optical balance between Nunito headings and DM Sans body typography.
-              Every contract clause, summary point, and risk explanation is effortlessly readable across all screen sizes.
-            </p>
-          </div>
-        </div>
+        </Card>
       </section>
     </main>
   );
