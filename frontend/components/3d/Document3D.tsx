@@ -1,103 +1,44 @@
 'use client';
 
-import React, { useRef, useState, useEffect } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { Float } from '@react-three/drei';
-import * as THREE from 'three';
+import React from 'react';
+import { FileText, ShieldCheck } from 'lucide-react';
 
-function DocumentModel() {
-  const meshRef = useRef<THREE.Group>(null);
-
-  useFrame((_, delta) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y += delta * 0.4;
-      meshRef.current.rotation.x = Math.sin(Date.now() * 0.001) * 0.1;
-    }
-  });
-
-  return (
-    <Float speed={2} rotationIntensity={0.4} floatIntensity={0.6} floatingRange={[-0.1, 0.1]}>
-      <group ref={meshRef}>
-        {/* Main Document Body */}
-        <mesh position={[0, 0, 0]}>
-          <boxGeometry args={[1.5, 2.1, 0.08]} />
-          <meshStandardMaterial
-            color="#FFFFFF"
-            roughness={0.2}
-            metalness={0.1}
-          />
-        </mesh>
-
-        {/* Back page layered shadow */}
-        <mesh position={[0.08, -0.08, -0.06]} rotation={[0, 0, -0.05]}>
-          <boxGeometry args={[1.5, 2.1, 0.05]} />
-          <meshStandardMaterial
-            color="#E2E8F0"
-            roughness={0.4}
-          />
-        </mesh>
-
-        {/* Header Accent Bar */}
-        <mesh position={[0, 0.75, 0.045]}>
-          <boxGeometry args={[1.1, 0.18, 0.01]} />
-          <meshStandardMaterial color="#1E3A8A" roughness={0.3} />
-        </mesh>
-
-        {/* Text lines */}
-        <mesh position={[-0.15, 0.4, 0.045]}>
-          <boxGeometry args={[0.8, 0.06, 0.01]} />
-          <meshStandardMaterial color="#94A3B8" />
-        </mesh>
-        <mesh position={[0, 0.2, 0.045]}>
-          <boxGeometry args={[1.1, 0.06, 0.01]} />
-          <meshStandardMaterial color="#CBD5E1" />
-        </mesh>
-        <mesh position={[0, 0.0, 0.045]}>
-          <boxGeometry args={[1.1, 0.06, 0.01]} />
-          <meshStandardMaterial color="#CBD5E1" />
-        </mesh>
-        <mesh position={[-0.2, -0.2, 0.045]}>
-          <boxGeometry args={[0.7, 0.06, 0.01]} />
-          <meshStandardMaterial color="#CBD5E1" />
-        </mesh>
-
-        {/* Golden Seal / Stamp Badge */}
-        <mesh position={[0.4, -0.6, 0.05]}>
-          <cylinderGeometry args={[0.22, 0.22, 0.02, 32]} />
-          <meshStandardMaterial
-            color="#D97706"
-            metalness={0.4}
-            roughness={0.3}
-          />
-        </mesh>
-      </group>
-    </Float>
-  );
-}
-
+/**
+ * Tactile Claymorphism Document visual element.
+ * Achieves depth through 4-layer box shadows and soft clay curvatures rather than 3D WebGL canvases.
+ */
 export default function Document3D({ className = '' }: { className?: string }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return <div className={`w-full h-full bg-slate-100/50 rounded-2xl ${className}`} />;
-  }
-
   return (
-    <div className={`relative ${className}`} aria-hidden="true">
-      <Canvas
-        camera={{ position: [0, 0, 4.2], fov: 40 }}
-        gl={{ antialias: true, alpha: true, powerPreference: 'low-power' }}
-        dpr={[1, 1.5]}
-      >
-        <ambientLight intensity={0.9} />
-        <directionalLight position={[5, 8, 5]} intensity={0.8} />
-        <pointLight position={[-4, -3, 2]} intensity={0.5} color="#D97706" />
-        <DocumentModel />
-      </Canvas>
+    <div className={`relative flex items-center justify-center p-6 ${className}`} aria-hidden="true">
+      {/* Background layered angled clay page */}
+      <div className="absolute w-44 h-56 bg-white/70 rounded-[32px] shadowDeepClay rotate-6 scale-95 border border-white/80" />
+
+      {/* Main Front Layer Clay Document */}
+      <div className="relative w-48 h-60 bg-clay-cardBg rounded-[32px] shadowDeepClay p-5 flex flex-col justify-between border border-white/90 animate-clay-float">
+        <div>
+          {/* Header Accent Bar */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-9 h-9 rounded-2xl bg-clay-accent/15 flex items-center justify-center text-clay-accent shadowClayPressed">
+              <FileText className="w-5 h-5" />
+            </div>
+            <div className="h-2.5 w-16 rounded-full bg-clay-accent/25" />
+          </div>
+
+          {/* Skeleton lines representing legal clauses */}
+          <div className="space-y-2.5 mt-2">
+            <div className="h-2.5 w-full rounded-full bg-slate-200/80" />
+            <div className="h-2.5 w-5/6 rounded-full bg-slate-200/70" />
+            <div className="h-2.5 w-4/6 rounded-full bg-slate-200/60" />
+            <div className="h-2.5 w-3/4 rounded-full bg-slate-200/50" />
+          </div>
+        </div>
+
+        {/* Golden Seal Badge */}
+        <div className="self-end flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-clay-warning to-amber-500 text-white shadowClayButton text-[11px] font-bold">
+          <ShieldCheck className="w-3.5 h-3.5" />
+          <span>VERIFIED</span>
+        </div>
+      </div>
     </div>
   );
 }

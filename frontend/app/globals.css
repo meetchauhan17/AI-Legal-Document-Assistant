@@ -1,68 +1,145 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #FAFAF9;
-  --surface: #FFFFFF;
-  --primary: #1E3A8A;
-  --primary-light: #2563EB;
-  --accent: #D97706;
-  --accent-light: #F59E0B;
-  --text-primary: #0F172A;
-  --text-secondary: #64748B;
-  --border: rgba(15, 23, 42, 0.08);
+  --clay-canvas: #F4F1FA;
+  --clay-foreground: #332F3A;
+  --clay-muted: #635F69;
+  --clay-accent: #7C3AED;
+  --clay-accent-alt: #DB2777;
+  --clay-tertiary: #0EA5E9;
+  --clay-success: #10B981;
+  --clay-warning: #F59E0B;
+  --clay-cardBg: #FFFFFF;
 }
 
 * {
   box-sizing: border-box;
 }
 
+/* Set body background to clay-canvas (#F4F1FA) — never pure white */
 body {
-  background-color: var(--background);
-  color: var(--text-primary);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: #F4F1FA;
+  color: #332F3A;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Perspective container for 3D card tilts */
-.perspective-1000 {
-  perspective: 1000px;
+/* Explicit Claymorphic Heading Font Utility */
+.font-heading {
+  font-family: var(--font-nunito), system-ui, sans-serif;
+  letter-spacing: -0.02em;
 }
 
-/* Gradient text utility */
-.gradient-text {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 50%, var(--accent) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+/* 4-Layer High-Fidelity Claymorphism Box Shadows */
+.shadowDeepClay {
+  box-shadow: 0 24px 48px -12px rgba(51, 47, 58, 0.18),
+              inset 0 2px 4px 0 rgba(255, 255, 255, 0.8),
+              inset 0 -6px 12px 0 rgba(124, 58, 237, 0.12),
+              inset 0 0 0 1.5px rgba(255, 255, 255, 0.6);
 }
 
-/* Hero gradient mesh background */
-.hero-mesh {
-  background-image:
-    radial-gradient(ellipse 60% 50% at 20% 20%, rgba(30, 58, 138, 0.06) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 40% at 80% 80%, rgba(217, 119, 6, 0.05) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 60% at 50% 0%, rgba(37, 99, 235, 0.04) 0%, transparent 70%);
+.shadowClayCard {
+  box-shadow: 0 16px 32px -8px rgba(51, 47, 58, 0.10),
+              inset 0 2px 4px 0 rgba(255, 255, 255, 0.9),
+              inset 0 -4px 8px 0 rgba(124, 58, 237, 0.05),
+              inset 0 0 0 1px rgba(255, 255, 255, 0.8);
 }
 
-/* Smooth card shadow transition */
-.card-hover {
-  transition: box-shadow 0.25s ease, transform 0.25s ease;
+.shadowClayButton {
+  box-shadow: 0 8px 16px -4px rgba(124, 58, 237, 0.35),
+              inset 0 2px 3px 0 rgba(255, 255, 255, 0.6),
+              inset 0 -3px 6px 0 rgba(0, 0, 0, 0.2),
+              inset 0 0 0 1px rgba(255, 255, 255, 0.3);
 }
 
-/* Subtle noise texture overlay for premium feel */
-.noise-bg::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-  pointer-events: none;
-  border-radius: inherit;
-  opacity: 0.4;
+.shadowClayButtonHover {
+  box-shadow: 0 12px 24px -4px rgba(124, 58, 237, 0.45),
+              inset 0 2px 4px 0 rgba(255, 255, 255, 0.7),
+              inset 0 -4px 8px 0 rgba(0, 0, 0, 0.25),
+              inset 0 0 0 1px rgba(255, 255, 255, 0.4);
 }
 
+.shadowClayPressed {
+  box-shadow: 0 2px 4px 0 rgba(51, 47, 58, 0.10),
+              inset 0 4px 8px 0 rgba(0, 0, 0, 0.15),
+              inset 0 -1px 2px 0 rgba(255, 255, 255, 0.5),
+              inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+/* 4 Keyframe Animations */
+@keyframes clay-float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(3deg);
+  }
+}
+
+@keyframes clay-float-delayed {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-25px) rotate(-4deg);
+  }
+}
+
+@keyframes clay-float-slow {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg) scale(1);
+  }
+  50% {
+    transform: translateY(-15px) rotate(2deg) scale(1.03);
+  }
+}
+
+@keyframes clay-breathe {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.10;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.14;
+  }
+}
+
+.animate-clay-float {
+  animation: clay-float 8s ease-in-out infinite;
+}
+
+.animate-clay-float-delayed {
+  animation: clay-float-delayed 10s ease-in-out infinite;
+}
+
+.animate-clay-float-slow {
+  animation: clay-float-slow 12s ease-in-out infinite;
+}
+
+.animate-clay-breathe {
+  animation: clay-breathe 6s ease-in-out infinite;
+}
+
+/* Staggered Delay Utilities */
+.animation-delay-2000 {
+  animation-delay: 2000ms;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4000ms;
+}
+
+/* Prefers Reduced Motion Accessibility Override */
+@media (prefers-reduced-motion: reduce) {
+  .animate-clay-float,
+  .animate-clay-float-delayed,
+  .animate-clay-float-slow,
+  .animate-clay-breathe {
+    animation: none !important;
+    transform: none !important;
+  }
+}
