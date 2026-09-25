@@ -122,13 +122,13 @@ Generated via Legal Document Assistant (Informational Use Only)`;
               <h3 className="font-heading font-black text-base text-clay-foreground">
                 Lawyer Consultation Brief
               </h3>
-              <p className="text-xs text-clay-muted">Structured overview ready for legal review</p>
+              <p className="text-xs sm:text-sm text-clay-foreground">Structured overview ready for legal review</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-xl bg-[#EFEBF5] shadow-clayPressed text-clay-muted hover:text-clay-foreground flex items-center justify-center text-sm font-bold transition-colors"
+            className="w-9 h-9 min-w-[36px] min-h-[36px] rounded-xl bg-[#EFEBF5] shadow-clayPressed text-clay-foreground flex items-center justify-center text-sm font-bold transition-colors"
           >
             ✕
           </button>
@@ -136,23 +136,23 @@ Generated via Legal Document Assistant (Informational Use Only)`;
 
         {/* Modal Body */}
         <div className="p-6 overflow-y-auto space-y-5 text-sm text-clay-foreground font-sans">
-          {/* Document Metadata Pill */}
-          <div className="p-4 rounded-2xl bg-[#EFEBF5] shadow-clayPressed border border-white flex items-center justify-between">
+          {/* Document Metadata Pill (rounded-[24px] for 32px parent) */}
+          <div className="p-4 rounded-[24px] bg-[#EFEBF5] shadow-clayPressed border border-white flex items-center justify-between">
             <div>
-              <span className="text-[10px] font-heading font-black uppercase tracking-wider text-clay-accent block">
+              <span className="text-xs font-heading font-black uppercase tracking-wider text-clay-accent block">
                 Target Agreement
               </span>
               <p className="font-heading font-bold text-sm text-clay-foreground">{documentType}</p>
             </div>
             <div className="text-right">
-              <span className="text-[10px] text-clay-muted uppercase block">Generated</span>
+              <span className="text-xs text-clay-foreground uppercase block font-medium">Generated</span>
               <p className="text-xs font-mono text-clay-foreground">{new Date().toLocaleDateString()}</p>
             </div>
           </div>
 
           {/* Unresolved Items */}
           <div>
-            <h4 className="font-heading font-black text-xs uppercase tracking-wider text-clay-muted mb-2.5 flex items-center gap-1.5">
+            <h4 className="font-heading font-black text-xs uppercase tracking-wider text-clay-foreground mb-2.5 flex items-center gap-1.5">
               <AlertTriangle className="w-3.5 h-3.5 text-clay-warning" />
               Items Requiring Verification ({uncheckedItems.length})
             </h4>
@@ -161,7 +161,7 @@ Generated via Legal Document Assistant (Informational Use Only)`;
                 {uncheckedItems.map((item, i) => (
                   <li
                     key={i}
-                    className="flex items-start gap-2.5 text-xs sm:text-sm leading-relaxed p-3.5 bg-white rounded-2xl border border-slate-100 shadow-sm"
+                    className="flex items-start gap-2.5 text-xs sm:text-sm leading-relaxed p-3.5 bg-white rounded-[16px] border border-slate-100 shadow-sm"
                   >
                     <span className="font-heading font-black text-clay-accent shrink-0">{i + 1}.</span>
                     <span>{item}</span>
@@ -169,7 +169,7 @@ Generated via Legal Document Assistant (Informational Use Only)`;
                 ))}
               </ul>
             ) : (
-              <div className="p-3.5 rounded-2xl bg-emerald-50 text-emerald-800 text-xs font-medium border border-emerald-200 shadow-clayPressed">
+              <div className="p-3.5 rounded-[16px] bg-emerald-50 text-emerald-800 text-xs font-medium border border-emerald-200 shadow-clayPressed">
                 ✓ All pre-signing checklist items have been verified and checked off!
               </div>
             )}
@@ -177,7 +177,7 @@ Generated via Legal Document Assistant (Informational Use Only)`;
 
           {/* Questions to Ask */}
           <div>
-            <h4 className="font-heading font-black text-xs uppercase tracking-wider text-clay-muted mb-2.5 flex items-center gap-1.5">
+            <h4 className="font-heading font-black text-xs uppercase tracking-wider text-clay-foreground mb-2.5 flex items-center gap-1.5">
               <HelpCircle className="w-3.5 h-3.5 text-clay-accent-alt" />
               Targeted Questions for Counsel ({questions.length})
             </h4>
@@ -185,7 +185,7 @@ Generated via Legal Document Assistant (Informational Use Only)`;
               {questions.map((q, i) => (
                 <li
                   key={i}
-                  className="flex items-start gap-2.5 text-xs sm:text-sm leading-relaxed p-3.5 bg-pink-50/40 rounded-2xl border border-pink-100 shadow-sm"
+                  className="flex items-start gap-2.5 text-xs sm:text-sm leading-relaxed p-3.5 bg-pink-50/40 rounded-[16px] border border-pink-100 shadow-sm"
                 >
                   <span className="font-heading font-black text-clay-accent-alt shrink-0">Q{i + 1}:</span>
                   <span>{q}</span>
@@ -197,7 +197,7 @@ Generated via Legal Document Assistant (Informational Use Only)`;
 
         {/* Modal Footer Actions */}
         <div className="px-6 py-4 border-t border-slate-100 bg-[#FAF8FD] flex items-center justify-between gap-3">
-          <span className="text-[11px] text-clay-muted font-sans">Informational consultation prep</span>
+          <span className="text-xs text-clay-foreground font-sans">Informational consultation prep</span>
           <div className="flex items-center gap-2">
             <Button
               variant="secondary"
@@ -350,7 +350,7 @@ function ChecklistContent() {
           </Card>
         </div>
 
-        <div className="text-center text-xs text-clay-muted/70 py-6 relative z-10 font-sans">
+        <div className="text-center text-xs sm:text-sm text-clay-foreground py-6 relative z-10 font-sans font-medium">
           Legal Document Assistant · Pre-signing Action Verification · In-Memory Privacy
         </div>
       </main>
@@ -368,26 +368,26 @@ function ChecklistContent() {
           <div className="flex items-center gap-3">
             <Link
               href="/analyze"
-              className="p-2 rounded-xl bg-white shadow-clayButton text-clay-muted hover:text-clay-accent transition-colors"
+              className="p-2 rounded-xl bg-white shadow-clayButton text-clay-foreground hover:text-clay-accent transition-colors"
               title="Back to Analysis"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
 
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-2xl bg-clay-accent/15 flex items-center justify-center text-clay-accent shadow-clayPressed">
+              <div className="w-10 h-10 rounded-2xl bg-clay-accent/15 flex items-center justify-center text-clay-accent shadow-clayPressed">
                 <ClipboardList className="w-5 h-5" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-heading font-black text-sm text-clay-foreground tracking-tight">
+                  <span className="font-heading font-black text-sm sm:text-base text-clay-foreground tracking-tight">
                     Pre-Signing Checklist
                   </span>
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-heading font-black bg-purple-100 text-clay-accent shadow-clayPressed uppercase">
                     {docTypeParam}
                   </span>
                 </div>
-                <div className="text-[11px] text-clay-muted font-sans flex items-center gap-2">
+                <div className="text-xs text-clay-foreground font-sans flex items-center gap-2">
                   <span>Grounding: Contract Clauses</span>
                   <span>·</span>
                   <Link
@@ -403,7 +403,7 @@ function ChecklistContent() {
 
           {/* Right Language Selector */}
           <div className="flex items-center gap-2.5 self-end sm:self-center">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white shadow-clayButton border border-white text-xs font-heading font-bold text-clay-foreground">
+            <div className="inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-1.5 rounded-full bg-white shadow-clayButton border border-white text-xs font-heading font-bold text-clay-foreground">
               <Globe className="w-3.5 h-3.5 text-clay-accent shrink-0" />
               <select
                 value={language}
@@ -430,7 +430,7 @@ function ChecklistContent() {
               <p className="font-heading font-black text-base text-clay-foreground">
                 Synthesizing Pre-Signing Checklist…
               </p>
-              <p className="text-xs text-clay-muted font-sans mt-1">
+              <p className="text-xs sm:text-sm text-clay-foreground font-sans mt-1">
                 Extracting verification obligations and high-risk terms from your agreement
               </p>
             </div>
@@ -455,7 +455,7 @@ function ChecklistContent() {
                   <span className="font-heading font-black text-base text-clay-foreground tracking-tight">
                     Verification Progress
                   </span>
-                  <span className="text-xs font-heading font-bold px-2.5 py-0.5 rounded-full bg-[#EFEBF5] text-clay-muted shadow-clayPressed">
+                  <span className="text-xs font-heading font-bold px-2.5 py-0.5 rounded-full bg-[#EFEBF5] text-clay-foreground shadow-clayPressed">
                     {progressPercent}%
                   </span>
                 </div>
@@ -494,7 +494,7 @@ function ChecklistContent() {
                     <h2 className="font-heading font-black text-xl text-clay-foreground tracking-tight">
                       Before Signing Checklist
                     </h2>
-                    <p className="text-xs text-clay-muted font-sans">
+                    <p className="text-xs sm:text-sm text-clay-foreground font-sans">
                       Click anywhere on a row to check off an obligation
                     </p>
                   </div>
@@ -509,7 +509,7 @@ function ChecklistContent() {
                       setCheckedItems(new Set(Array.from({ length: totalItems }, (_, i) => i)));
                     }
                   }}
-                  className="text-xs font-heading font-bold text-clay-accent hover:underline cursor-pointer"
+                  className="min-h-[44px] px-3 text-xs font-heading font-bold text-clay-accent hover:underline cursor-pointer inline-flex items-center"
                 >
                   {checkedItems.size === totalItems ? 'Uncheck All' : 'Check All'}
                 </button>
@@ -570,7 +570,7 @@ function ChecklistContent() {
                   <h2 className="font-heading font-black text-xl text-clay-foreground tracking-tight">
                     Questions to Ask Before Signing
                   </h2>
-                  <p className="text-xs text-clay-muted font-sans">
+                  <p className="text-xs text-clay-foreground font-medium font-sans">
                     Targeted inquiries referencing identified contract clauses
                   </p>
                 </div>

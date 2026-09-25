@@ -133,7 +133,7 @@ function DocInputZone({
         <div className="flex items-center justify-between mb-5 pb-3 border-b border-slate-100">
           <div className="flex items-center gap-3">
             <span
-              className={`w-9 h-9 rounded-2xl flex items-center justify-center font-heading font-black text-xs text-white shadow-clayButton ${badgeGradient}`}
+              className={`w-10 h-10 rounded-2xl flex items-center justify-center font-heading font-black text-sm text-white shadow-clayButton ${badgeGradient}`}
             >
               {badgeLabel}
             </span>
@@ -141,21 +141,21 @@ function DocInputZone({
               <span className="font-heading font-black text-base text-clay-foreground tracking-tight block">
                 {label}
               </span>
-              <span className="text-[11px] text-clay-muted">
+              <span className="text-xs text-clay-foreground">
                 {mode === 'file' ? 'PDF File Upload' : 'Direct Text Input'}
               </span>
             </div>
           </div>
 
-          {/* Mode Switch Tabs */}
-          <div className="flex bg-[#EFEBF5] p-1 rounded-2xl shadow-clayPressed text-xs font-heading font-bold">
+          {/* Mode Switch Tabs (rounded-[24px] for 32px parent) */}
+          <div className="flex bg-[#EFEBF5] p-1.5 rounded-[24px] shadow-clayPressed text-xs font-heading font-bold">
             <button
               type="button"
               onClick={() => onModeChange('file')}
-              className={`px-3 py-1.5 rounded-xl transition-all ${
+              className={`min-h-[44px] px-3.5 py-2 rounded-[16px] transition-all flex items-center ${
                 mode === 'file'
                   ? 'bg-white text-clay-foreground shadow-clayButton'
-                  : 'text-clay-muted hover:text-clay-foreground'
+                  : 'text-clay-foreground hover:bg-white/40'
               }`}
             >
               Upload PDF
@@ -163,10 +163,10 @@ function DocInputZone({
             <button
               type="button"
               onClick={() => onModeChange('text')}
-              className={`px-3 py-1.5 rounded-xl transition-all ${
+              className={`min-h-[44px] px-3.5 py-2 rounded-[16px] transition-all flex items-center ${
                 mode === 'text'
                   ? 'bg-white text-clay-foreground shadow-clayButton'
-                  : 'text-clay-muted hover:text-clay-foreground'
+                  : 'text-clay-foreground hover:bg-white/40'
               }`}
             >
               Paste Text
@@ -180,7 +180,7 @@ function DocInputZone({
             {!file ? (
               <div
                 {...getRootProps()}
-                className={`relative rounded-[28px] p-8 sm:p-10 text-center cursor-pointer transition-all duration-300 bg-[#EFEBF5] shadow-clayPressed border-2 border-dashed ${
+                className={`relative rounded-[24px] p-8 sm:p-10 text-center cursor-pointer transition-all duration-300 bg-[#EFEBF5] shadow-clayPressed border-2 border-dashed ${
                   isDragActive
                     ? 'border-clay-accent bg-clay-accent/5 ring-4 ring-clay-accent/20'
                     : 'border-clay-accent/25 hover:border-clay-accent/60'
@@ -190,7 +190,7 @@ function DocInputZone({
 
                 {/* Gradient Upload Orb */}
                 <div
-                  className={`w-14 h-14 mx-auto mb-3 rounded-2xl bg-gradient-to-br ${accentColor} text-white shadow-clayButton flex items-center justify-center`}
+                  className={`w-14 h-14 mx-auto mb-3 rounded-[16px] bg-gradient-to-br ${accentColor} text-white shadow-clayButton flex items-center justify-center`}
                 >
                   <Upload className="w-7 h-7" />
                 </div>
@@ -198,22 +198,22 @@ function DocInputZone({
                 <h4 className="font-heading font-black text-base text-clay-foreground mb-1">
                   {isDragActive ? 'Drop PDF into tray!' : `Drop ${label} PDF here`}
                 </h4>
-                <p className="font-sans text-xs text-clay-muted">
+                <p className="font-sans text-xs sm:text-sm text-clay-foreground">
                   or <span className="text-clay-accent font-bold underline">browse files</span> (up to 5MB)
                 </p>
               </div>
             ) : (
               /* File selected state */
-              <div className="p-5 rounded-2xl bg-[#EFEBF5] shadow-clayPressed border border-white flex items-center justify-between">
+              <div className="p-5 rounded-[24px] bg-[#EFEBF5] shadow-clayPressed border border-white flex items-center justify-between">
                 <div className="flex items-center gap-3 overflow-hidden">
-                  <div className="w-10 h-10 rounded-xl bg-clay-success/15 text-clay-success flex items-center justify-center shadow-clayPressed shrink-0">
+                  <div className="w-10 h-10 rounded-[16px] bg-clay-success/15 text-clay-success flex items-center justify-center shadow-clayPressed shrink-0">
                     <CheckCircle2 className="w-5 h-5" />
                   </div>
                   <div className="overflow-hidden">
                     <p className="font-heading font-bold text-xs sm:text-sm text-clay-foreground truncate">
                       {file.name}
                     </p>
-                    <p className="text-[11px] text-clay-muted font-mono">
+                    <p className="text-xs text-clay-foreground font-mono">
                       {(file.size / 1024).toFixed(1)} KB · PDF Ready
                     </p>
                   </div>
@@ -221,7 +221,7 @@ function DocInputZone({
                 <button
                   type="button"
                   onClick={onClear}
-                  className="text-xs font-heading font-bold text-clay-muted hover:text-red-500 underline transition-colors px-2 py-1"
+                  className="min-h-[44px] text-xs font-heading font-bold text-clay-foreground hover:text-red-500 underline transition-colors px-2 py-1 inline-flex items-center"
                 >
                   Change
                 </button>
@@ -364,7 +364,7 @@ export default function ComparePage() {
                 <h1 className="font-heading font-black text-sm text-clay-foreground tracking-tight">
                   Compare Legal Documents
                 </h1>
-                <p className="text-[11px] text-clay-muted font-sans">
+                <p className="text-xs text-clay-foreground font-sans">
                   Side-by-side term &amp; liability evaluation
                 </p>
               </div>
@@ -535,7 +535,7 @@ export default function ComparePage() {
                 <h2 className="font-heading font-black text-2xl sm:text-3xl text-clay-foreground tracking-tight">
                   Detailed Clause Comparison
                 </h2>
-                <p className="font-sans text-xs sm:text-sm text-clay-muted">
+                <p className="font-sans text-xs sm:text-sm text-clay-foreground font-medium">
                   {result.comparison_points.length} key aspects evaluated across Document A &amp; Document B
                 </p>
               </div>
@@ -557,7 +557,7 @@ export default function ComparePage() {
               className="p-8 sm:p-10 border border-clay-accent/20 bg-gradient-to-br from-clay-accent/5 via-white/80 to-clay-accent-alt/5 shadow-clayCard"
             >
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] text-white flex items-center justify-center shadow-clayButton">
+                <div className="w-10 h-10 rounded-[24px] bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] text-white flex items-center justify-center shadow-clayButton">
                   <Sparkles className="w-5 h-5" />
                 </div>
                 <div>
@@ -580,7 +580,7 @@ export default function ComparePage() {
                 <h3 className="font-heading font-black text-lg text-clay-foreground">
                   Comparison Aspects ({result.comparison_points.length})
                 </h3>
-                <div className="flex items-center gap-3 text-xs font-sans text-clay-muted">
+                <div className="flex items-center gap-3 text-xs font-sans text-clay-foreground font-medium">
                   <span className="flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm" />
                     Emerald Left Accent = Favorable
@@ -600,7 +600,7 @@ export default function ComparePage() {
                     {/* Aspect Label & Note */}
                     <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 pb-3 border-b border-slate-100">
                       <div>
-                        <span className="text-[10px] font-heading font-black uppercase tracking-wider text-clay-muted block">
+                        <span className="text-xs font-heading font-black uppercase tracking-wider text-clay-foreground block">
                           Aspect #{index + 1}
                         </span>
                         <h4 className="font-heading font-black text-base sm:text-lg text-clay-foreground tracking-tight">
@@ -608,7 +608,7 @@ export default function ComparePage() {
                         </h4>
                       </div>
                       {(point.note || point.explanation) && (
-                        <p className="font-sans text-xs text-clay-muted sm:max-w-md sm:text-right">
+                        <p className="font-sans text-xs sm:text-sm text-clay-foreground sm:max-w-md sm:text-right">
                           {point.note || point.explanation}
                         </p>
                       )}
@@ -616,9 +616,9 @@ export default function ComparePage() {
 
                     {/* Side-by-Side Values (grid-cols-1 sm:grid-cols-2) */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                      {/* Document A Value */}
+                      {/* Document A Value (rounded-[16px] for 24px parent Card) */}
                       <div
-                        className={`p-4 sm:p-5 rounded-2xl transition-all ${
+                        className={`p-4 sm:p-5 rounded-[16px] transition-all ${
                           favorable === 'a'
                             ? 'bg-emerald-50/80 border-l-4 border-l-emerald-500 border border-emerald-200/60 shadow-clayPressed'
                             : 'bg-[#F4F1FA]/60 border border-slate-200/60'
@@ -640,9 +640,9 @@ export default function ComparePage() {
                         </p>
                       </div>
 
-                      {/* Document B Value */}
+                      {/* Document B Value (rounded-[16px] for 24px parent Card) */}
                       <div
-                        className={`p-4 sm:p-5 rounded-2xl transition-all ${
+                        className={`p-4 sm:p-5 rounded-[16px] transition-all ${
                           favorable === 'b'
                             ? 'bg-emerald-50/80 border-l-4 border-l-emerald-500 border border-emerald-200/60 shadow-clayPressed'
                             : 'bg-[#F4F1FA]/60 border border-slate-200/60'

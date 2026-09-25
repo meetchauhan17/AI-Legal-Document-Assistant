@@ -54,7 +54,7 @@ export default function ClayTestPage() {
             <h2 className="font-heading font-black text-2xl text-clay-foreground">
               1. Clay Buttons & Squish Physics
             </h2>
-            <p className="text-xs text-clay-muted mt-1">
+            <p className="text-xs text-clay-foreground mt-1">
               Test: Click each button to observe the tactile squish (<code className="font-mono bg-white/80 px-1 py-0.5 rounded">active:scale-[0.92]</code>) and shadow displacement.
             </p>
           </div>
@@ -67,7 +67,7 @@ export default function ClayTestPage() {
           <div className="space-y-8">
             {/* 4 Variants */}
             <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-clay-muted block mb-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-clay-foreground block mb-3">
                 Variants (Default Size: md / h-14)
               </span>
               <div className="flex flex-wrap gap-4 items-center">
@@ -107,7 +107,7 @@ export default function ClayTestPage() {
 
             {/* 3 Sizes */}
             <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-clay-muted block mb-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-clay-foreground block mb-3">
                 Sizes (sm: h-11, md: h-14, lg: h-16)
               </span>
               <div className="flex flex-wrap items-center gap-4">
@@ -134,7 +134,7 @@ export default function ClayTestPage() {
         <h2 className="font-heading font-black text-2xl text-clay-foreground mb-2">
           2. Clay Cards & Hover Lift Physics
         </h2>
-        <p className="text-xs text-clay-muted mb-6">
+        <p className="text-xs text-clay-foreground mb-6">
           Test: Hover over interactive cards to verify smooth upward lift (<code className="font-mono bg-white/80 px-1 py-0.5 rounded">hover:-translate-y-2</code>) and deepened shadow.
         </p>
 
@@ -158,7 +158,7 @@ export default function ClayTestPage() {
                 </h3>
               </div>
             </div>
-            <p className="font-sans text-xs text-clay-muted leading-relaxed mb-4">
+            <p className="font-sans text-xs text-clay-foreground leading-relaxed mb-4">
               Features <code className="bg-white/80 px-1 py-0.5 rounded">bg-white/60 backdrop-blur-xl</code> with smooth 500ms hover lift and deepened shadow.
             </p>
             <span className="mt-auto text-[11px] font-bold text-clay-accent flex items-center gap-1">
@@ -185,7 +185,7 @@ export default function ClayTestPage() {
                 </h3>
               </div>
             </div>
-            <p className="font-sans text-xs text-clay-muted leading-relaxed mb-4">
+            <p className="font-sans text-xs text-clay-foreground leading-relaxed mb-4">
               Features pure <code className="bg-slate-100 px-1 py-0.5 rounded">bg-white</code> with 4-layer clay shadow stack and interactive physics.
             </p>
             <span className="mt-auto text-[11px] font-bold text-clay-tertiary flex items-center gap-1">
@@ -212,7 +212,7 @@ export default function ClayTestPage() {
                 </h3>
               </div>
             </div>
-            <p className="font-sans text-xs text-clay-muted leading-relaxed">
+            <p className="font-sans text-xs text-clay-foreground leading-relaxed">
               Standard non-interactive card. Preserves tactile clay elevation without hover displacement.
             </p>
           </Card>
@@ -229,7 +229,7 @@ export default function ClayTestPage() {
                 <h3 className="font-heading font-black text-2xl sm:text-3xl text-clay-foreground mb-2">
                   Variant: &quot;hero&quot; with Enhanced Padding
                 </h3>
-                <p className="font-sans text-sm text-clay-muted max-w-xl">
+                <p className="font-sans text-sm text-clay-foreground max-w-xl">
                   Designed for high-impact bento grids and feature announcements. Features extra generous padding and responsive clay layout.
                 </p>
               </div>
@@ -246,7 +246,7 @@ export default function ClayTestPage() {
         <h2 className="font-heading font-black text-2xl text-clay-foreground mb-2">
           3. Clay Input & Textarea
         </h2>
-        <p className="text-xs text-clay-muted mb-6">
+        <p className="text-xs text-clay-foreground mb-6">
           Test: Focus each input to verify transformation from recessed concave look (<code className="font-mono bg-white/80 px-1 py-0.5 rounded">bg-[#EFEBF5] shadow-clayPressed</code>) to raised-white (<code className="font-mono bg-white/80 px-1 py-0.5 rounded">focus:bg-white focus:ring-4</code>).
         </p>
 
@@ -256,7 +256,7 @@ export default function ClayTestPage() {
             <div>
               <label
                 htmlFor="test-clay-input"
-                className="block text-xs font-bold uppercase tracking-wider text-clay-muted mb-2"
+                className="block text-xs font-bold uppercase tracking-wider text-clay-foreground mb-2"
               >
                 Document Question Input (h-16)
               </label>
@@ -271,7 +271,7 @@ export default function ClayTestPage() {
                   <Send className="w-5 h-5" />
                 </Button>
               </div>
-              <span className="text-[11px] text-clay-muted mt-1 block">
+              <span className="text-[11px] text-clay-foreground font-medium mt-1 block">
                 Notice how the input transforms from concave recessed clay to crisp raised-white when active.
               </span>
             </div>
@@ -280,7 +280,7 @@ export default function ClayTestPage() {
             <div>
               <label
                 htmlFor="test-clay-textarea"
-                className="block text-xs font-bold uppercase tracking-wider text-clay-muted mb-2"
+                className="block text-xs font-bold uppercase tracking-wider text-clay-foreground mb-2"
               >
                 Contract Textarea (Multi-line)
               </label>

@@ -399,20 +399,20 @@ function LawyerPrepContent() {
           <div className="flex items-center gap-3">
             <Link
               href="/analyze"
-              className="p-2 rounded-xl bg-white shadow-clayButton text-clay-muted hover:text-clay-accent transition-colors"
+              className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-[16px] bg-white shadow-clayButton text-clay-foreground hover:text-clay-accent transition-colors"
               title="Back to Analysis"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-2xl bg-clay-accent/15 flex items-center justify-center text-clay-accent shadow-clayPressed">
+              <div className="w-10 h-10 rounded-[16px] bg-clay-accent/15 flex items-center justify-center text-clay-accent shadow-clayPressed">
                 <Scale className="w-5 h-5" />
               </div>
               <div>
                 <h1 className="font-heading font-black text-sm text-clay-foreground tracking-tight">
                   Lawyer Consultation Prep
                 </h1>
-                <p className="text-[11px] text-clay-muted font-sans">
+                <p className="text-[11px] text-clay-foreground font-medium font-sans">
                   Printable brief &amp; client PDF export
                 </p>
               </div>
@@ -425,7 +425,7 @@ function LawyerPrepContent() {
               href={`/ask?doc=${documentId}&type=${encodeURIComponent(docTypeParam)}`}
               className="hidden sm:inline-block"
             >
-              <Button variant="ghost" size="sm" className="text-xs">
+              <Button variant="ghost" size="sm" className="text-xs min-h-[44px] px-3">
                 <MessageSquare className="w-3.5 h-3.5 mr-1 text-clay-accent" />
                 Q&amp;A Chat
               </Button>
@@ -434,7 +434,7 @@ function LawyerPrepContent() {
               href={`/checklist?doc=${documentId}&type=${encodeURIComponent(docTypeParam)}`}
               className="hidden sm:inline-block"
             >
-              <Button variant="ghost" size="sm" className="text-xs">
+              <Button variant="ghost" size="sm" className="text-xs min-h-[44px] px-3">
                 <ClipboardList className="w-3.5 h-3.5 mr-1 text-clay-accent-alt" />
                 Checklist
               </Button>
@@ -492,7 +492,7 @@ function LawyerPrepContent() {
                 <span className="text-[10px] font-heading font-black tracking-widest uppercase px-2.5 py-0.5 rounded-full bg-clay-accent text-white shadow-clayPressed">
                   CONFIDENTIAL LEGAL BRIEF
                 </span>
-                <span className="text-xs font-mono text-clay-muted">
+                <span className="text-xs font-mono text-clay-foreground">
                   Ref: {documentId ? documentId.substring(0, 8) : 'SAMPLE-DOC'}
                 </span>
               </div>
@@ -501,7 +501,7 @@ function LawyerPrepContent() {
               </h2>
             </div>
 
-            <div className="text-left sm:text-right text-xs text-clay-muted font-sans">
+            <div className="text-left sm:text-right text-xs text-clay-foreground font-sans">
               <p className="font-heading font-bold text-clay-foreground">Prepared for Legal Review</p>
               <p>{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
@@ -509,7 +509,7 @@ function LawyerPrepContent() {
 
           {/* Section 1: Plain Summary Paragraph & Key Points */}
           <section className="mb-8">
-            <h3 className="font-heading font-black text-xs uppercase tracking-wider text-clay-muted mb-3 pb-1 border-b border-slate-100 flex items-center gap-1.5">
+            <h3 className="font-heading font-black text-xs uppercase tracking-wider text-clay-foreground mb-3 pb-1 border-b border-slate-100 flex items-center gap-1.5">
               <FileText className="w-3.5 h-3.5 text-clay-accent" />
               1. Executive Plain-Language Summary
             </h3>
@@ -518,11 +518,11 @@ function LawyerPrepContent() {
             </p>
 
             {activeKeyPoints && activeKeyPoints.length > 0 && (
-              <div className="mt-4 p-4 sm:p-5 rounded-2xl bg-[#EFEBF5] shadow-clayPressed border border-white space-y-2">
+              <div className="mt-4 p-4 sm:p-5 rounded-[24px] bg-[#EFEBF5] shadow-clayPressed border border-white space-y-2">
                 <p className="font-heading font-bold text-xs text-clay-foreground">
                   Key Commitments &amp; Takeaways:
                 </p>
-                <ul className="space-y-1.5 text-xs font-sans text-clay-muted">
+                <ul className="space-y-1.5 text-xs font-sans text-clay-foreground">
                   {activeKeyPoints.slice(0, 6).map((pt, i) => (
                     <li key={i} className="flex items-start gap-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-clay-success shrink-0 mt-0.5" />
@@ -536,7 +536,7 @@ function LawyerPrepContent() {
 
           {/* Section 2: Clauses to Discuss (Flagged Risk & Attention Items Only) */}
           <section className="mb-8">
-            <h3 className="font-heading font-black text-xs uppercase tracking-wider text-clay-muted mb-3 pb-1 border-b border-slate-100 flex items-center gap-1.5">
+            <h3 className="font-heading font-black text-xs uppercase tracking-wider text-clay-foreground mb-3 pb-1 border-b border-slate-100 flex items-center gap-1.5">
               <ShieldAlert className="w-3.5 h-3.5 text-red-500" />
               2. Clauses to Discuss (Flagged Risk &amp; Attention Items)
             </h3>
@@ -549,7 +549,7 @@ function LawyerPrepContent() {
                   return (
                     <div
                       key={i}
-                      className={`p-4 sm:p-5 rounded-2xl border transition-none ${
+                      className={`p-4 sm:p-5 rounded-[24px] border transition-none ${
                         isRisk
                           ? 'border-l-4 border-l-red-500 bg-red-50/50 border-red-200/60 shadow-clayPressed'
                           : 'border-l-4 border-l-amber-500 bg-amber-50/50 border-amber-200/60 shadow-clayPressed'
@@ -580,7 +580,7 @@ function LawyerPrepContent() {
                       </p>
 
                       {c.clause_text && (
-                        <p className="mt-2.5 text-xs font-mono italic text-clay-muted border-l-2 border-slate-300 pl-2.5 line-clamp-2">
+                        <p className="mt-2.5 text-xs font-mono italic text-clay-foreground border-l-2 border-slate-300 pl-2.5 line-clamp-2">
                           &quot;{c.clause_text.trim()}&quot;
                         </p>
                       )}
@@ -589,7 +589,7 @@ function LawyerPrepContent() {
                 })}
               </div>
             ) : (
-              <p className="font-sans text-xs text-clay-muted italic">
+              <p className="font-sans text-xs text-clay-foreground italic">
                 No high-risk clauses were flagged for this document.
               </p>
             )}
@@ -597,7 +597,7 @@ function LawyerPrepContent() {
 
           {/* Section 3: Questions to Ask Numbered List */}
           <section className="mb-8">
-            <h3 className="font-heading font-black text-xs uppercase tracking-wider text-clay-muted mb-3 pb-1 border-b border-slate-100 flex items-center gap-1.5">
+            <h3 className="font-heading font-black text-xs uppercase tracking-wider text-clay-foreground mb-3 pb-1 border-b border-slate-100 flex items-center gap-1.5">
               <HelpCircle className="w-3.5 h-3.5 text-clay-accent-alt" />
               3. Questions to Ask Legal Counsel
             </h3>
@@ -606,7 +606,7 @@ function LawyerPrepContent() {
               {activeQuestions.map((q, i) => (
                 <div
                   key={i}
-                  className="p-3.5 rounded-2xl bg-[#EFEBF5] shadow-clayPressed border border-white flex items-start gap-3 text-xs sm:text-sm text-clay-foreground font-sans"
+                  className="p-3.5 rounded-[24px] bg-[#EFEBF5] shadow-clayPressed border border-white flex items-start gap-3 text-xs sm:text-sm text-clay-foreground font-sans"
                 >
                   <span className="w-6 h-6 rounded-full bg-white shadow-clayButton text-clay-accent font-heading font-black text-xs flex items-center justify-center shrink-0 mt-0.5">
                     {i + 1}
@@ -619,7 +619,7 @@ function LawyerPrepContent() {
 
           {/* Footer Mandatory Legal Disclaimer */}
           <footer className="pt-6 border-t border-slate-100 text-center">
-            <p className="text-[11px] font-sans text-clay-muted italic leading-relaxed max-w-xl mx-auto">
+            <p className="text-[11px] font-sans text-clay-foreground italic leading-relaxed max-w-xl mx-auto font-medium">
               This is an AI-generated summary to help you prepare for a discussion with a qualified legal professional. It is not legal advice.
             </p>
           </footer>

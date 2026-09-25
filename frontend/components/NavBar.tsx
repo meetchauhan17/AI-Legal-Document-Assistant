@@ -69,12 +69,12 @@ export default function NavBar() {
                 Legal Assistant
               </span>
               {hasDocument ? (
-                <div className="flex items-center gap-1.5 text-[10px] text-clay-success font-heading font-bold">
+                <div className="flex items-center gap-1.5 text-xs text-clay-success font-heading font-bold">
                   <span className="w-1.5 h-1.5 rounded-full bg-clay-success animate-pulse" />
                   <span className="truncate max-w-[110px] sm:max-w-[140px]">{documentType}</span>
                 </div>
               ) : (
-                <p className="text-[10px] text-clay-muted font-sans leading-none hidden sm:block">
+                <p className="text-xs text-clay-foreground font-sans leading-none hidden sm:block">
                   Plain-Language AI
                 </p>
               )}
@@ -94,13 +94,13 @@ export default function NavBar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`inline-flex items-center gap-1.5 transition-all select-none ${
+                  className={`inline-flex items-center gap-1.5 min-h-[44px] transition-all select-none ${
                     isActive
-                      ? 'px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-heading font-black text-clay-accent shadow-clayPressed rounded-full bg-[#EFEBF5] border border-white/70'
-                      : 'px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-heading font-bold text-clay-muted hover:text-clay-foreground hover:bg-white/60 rounded-full'
+                      ? 'px-3.5 sm:px-4 py-2 text-sm font-heading font-black text-clay-accent shadow-clayPressed rounded-full bg-[#EFEBF5] border border-white/70'
+                      : 'px-2.5 sm:px-3 py-2 text-sm font-heading font-bold text-clay-foreground hover:bg-white/60 rounded-full'
                   }`}
                 >
-                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-clay-accent' : 'text-clay-muted'}`} />
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-clay-accent' : 'text-clay-foreground'}`} />
                   <span>{item.name}</span>
                 </Link>
               );
@@ -110,12 +110,12 @@ export default function NavBar() {
           {/* Right Action: Language Selector & Mobile Hamburger */}
           <div className="flex items-center gap-2 sm:gap-3">
             {/* 4. Language Selector: small pill-shaped dropdown (shadow-clayButton, rounded-full) */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white shadow-clayButton border border-white/90 text-xs font-heading font-bold text-clay-foreground cursor-pointer select-none active:scale-[0.95] transition-all">
-              <Globe className="w-3.5 h-3.5 text-clay-accent shrink-0" />
+            <div className="inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-1.5 rounded-full bg-white shadow-clayButton border border-white/90 text-sm font-heading font-bold text-clay-foreground cursor-pointer select-none active:scale-[0.95] transition-all">
+              <Globe className="w-4 h-4 text-clay-accent shrink-0" />
               <select
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
-                className="bg-transparent font-heading font-bold text-xs text-clay-foreground focus:outline-none cursor-pointer pr-1"
+                className="bg-transparent font-heading font-bold text-sm text-clay-foreground focus:outline-none cursor-pointer pr-1"
                 aria-label="Select Language"
               >
                 {LANGUAGES.map((l) => (
@@ -126,11 +126,11 @@ export default function NavBar() {
               </select>
             </div>
 
-            {/* 3. Mobile Hamburger Button (styled as a small clay button, shadow-clayButton) */}
+            {/* 3. Mobile Hamburger Button (min 44px touch target, shadow-clayButton) */}
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden w-10 h-10 rounded-2xl bg-white shadow-clayButton flex items-center justify-center text-clay-foreground hover:text-clay-accent active:scale-[0.92] active:shadow-clayPressed transition-all border border-white/80"
+              className="md:hidden w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-white shadow-clayButton flex items-center justify-center text-clay-foreground hover:text-clay-accent active:scale-[0.92] active:shadow-clayPressed transition-all border border-white/80"
               aria-label="Toggle Navigation Menu"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -185,12 +185,12 @@ export default function NavBar() {
 
               {/* Document status footer inside mobile menu */}
               {hasDocument && (
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-heading font-bold text-clay-muted">
+                <div className="mt-4 p-3 rounded-[24px] bg-[#EFEBF5] shadow-clayPressed border border-white/80 flex items-center justify-between text-xs font-heading font-bold text-clay-foreground">
                   <span className="flex items-center gap-1.5 text-clay-success">
                     <ShieldCheck className="w-4 h-4" />
                     Loaded: {documentType}
                   </span>
-                  <span className="font-mono text-[10px] text-clay-muted/70">
+                  <span className="font-mono text-xs text-clay-foreground">
                     ID: {documentId?.substring(0, 8)}…
                   </span>
                 </div>

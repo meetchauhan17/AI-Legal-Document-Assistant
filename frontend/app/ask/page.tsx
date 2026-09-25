@@ -136,13 +136,13 @@ function SourceSection({ excerpt }: { excerpt: string }) {
         size="sm"
         type="button"
         onClick={() => setOpen(!open)}
-        className="!h-7 !px-3 !text-xs !rounded-xl text-clay-accent hover:bg-clay-accent/10 transition-all gap-1 -ml-1"
+        className="!h-9 !px-3.5 !text-xs !rounded-xl text-clay-accent hover:bg-clay-accent/10 transition-all gap-1 -ml-1 select-none"
       >
         <span>{open ? 'Hide source ▴' : 'Show source ▾'}</span>
       </Button>
 
       {open && (
-        <div className="mt-2.5 p-4 rounded-2xl bg-[#EFEBF5] shadow-clayPressed border border-white font-mono text-xs text-clay-muted italic leading-relaxed whitespace-pre-wrap">
+        <div className="mt-2.5 p-4 rounded-[16px] bg-[#EFEBF5] shadow-clayPressed border border-white font-mono text-xs sm:text-sm text-clay-foreground italic leading-relaxed whitespace-pre-wrap">
           &quot;{excerpt}&quot;
         </div>
       )}
@@ -317,7 +317,7 @@ function AskPageContent() {
           </Card>
         </div>
 
-        <div className="text-center text-xs text-clay-muted/70 py-6 relative z-10">
+        <div className="text-center text-xs sm:text-sm text-clay-foreground py-6 relative z-10 font-medium">
           Grounded Clause-Level Question Answering · In-Memory Privacy
         </div>
       </main>
@@ -336,12 +336,12 @@ function AskPageContent() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               {/* Document Type + Badge */}
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-2xl bg-clay-accent/15 text-clay-accent flex items-center justify-center shadow-clayPressed shrink-0">
+                <div className="w-10 h-10 rounded-2xl bg-clay-accent/15 text-clay-accent flex items-center justify-center shadow-clayPressed shrink-0">
                   <FileText className="w-5 h-5" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-heading font-black text-sm text-clay-foreground tracking-tight">
+                    <span className="font-heading font-black text-sm sm:text-base text-clay-foreground tracking-tight">
                       {docTypeParam}
                     </span>
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-heading font-black bg-emerald-100 text-emerald-800 shadow-clayPressed uppercase">
@@ -349,7 +349,7 @@ function AskPageContent() {
                       Loaded
                     </span>
                   </div>
-                  <span className="text-[11px] text-clay-muted font-mono">
+                  <span className="text-xs text-clay-foreground font-mono">
                     ID: {documentId.substring(0, 10)}…
                   </span>
                 </div>
@@ -358,7 +358,7 @@ function AskPageContent() {
               {/* Actions: Change Document Ghost Button + Language Dropdown */}
               <div className="flex items-center gap-2 self-end sm:self-center">
                 {/* Language Selector */}
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white shadow-clayButton border border-white text-xs font-heading font-bold text-clay-foreground">
+                <div className="inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-1.5 rounded-full bg-white shadow-clayButton border border-white text-xs font-heading font-bold text-clay-foreground">
                   <Globe className="w-3.5 h-3.5 text-clay-accent shrink-0" />
                   <select
                     value={language}
@@ -375,12 +375,12 @@ function AskPageContent() {
 
                 {/* Change Document: ghost-variant Button */}
                 <Link href="/analyze">
-                  <Button variant="ghost" size="sm" className="text-xs">
+                  <Button variant="ghost" size="sm" className="min-h-[44px] text-xs">
                     Change Document
                   </Button>
                 </Link>
 
-                {/* Reset Chat */}
+                {/* Reset Chat (min-h-[44px] min-w-[44px]) */}
                 <button
                   type="button"
                   onClick={() => {
@@ -394,10 +394,10 @@ function AskPageContent() {
                       },
                     ]);
                   }}
-                  className="p-2 rounded-xl bg-white shadow-clayButton text-clay-muted hover:text-clay-accent transition-colors"
+                  className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-white shadow-clayButton text-clay-foreground hover:text-clay-accent flex items-center justify-center transition-colors active:scale-[0.92]"
                   title="Reset Chat"
                 >
-                  <RotateCcw className="w-3.5 h-3.5" />
+                  <RotateCcw className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -419,7 +419,7 @@ function AskPageContent() {
                 /* USER MESSAGE: Right-aligned, primary gradient, rounded-[24px] rounded-br-[8px] */
                 <div className="bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] text-white px-5 py-3.5 rounded-[24px] rounded-br-[8px] shadow-clayButton max-w-[85%] sm:max-w-[75%] text-sm leading-relaxed">
                   <p className="whitespace-pre-wrap font-sans font-medium">{msg.content}</p>
-                  <span className="block text-[10px] text-white/70 mt-1.5 text-right font-mono">
+                  <span className="block text-[10px] text-white/90 mt-1.5 text-right font-mono font-medium">
                     {msg.timestamp}
                   </span>
                 </div>
@@ -451,7 +451,7 @@ function AskPageContent() {
                     {/* Expandable Source Excerpt Section */}
                     {msg.source_excerpt && <SourceSection excerpt={msg.source_excerpt} />}
 
-                    <span className="block text-[10px] text-clay-muted/70 mt-2 font-mono">
+                    <span className="block text-[10px] text-clay-foreground font-mono mt-2">
                       {msg.timestamp}
                     </span>
                   </Card>
@@ -466,10 +466,10 @@ function AskPageContent() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Suggested Quick Question Chips */}
+        {/* Suggested Quick Question Chips (min-h-[44px] touch target) */}
         {messages.length <= 2 && (
           <div className="my-4">
-            <span className="text-[11px] font-heading font-bold uppercase tracking-wider text-clay-muted mb-2 flex items-center gap-1.5">
+            <span className="text-xs font-heading font-bold uppercase tracking-wider text-clay-foreground mb-2 flex items-center gap-1.5">
               <HelpCircle className="w-3.5 h-3.5 text-clay-accent" /> Suggested Inquiries
             </span>
             <div className="flex flex-wrap gap-2">
@@ -479,7 +479,7 @@ function AskPageContent() {
                   type="button"
                   onClick={() => handleSend(sq)}
                   disabled={isLoading}
-                  className="px-3.5 py-1.5 bg-white border border-white/90 shadow-clayCard hover:shadow-deepClay text-clay-foreground hover:text-clay-accent rounded-full text-xs font-sans font-medium transition-all cursor-pointer text-left active:scale-[0.96]"
+                  className="px-4 py-2.5 min-h-[44px] bg-white border border-white/90 shadow-clayCard hover:shadow-deepClay text-clay-foreground hover:text-clay-accent rounded-full text-xs sm:text-sm font-sans font-medium transition-all cursor-pointer text-left active:scale-[0.96] flex items-center"
                 >
                   {sq}
                 </button>
@@ -520,9 +520,9 @@ function AskPageContent() {
             </Button>
           </div>
 
-          <div className="flex items-center justify-between px-2 pt-2 text-[11px] text-clay-muted font-sans">
+          <div className="flex items-center justify-between px-2 pt-2 text-xs text-clay-foreground font-sans">
             <span>Press <strong>Enter</strong> to send question</span>
-            <span className="text-clay-accent font-medium">Grounded strictly in contract excerpts</span>
+            <span className="text-clay-accent font-bold">Grounded strictly in contract excerpts</span>
           </div>
         </div>
       </footer>

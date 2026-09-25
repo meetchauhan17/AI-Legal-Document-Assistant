@@ -135,6 +135,15 @@ body {
 
 /* Prefers Reduced Motion Accessibility Override */
 @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
   .animate-clay-float,
   .animate-clay-float-delayed,
   .animate-clay-float-slow,
@@ -142,4 +151,12 @@ body {
     animation: none !important;
     transform: none !important;
   }
+
+  button,
+  a,
+  input,
+  textarea {
+    transition: none !important;
+  }
 }
+

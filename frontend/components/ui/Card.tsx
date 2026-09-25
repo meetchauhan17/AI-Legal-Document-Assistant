@@ -21,11 +21,11 @@ export default function Card({
   className = '',
   ...props
 }: CardProps) {
-  // Variant background & padding rules
+  // Variant background & padding rules (responsive backdrop blur for mobile performance)
   const variantStyles = {
-    glass: 'bg-white/60 backdrop-blur-xl p-8',
-    solid: 'bg-white p-8',
-    hero: 'bg-white/75 backdrop-blur-xl p-10 sm:p-12',
+    glass: 'bg-white/60 backdrop-blur-md sm:backdrop-blur-xl p-6 sm:p-8',
+    solid: 'bg-white p-6 sm:p-8',
+    hero: 'bg-white/75 backdrop-blur-md sm:backdrop-blur-xl p-8 sm:p-12',
   };
 
   // Interactive physics

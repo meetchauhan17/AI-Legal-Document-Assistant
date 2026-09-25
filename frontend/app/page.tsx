@@ -107,10 +107,10 @@ export default function Home() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.2, duration: 0.6 }}
-          className="mt-16 flex flex-col items-center gap-1.5 text-clay-muted/70"
+          className="mt-16 flex flex-col items-center gap-1.5 text-clay-foreground"
           aria-hidden="true"
         >
-          <span className="text-[11px] font-bold tracking-widest uppercase font-heading">Explore Capabilities</span>
+          <span className="text-xs font-bold tracking-widest uppercase font-heading">Explore Capabilities</span>
           <motion.div
             animate={{ y: [0, 6, 0] }}
             transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
@@ -194,7 +194,7 @@ export default function Home() {
                       <AlertTriangle className="w-3.5 h-3.5" />
                       Archaic Contract Clause
                     </div>
-                    <p className="font-mono text-xs text-clay-muted/90 leading-relaxed italic">
+                    <p className="font-mono text-xs text-clay-foreground leading-relaxed italic">
                       &quot;In the event of Lessee&apos;s failure to tender full remittance on or before the designated inception calendar date, Lessor retains sole, absolute, unilateral discretion to declare forfeiture...&quot;
                     </p>
                   </div>
@@ -214,7 +214,7 @@ export default function Home() {
 
               {/* Bottom Feature Tags & Action */}
               <div className="pt-6 mt-4 border-t border-slate-200/60 flex flex-wrap items-center justify-between gap-4">
-                <div className="flex flex-wrap gap-2 text-xs font-semibold text-clay-muted">
+                <div className="flex flex-wrap gap-2 text-xs font-semibold text-clay-foreground">
                   <span className="px-3 py-1 rounded-full bg-white shadow-clayCard">PDF & Text Input</span>
                   <span className="px-3 py-1 rounded-full bg-white shadow-clayCard">English · हिन्दी · ગુજરાતી</span>
                   <span className="px-3 py-1 rounded-full bg-white shadow-clayCard">5-8 Takeaway Bullets</span>
@@ -370,7 +370,7 @@ export default function Home() {
 
       {/* ── 5. PERSISTENT FOOTER ────────────────────────────────────── */}
       <footer className="relative z-10 border-t border-slate-200/60 bg-white/60 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-clay-muted">
+        <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-clay-foreground">
           <p className="font-sans">
             AI Legal Document Assistant — Built with High-Fidelity Claymorphism
           </p>

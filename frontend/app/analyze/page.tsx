@@ -123,7 +123,7 @@ function ClauseItem({ clause, index }: { clause: Clause; index: number }) {
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 mt-0.5 shadow-clayPressed">
+          <div className="w-8 h-8 rounded-[16px] bg-slate-100 flex items-center justify-center shrink-0 mt-0.5 shadow-clayPressed">
             <IconComponent className="w-4 h-4 text-clay-foreground" />
           </div>
           <div>
@@ -131,7 +131,7 @@ function ClauseItem({ clause, index }: { clause: Clause; index: number }) {
               <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider font-heading ${cfg.badgeBg}`}>
                 {cfg.label}
               </span>
-              <span className="text-xs font-bold text-clay-muted">
+              <span className="text-xs font-bold text-clay-foreground">
                 {clause.category || 'General Clause'}
               </span>
             </div>
@@ -143,7 +143,7 @@ function ClauseItem({ clause, index }: { clause: Clause; index: number }) {
 
         <button
           type="button"
-          className="text-clay-muted hover:text-clay-accent transition-colors p-1"
+          className="text-clay-muted hover:text-clay-accent transition-colors w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl"
           aria-label={expanded ? 'Collapse' : 'Expand'}
         >
           {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -153,19 +153,19 @@ function ClauseItem({ clause, index }: { clause: Clause; index: number }) {
       {expanded && (
         <div className="mt-4 pt-4 border-t border-slate-100/80 space-y-3">
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-clay-muted font-heading block mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-clay-foreground font-heading block mb-1">
               Practical Explanation
             </span>
-            <p className="font-sans text-xs sm:text-sm text-clay-foreground leading-relaxed bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+            <p className="font-sans text-xs sm:text-sm text-clay-foreground leading-relaxed bg-slate-50/80 p-3.5 rounded-[16px] border border-slate-100">
               {clause.explanation}
             </p>
           </div>
 
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-clay-muted font-heading block mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-clay-foreground font-heading block mb-1">
               Exact Contract Excerpt
             </span>
-            <p className="font-mono text-xs text-clay-muted italic bg-[#EFEBF5]/60 p-3 rounded-xl border border-white shadow-clayPressed leading-relaxed">
+            <p className="font-mono text-xs text-clay-foreground italic bg-[#EFEBF5]/60 p-3.5 rounded-[16px] border border-white shadow-clayPressed leading-relaxed">
               &quot;{clause.clause_text.trim()}&quot;
             </p>
           </div>
@@ -290,7 +290,7 @@ export default function AnalyzePage() {
           <div className="flex items-center gap-3">
             <Link
               href="/"
-              className="p-2 rounded-xl bg-white shadow-clayButton text-clay-muted hover:text-clay-accent transition-colors"
+              className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-[16px] bg-white shadow-clayButton text-clay-foreground hover:text-clay-accent transition-colors"
               title="Home"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -299,13 +299,13 @@ export default function AnalyzePage() {
               <h1 className="font-heading font-black text-sm text-clay-foreground tracking-tight">
                 Analyze Legal Document
               </h1>
-              <p className="text-[11px] text-clay-muted">Plain-language summary &amp; risk matrix</p>
+              <p className="text-[11px] text-clay-foreground font-medium">Plain-language summary &amp; risk matrix</p>
             </div>
           </div>
 
           {/* 6. Language selector: Pill-shaped dropdown matching clay button aesthetic */}
           <div className="flex items-center gap-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white shadow-clayButton border border-white/80 text-xs font-heading font-bold text-clay-foreground">
+            <div className="inline-flex items-center gap-2 px-3.5 min-h-[44px] rounded-full bg-white shadow-clayButton border border-white/80 text-xs font-heading font-bold text-clay-foreground">
               <Globe className="w-3.5 h-3.5 text-clay-accent shrink-0" />
               <select
                 id="language-select"
@@ -336,7 +336,7 @@ export default function AnalyzePage() {
             <h2 className="font-heading font-black text-3xl sm:text-4xl text-clay-foreground tracking-tight mb-2">
               Upload or Paste Any Legal Agreement
             </h2>
-            <p className="font-sans text-sm sm:text-base text-clay-muted max-w-lg mx-auto">
+            <p className="font-sans text-sm sm:text-base text-clay-foreground max-w-lg mx-auto">
               Extracts text locally in memory, generates transparent plain-language takeaways, and categorizes high-stakes risk clauses.
             </p>
 
@@ -345,7 +345,7 @@ export default function AnalyzePage() {
               <button
                 type="button"
                 onClick={handleLoadSample}
-                className="inline-flex items-center gap-1.5 text-xs font-heading font-bold text-clay-accent hover:text-clay-accent-alt bg-white shadow-clayButton hover:shadow-clayButtonHover active:scale-[0.95] px-4 py-2 rounded-full border border-white/80 transition-all cursor-pointer"
+                className="inline-flex items-center gap-1.5 text-xs font-heading font-bold text-clay-accent hover:text-clay-accent-alt bg-white shadow-clayButton hover:shadow-clayButtonHover active:scale-[0.95] px-4 py-2.5 min-h-[44px] rounded-full border border-white/80 transition-all cursor-pointer"
               >
                 <Layers className="w-3.5 h-3.5 text-clay-accent" />
                 Load Sample Agreement (Residential Lease)
@@ -358,14 +358,14 @@ export default function AnalyzePage() {
         {!result && !isLoading && (
           <div className="space-y-6">
             {/* Mode switch */}
-            <div className="flex bg-[#EFEBF5] p-1.5 rounded-2xl shadow-clayPressed max-w-xs mx-auto">
+            <div className="flex bg-[#EFEBF5] p-1.5 rounded-[24px] shadow-clayPressed max-w-xs mx-auto">
               <button
                 type="button"
                 onClick={() => setMode('file')}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-heading font-bold transition-all ${
+                className={`flex-1 flex items-center justify-center gap-2 min-h-[44px] py-2 px-3 rounded-[16px] text-xs font-heading font-bold transition-all ${
                   mode === 'file'
                     ? 'bg-white text-clay-foreground shadow-clayButton'
-                    : 'text-clay-muted hover:text-clay-foreground'
+                    : 'text-clay-foreground hover:text-clay-accent'
                 }`}
               >
                 <Upload className="w-3.5 h-3.5" />
@@ -374,10 +374,10 @@ export default function AnalyzePage() {
               <button
                 type="button"
                 onClick={() => setMode('text')}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-heading font-bold transition-all ${
+                className={`flex-1 flex items-center justify-center gap-2 min-h-[44px] py-2 px-3 rounded-[16px] text-xs font-heading font-bold transition-all ${
                   mode === 'text'
                     ? 'bg-white text-clay-foreground shadow-clayButton'
-                    : 'text-clay-muted hover:text-clay-foreground'
+                    : 'text-clay-foreground hover:text-clay-accent'
                 }`}
               >
                 <Type className="w-3.5 h-3.5" />
@@ -400,15 +400,15 @@ export default function AnalyzePage() {
                   >
                     <input {...getInputProps()} />
 
-                    {/* Gradient icon orb */}
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-purple-400 to-clay-accent text-white shadow-clayButton flex items-center justify-center">
+                    {/* Gradient icon orb (8px less than dropzone rounded-[32px]) */}
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-[24px] bg-gradient-to-br from-purple-400 to-clay-accent text-white shadow-clayButton flex items-center justify-center">
                       <Upload className="w-8 h-8" />
                     </div>
 
                     <h3 className="font-heading font-black text-lg text-clay-foreground mb-1">
                       {isDragActive ? 'Drop your PDF into the tray!' : 'Drag & drop a PDF contract here'}
                     </h3>
-                    <p className="font-sans text-xs text-clay-muted">
+                    <p className="font-sans text-xs text-clay-foreground">
                       or <span className="text-clay-accent font-bold underline">browse your device</span> (PDF up to 5MB)
                     </p>
                   </div>
@@ -416,14 +416,14 @@ export default function AnalyzePage() {
                   /* File selected state */
                   <div className="p-6 rounded-[32px] bg-white border border-white shadow-clayCard flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-clay-success/15 text-clay-success flex items-center justify-center shadow-clayPressed">
+                      <div className="w-12 h-12 rounded-[24px] bg-clay-success/15 text-clay-success flex items-center justify-center shadow-clayPressed">
                         <CheckCircle2 className="w-6 h-6" />
                       </div>
                       <div>
                         <h4 className="font-heading font-bold text-sm text-clay-foreground">
                           {file.name}
                         </h4>
-                        <p className="text-xs text-clay-muted">
+                        <p className="text-xs text-clay-foreground">
                           {(file.size / 1024).toFixed(1)} KB · Ready to analyze
                         </p>
                       </div>
@@ -431,7 +431,7 @@ export default function AnalyzePage() {
                     <button
                       type="button"
                       onClick={() => setFile(null)}
-                      className="text-xs font-bold text-clay-muted hover:text-red-500 underline transition-colors px-2 py-1"
+                      className="text-xs font-bold text-clay-foreground hover:text-red-500 underline transition-colors min-h-[44px] px-3 flex items-center"
                     >
                       Change File
                     </button>
@@ -447,13 +447,13 @@ export default function AnalyzePage() {
                   placeholder="Paste the full text of your legal agreement here..."
                   rows={8}
                 />
-                <div className="mt-2 flex items-center justify-between text-xs text-clay-muted px-2">
+                <div className="mt-2 flex items-center justify-between text-xs text-clay-foreground px-2">
                   <span>{pastedText.length} characters</span>
                   {pastedText.length > 0 && (
                     <button
                       type="button"
                       onClick={() => setPastedText('')}
-                      className="hover:text-red-500 transition-colors"
+                      className="min-h-[44px] flex items-center hover:text-red-500 transition-colors"
                     >
                       Clear Text
                     </button>
@@ -494,7 +494,7 @@ export default function AnalyzePage() {
               <h3 className="font-heading font-black text-2xl text-clay-foreground">
                 Analyzing Contract
               </h3>
-              <p className="font-sans text-xs text-clay-muted mt-1">
+              <p className="font-sans text-xs text-clay-foreground mt-1">
                 Executing 3-stage privacy-first analysis in local memory...
               </p>
             </div>
@@ -519,9 +519,9 @@ export default function AnalyzePage() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      {/* Icon with clay-breathe animation while active */}
+                      {/* Icon with clay-breathe animation while active (8px less than Card) */}
                       <div
-                        className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shrink-0 ${
+                        className={`w-12 h-12 rounded-[24px] flex items-center justify-center text-white shrink-0 ${
                           isDone
                             ? 'bg-clay-success shadow-clayPressed'
                             : isCurrent
@@ -538,7 +538,7 @@ export default function AnalyzePage() {
 
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold text-clay-muted uppercase tracking-wider font-heading">
+                          <span className="text-[10px] font-bold text-clay-foreground uppercase tracking-wider font-heading">
                             Stage {idx + 1}
                           </span>
                           {isCurrent && (
@@ -550,7 +550,7 @@ export default function AnalyzePage() {
                         <h4 className="font-heading font-bold text-base text-clay-foreground">
                           {s.label}
                         </h4>
-                        <p className="text-xs text-clay-muted">
+                        <p className="text-xs text-clay-foreground">
                           {s.desc}
                         </p>
                       </div>
@@ -577,7 +577,7 @@ export default function AnalyzePage() {
                 <h2 className="font-heading font-black text-2xl text-clay-foreground">
                   Document Analysis Complete
                 </h2>
-                <p className="font-sans text-xs text-clay-muted mt-0.5">
+                <p className="font-sans text-xs text-clay-foreground mt-0.5">
                   {result.risk.clauses.length} clauses analyzed · {riskCount} risk flags · {attentionCount} attention items
                 </p>
               </div>
@@ -618,7 +618,7 @@ export default function AnalyzePage() {
             {/* 4b. Plain-Language Summary (Solid variant Card) */}
             <Card variant="solid" className="p-8">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-2xl bg-clay-accent/15 text-clay-accent flex items-center justify-center shadow-clayPressed">
+                <div className="w-10 h-10 rounded-[24px] bg-clay-accent/15 text-clay-accent flex items-center justify-center shadow-clayPressed">
                   <BookOpen className="w-5 h-5" />
                 </div>
                 <div>
@@ -639,7 +639,7 @@ export default function AnalyzePage() {
             {result.simplify.key_points && result.simplify.key_points.length > 0 && (
               <Card variant="solid" className="p-8">
                 <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 rounded-2xl bg-clay-success/15 text-clay-success flex items-center justify-center shadow-clayPressed">
+                  <div className="w-10 h-10 rounded-[24px] bg-clay-success/15 text-clay-success flex items-center justify-center shadow-clayPressed">
                     <CheckCircle2 className="w-5 h-5" />
                   </div>
                   <div>
@@ -656,7 +656,7 @@ export default function AnalyzePage() {
                   {result.simplify.key_points.map((pt, i) => (
                     <li
                       key={i}
-                      className="flex items-start gap-3 text-xs sm:text-sm text-clay-foreground font-medium leading-relaxed p-2.5 rounded-xl hover:bg-slate-50 transition-colors"
+                      className="flex items-start gap-3 text-xs sm:text-sm text-clay-foreground font-medium leading-relaxed p-2.5 rounded-[16px] hover:bg-slate-50 transition-colors"
                       style={{ animationDelay: `${i * 100}ms` }}
                     >
                       <div className="w-6 h-6 rounded-full bg-clay-success/15 text-clay-success flex items-center justify-center shrink-0 mt-0.5 shadow-clayPressed">
@@ -673,7 +673,7 @@ export default function AnalyzePage() {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-pink-400 to-pink-600 text-white flex items-center justify-center shadow-clayButton">
+                  <div className="w-10 h-10 rounded-[24px] bg-gradient-to-br from-pink-400 to-pink-600 text-white flex items-center justify-center shadow-clayButton">
                     <ShieldAlert className="w-5 h-5" />
                   </div>
                   <div>
@@ -686,7 +686,7 @@ export default function AnalyzePage() {
                   </div>
                 </div>
 
-                <span className="text-xs font-bold text-clay-muted">
+                <span className="text-xs font-bold text-clay-foreground">
                   {result.risk.clauses.length} evaluated
                 </span>
               </div>
@@ -695,7 +695,7 @@ export default function AnalyzePage() {
               <Card variant="glass" className="p-4 mb-4">
                 <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
                   <div className="flex flex-wrap items-center gap-5">
-                    <span className="text-[11px] font-bold text-clay-muted uppercase tracking-wider font-heading">
+                    <span className="text-[11px] font-bold text-clay-foreground uppercase tracking-wider font-heading">
                       Classification:
                     </span>
                     <div className="flex items-center gap-2">
@@ -712,7 +712,7 @@ export default function AnalyzePage() {
                     </div>
                   </div>
 
-                  <span className="text-[11px] text-clay-muted flex items-center gap-1">
+                  <span className="text-[11px] text-clay-foreground flex items-center gap-1 font-medium">
                     <Info className="w-3.5 h-3.5 text-clay-accent" /> Click any clause to view full explanation
                   </span>
                 </div>
@@ -733,7 +733,7 @@ export default function AnalyzePage() {
                   <h3 className="font-heading font-black text-xl text-clay-foreground mb-1">
                     Ready for Next Steps?
                   </h3>
-                  <p className="font-sans text-xs sm:text-sm text-clay-muted">
+                  <p className="font-sans text-xs sm:text-sm text-clay-foreground">
                     Generate an attorney consultation brief or ask grounded questions about your agreement.
                   </p>
                 </div>
