@@ -1,32 +1,36 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
-import FloatingShapes from '@/components/3d/FloatingShapes';
+import { motion } from 'framer-motion';
+import ClayBlobs from '@/components/ClayBlobs';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
 import {
   FileText,
   ShieldAlert,
-  MessageSquare,
-  GitCompare,
-  ClipboardList,
-  ArrowRight,
+  MessageSquareText,
   Scale,
-  AlertTriangle,
+  CheckSquare,
+  ArrowRight,
   Sparkles,
+  Shield,
+  Layers,
+  CheckCircle2,
+  AlertTriangle,
+  ArrowUpRight,
 } from 'lucide-react';
 
-// ── Stagger animation variants ──────────────────────────────────────────────
-
+// Motion variants for entrance animations
 const containerVariants = {
   hidden: {},
   visible: {
-    transition: { staggerChildren: 0.1, delayChildren: 0.3 },
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
   },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 28 },
+  hidden: { opacity: 0, y: 24 },
   visible: {
     opacity: 1,
     y: 0,
@@ -34,436 +38,345 @@ const itemVariants = {
   },
 };
 
-// ── Feature card with mouse-tracking 3D tilt ────────────────────────────────
-
-interface FeatureCardProps {
-  icon: React.ReactNode;
-  iconBg: string;
-  iconColor: string;
-  label: string;
-  title: string;
-  description: string;
-  delay?: number;
-  accentBar?: string;
-}
-
-function FeatureCard({
-  icon,
-  iconBg,
-  iconColor,
-  label,
-  title,
-  description,
-  delay = 0,
-  accentBar = '#1E3A8A',
-}: FeatureCardProps) {
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  // Raw mouse position
-  const rawX = useMotionValue(0);
-  const rawY = useMotionValue(0);
-
-  // Spring-smoothed values for buttery tilt
-  const springConfig = { stiffness: 260, damping: 28 };
-  const springX = useSpring(rawX, springConfig);
-  const springY = useSpring(rawY, springConfig);
-
-  // Map spring values to rotateX / rotateY degrees
-  const rotateY = useTransform(springX, [-0.5, 0.5], [-9, 9]);
-  const rotateX = useTransform(springY, [-0.5, 0.5], [7, -7]);
-
-  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
-    const rect = cardRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    // Normalise cursor position to [-0.5, 0.5]
-    rawX.set((e.clientX - rect.left) / rect.width - 0.5);
-    rawY.set((e.clientY - rect.top) / rect.height - 0.5);
-  }
-
-  function handleMouseLeave() {
-    rawX.set(0);
-    rawY.set(0);
-  }
-
-  return (
-    <motion.div
-      variants={itemVariants}
-      custom={delay}
-      className="perspective-1000"
-    >
-      <motion.div
-        ref={cardRef}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
-        whileHover={{ scale: 1.02 }}
-        transition={{ scale: { duration: 0.2 } }}
-        className="relative bg-white rounded-2xl border border-slate-200/70 p-6 cursor-default
-                   shadow-[0_4px_20px_-4px_rgba(15,23,42,0.06),0_2px_8px_-2px_rgba(15,23,42,0.04)]
-                   hover:shadow-[0_16px_40px_-8px_rgba(15,23,42,0.12),0_4px_12px_-2px_rgba(15,23,42,0.06)]
-                   transition-shadow duration-300 h-full overflow-hidden"
-      >
-        {/* Coloured top accent bar */}
-        <div
-          className="absolute top-0 left-0 right-0 h-[3px] rounded-t-2xl"
-          style={{ background: accentBar }}
-        />
-
-        {/* Icon badge */}
-        <div
-          className={`w-11 h-11 rounded-xl ${iconBg} flex items-center justify-center mb-4 mt-2`}
-        >
-          <span className={iconColor}>{icon}</span>
-        </div>
-
-        {/* Tiny category label */}
-        <p className="text-[10px] font-semibold tracking-widest text-text-secondary uppercase mb-1">
-          {label}
-        </p>
-
-        <h3 className="text-[15px] font-700 text-text-primary mb-2 leading-snug" style={{ fontWeight: 700 }}>
-          {title}
-        </h3>
-        <p className="text-[13px] text-text-secondary leading-relaxed">{description}</p>
-
-        {/* Subtle inner glint that translates with the tilt */}
-        <motion.div
-          style={{ translateZ: 12, transformStyle: 'preserve-3d' }}
-          className="absolute inset-0 rounded-2xl pointer-events-none"
-          aria-hidden="true"
-        >
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-        </motion.div>
-      </motion.div>
-    </motion.div>
-  );
-}
-
-// ── Main page ────────────────────────────────────────────────────────────────
-
-const FEATURES: FeatureCardProps[] = [
-  {
-    icon: <FileText className="w-5 h-5" />,
-    iconBg: 'bg-blue-50',
-    iconColor: 'text-primary',
-    label: 'Simplify',
-    title: 'Plain-Language Summary',
-    description:
-      'Converts dense legal text into clear 2–3 paragraph summaries with 5–8 key takeaways, preserving all obligations, deadlines, and dollar amounts.',
-    accentBar: 'linear-gradient(90deg,#1E3A8A,#2563EB)',
-    delay: 0,
-  },
-  {
-    icon: <ShieldAlert className="w-5 h-5" />,
-    iconBg: 'bg-red-50',
-    iconColor: 'text-red-500',
-    label: 'Risk Detection',
-    title: 'Clause Risk Classification',
-    description:
-      'Identifies 10–15 key clauses and flags each as Standard, Attention, or Risk — surfacing auto-renewal traps, unilateral forfeiture, and liability waivers.',
-    accentBar: 'linear-gradient(90deg,#EF4444,#F97316)',
-    delay: 0.05,
-  },
-  {
-    icon: <MessageSquare className="w-5 h-5" />,
-    iconBg: 'bg-violet-50',
-    iconColor: 'text-violet-600',
-    label: 'Q&A',
-    title: 'Ask Questions',
-    description:
-      'Ask any question about your document. Retrieves the most relevant excerpts and answers only from the actual text — never from external knowledge.',
-    accentBar: 'linear-gradient(90deg,#7C3AED,#8B5CF6)',
-    delay: 0.1,
-  },
-  {
-    icon: <GitCompare className="w-5 h-5" />,
-    iconBg: 'bg-emerald-50',
-    iconColor: 'text-emerald-600',
-    label: 'Compare',
-    title: 'Compare Two Documents',
-    description:
-      'Side-by-side comparison of two contracts — amounts, durations, penalties, and one-sided clauses — with a favorability verdict per dimension.',
-    accentBar: 'linear-gradient(90deg,#059669,#10B981)',
-    delay: 0.15,
-  },
-  {
-    icon: <ClipboardList className="w-5 h-5" />,
-    iconBg: 'bg-amber-50',
-    iconColor: 'text-accent',
-    label: 'Checklist',
-    title: 'Pre-Signing Checklist',
-    description:
-      'Generates 5–8 specific actionable items referencing actual document content — section names, dollar amounts, clauses — plus targeted questions to ask before you sign.',
-    accentBar: 'linear-gradient(90deg,#D97706,#F59E0B)',
-    delay: 0.2,
-  },
-];
-
 export default function Home() {
   return (
-    <main className="relative min-h-screen bg-background hero-mesh overflow-x-hidden">
+    <main className="relative min-h-screen bg-clay-canvas text-clay-foreground overflow-x-hidden selection:bg-clay-accent/20 selection:text-clay-accent">
+      {/* ── 1. AMBIENT BACKGROUND BLOBS ──────────────────────────────── */}
+      <ClayBlobs />
 
-      {/* ── SECTION 1: HERO ──────────────────────────────────────────── */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-6 pt-16 pb-24">
-
-        {/* 3D background — low opacity, absolutely positioned, non-interactive */}
-        <div className="pointer-events-none absolute inset-0 opacity-75" aria-hidden="true">
-          <FloatingShapes />
-        </div>
-
-        {/* Soft vignette to ensure text readability over 3D shapes */}
-        <div
-          className="pointer-events-none absolute inset-0"
-          aria-hidden="true"
-          style={{
-            background:
-              'radial-gradient(ellipse 80% 60% at 50% 50%, transparent 30%, rgba(250,250,249,0.85) 100%)',
-          }}
-        />
-
-        {/* Hero content */}
+      {/* ── 2. HERO SECTION ─────────────────────────────────────────── */}
+      <section className="relative min-h-[85vh] flex flex-col items-center justify-center px-6 pt-16 pb-20 text-center">
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="relative z-10 max-w-4xl mx-auto text-center"
+          className="relative z-10 max-w-5xl mx-auto flex flex-col items-center"
         >
           {/* Eyebrow badge */}
-          <motion.div variants={itemVariants} className="flex justify-center mb-6">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-slate-200/80 shadow-soft text-xs font-semibold text-text-secondary">
-              <Sparkles className="w-3.5 h-3.5 text-accent" />
-              AI-Powered Legal Document Analysis
+          <motion.div variants={itemVariants} className="mb-6">
+            <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/80 backdrop-blur-md shadow-clayCard border border-white text-xs font-bold text-clay-accent font-heading">
+              <Sparkles className="w-3.5 h-3.5 text-clay-accent" />
+              High-Fidelity AI Legal Document Intelligence
             </div>
           </motion.div>
 
-          {/* Main heading */}
+          {/* Large Headline with Nunito Font-Black & Clay Text Gradient */}
           <motion.h1
             variants={itemVariants}
-            className="text-4xl sm:text-5xl md:text-6xl font-800 text-text-primary leading-[1.1] tracking-tight mb-6"
-            style={{ fontWeight: 800 }}
+            className="font-heading font-black text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight leading-[1.1] text-clay-foreground mb-6"
           >
             Understand any legal document{' '}
-            <span className="gradient-text">in plain language</span>
+            <span className="bg-gradient-to-r from-clay-foreground via-clay-accent to-clay-accent-alt bg-clip-text text-transparent">
+              in plain language
+            </span>
             {' '}— instantly.
           </motion.h1>
 
-          {/* Subheading */}
+          {/* Subheading in DM Sans, text-lg, text-clay-muted, max-w-2xl */}
           <motion.p
             variants={itemVariants}
-            className="text-lg sm:text-xl text-text-secondary leading-relaxed max-w-2xl mx-auto mb-8"
+            className="font-sans text-lg sm:text-xl text-clay-muted max-w-2xl mx-auto leading-relaxed mb-10"
           >
-            Upload a contract, lease, or agreement. Get a plain-English summary, risk flags, 
-            clause-by-clause analysis, and a specific pre-signing checklist — in seconds.
+            Upload a contract, lease, or agreement. Get a plain-English summary, one-sided risk flags,
+            clause-by-clause analysis, and a pre-signing checklist — in seconds.
           </motion.p>
 
-          {/* Info card */}
+          {/* Two CTA Buttons: Stacked vertically on mobile, horizontal on desktop */}
           <motion.div
             variants={itemVariants}
-            className="relative bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/70 p-5 max-w-2xl mx-auto mb-10
-                       shadow-[0_8px_30px_-8px_rgba(15,23,42,0.08)]"
+            className="flex flex-col gap-6 sm:flex-row justify-center items-center w-full sm:w-auto"
           >
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center shrink-0 mt-0.5">
-                  <FileText className="w-4 h-4 text-primary" />
-                </div>
-                <div className="text-left">
-                  <p className="font-600 text-text-primary text-[13px]" style={{ fontWeight: 600 }}>PDF or Text</p>
-                  <p className="text-text-secondary text-[12px]">Upload up to 5 MB or paste your text directly</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center shrink-0 mt-0.5">
-                  <ShieldAlert className="w-4 h-4 text-red-500" />
-                </div>
-                <div className="text-left">
-                  <p className="font-600 text-text-primary text-[13px]" style={{ fontWeight: 600 }}>Instant Risk Flags</p>
-                  <p className="text-text-secondary text-[12px]">One-sided clauses, traps, and penalties highlighted</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center shrink-0 mt-0.5">
-                  <Scale className="w-4 h-4 text-accent" />
-                </div>
-                <div className="text-left">
-                  <p className="font-600 text-text-primary text-[13px]" style={{ fontWeight: 600 }}>Privacy First</p>
-                  <p className="text-text-secondary text-[12px]">Documents never persisted — session memory only</p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* CTA buttons */}
-          <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-3 justify-center">
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
-              <Link
-                href="/analyze"
-                id="cta-analyze"
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-[15px] text-white
-                           bg-gradient-to-r from-primary to-primary-light
-                           shadow-[0_4px_20px_-4px_rgba(30,58,138,0.45)]
-                           hover:shadow-[0_6px_24px_-4px_rgba(30,58,138,0.55)]
-                           transition-shadow duration-200"
-              >
+            <Link href="/analyze" id="cta-analyze" className="w-full sm:w-auto">
+              <Button variant="primary" size="lg" className="w-full sm:w-auto shadow-clayButton">
                 Analyze a Document
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </motion.div>
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </Link>
 
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
-              <Link
-                href="/compare"
-                id="cta-compare"
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-[15px] text-primary
-                           bg-white border border-slate-200 shadow-soft
-                           hover:border-primary/30 hover:shadow-[0_4px_16px_-4px_rgba(30,58,138,0.15)]
-                           transition-all duration-200"
-              >
-                <GitCompare className="w-4 h-4" />
+            <Link href="/compare" id="cta-compare" className="w-full sm:w-auto">
+              <Button variant="outline" size="lg" className="w-full sm:w-auto shadow-clayCard bg-white/60 backdrop-blur-md">
+                <Scale className="w-5 h-5 mr-2" />
                 Compare Two Documents
-              </Link>
-            </motion.div>
+              </Button>
+            </Link>
           </motion.div>
         </motion.div>
 
-        {/* Scroll indicator */}
+        {/* Explore cue */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1.4, duration: 0.6 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5"
+          transition={{ delay: 1.2, duration: 0.6 }}
+          className="mt-16 flex flex-col items-center gap-1.5 text-clay-muted/70"
           aria-hidden="true"
         >
-          <span className="text-[11px] font-medium text-text-secondary/60 tracking-widest uppercase">Explore</span>
+          <span className="text-[11px] font-bold tracking-widest uppercase font-heading">Explore Capabilities</span>
           <motion.div
             animate={{ y: [0, 6, 0] }}
-            transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
-            className="w-4 h-4 text-text-secondary/40"
+            transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
+            className="w-4 h-4"
           >
             <svg viewBox="0 0 16 16" fill="none">
-              <path d="M8 3v10M3 8l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M8 3v10M3 8l5 5 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </motion.div>
         </motion.div>
       </section>
 
-      {/* ── SECTION 2: FEATURE CARDS ─────────────────────────────────── */}
+      {/* ── 3. FEATURE SECTION AS A BENTO GRID ──────────────────────── */}
       <section className="relative z-10 max-w-7xl mx-auto px-6 pb-24" aria-labelledby="features-heading">
-
-        {/* Section header */}
+        {/* Section title */}
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-          className="text-center mb-12"
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-14"
         >
-          <p className="text-[11px] font-semibold tracking-widest text-text-secondary uppercase mb-3">
-            Capabilities
-          </p>
+          <span className="inline-flex items-center gap-1.5 px-4 py-1 rounded-full text-xs font-bold text-clay-accent bg-clay-accent/10 mb-3 shadow-clayPressed font-heading">
+            <Layers className="w-3.5 h-3.5" />
+            All-In-One Legal Intelligence
+          </span>
           <h2
             id="features-heading"
-            className="text-2xl sm:text-3xl font-700 text-text-primary mb-3"
-            style={{ fontWeight: 700 }}
+            className="font-heading font-black text-3xl sm:text-4xl md:text-5xl text-clay-foreground tracking-tight mb-3"
           >
             Everything you need before you sign
           </h2>
-          <p className="text-text-secondary text-[15px] max-w-xl mx-auto">
-            Five specialised AI tools, each grounded strictly in your document's actual text.
+          <p className="font-sans text-base sm:text-lg text-clay-muted max-w-xl mx-auto">
+            Five specialized legal AI engines, grounded strictly in your document&apos;s actual text with zero permanent storage.
           </p>
         </motion.div>
 
-        {/* Cards grid */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-60px' }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5"
-        >
-          {FEATURES.map((f) => (
-            <FeatureCard key={f.title} {...f} />
-          ))}
-        </motion.div>
+        {/* Bento Grid: grid-cols-1 md:grid-cols-2 lg:grid-cols-3 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-        {/* Second CTA row */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-40px' }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="flex flex-col sm:flex-row gap-3 justify-center mt-12"
-        >
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
-            <Link
-              href="/analyze"
-              id="cta-analyze-2"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm text-white
-                         bg-gradient-to-r from-primary to-primary-light
-                         shadow-[0_4px_20px_-4px_rgba(30,58,138,0.4)]
-                         hover:shadow-[0_6px_24px_-4px_rgba(30,58,138,0.5)]
-                         transition-shadow duration-200"
+          {/* CARD 1 (HERO BENTO CARD): "Simplify Documents" spanning md:col-span-2 md:row-span-2 */}
+          <div className="md:col-span-2 md:row-span-2">
+            <Card
+              variant="hero"
+              interactive
+              id="feature-simplify-hero"
+              className="h-full hover:scale-[1.02] transition-all duration-500 flex flex-col justify-between"
             >
-              Get Started — Analyze a Document
+              <div>
+                {/* Header row with gradient icon orb */}
+                <div className="flex items-start justify-between gap-4 mb-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white shadow-clayButton shrink-0">
+                      <FileText className="w-8 h-8" />
+                    </div>
+                    <div>
+                      <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-blue-100 text-blue-700 font-heading">
+                        Core Feature
+                      </span>
+                      <h3 className="font-heading font-black text-2xl sm:text-3xl text-clay-foreground mt-1">
+                        Plain-Language Simplification
+                      </h3>
+                    </div>
+                  </div>
+
+                  <Link href="/analyze" className="hidden sm:inline-flex items-center gap-1 text-xs font-bold text-clay-accent hover:text-clay-accent-alt font-heading">
+                    Try Now <ArrowUpRight className="w-4 h-4" />
+                  </Link>
+                </div>
+
+                <p className="font-sans text-base text-clay-muted leading-relaxed mb-6">
+                  Translates dense, convoluted legal agreements into clear, structured plain language.
+                  Preserves every substantive financial obligation, deadline, and dollar amount while discarding archaic legal traps.
+                </p>
+
+                {/* Tactile Side-by-Side Example Preview inside the Bento Card */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-4">
+                  {/* Before: Complex Legalese */}
+                  <div className="p-4 rounded-2xl bg-[#EFEBF5] shadow-clayPressed border border-white/60">
+                    <div className="flex items-center gap-2 mb-2 text-xs font-bold text-red-500 font-heading">
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      Archaic Contract Clause
+                    </div>
+                    <p className="font-mono text-xs text-clay-muted/90 leading-relaxed italic">
+                      &quot;In the event of Lessee&apos;s failure to tender full remittance on or before the designated inception calendar date, Lessor retains sole, absolute, unilateral discretion to declare forfeiture...&quot;
+                    </p>
+                  </div>
+
+                  {/* After: Plain Language Translation */}
+                  <div className="p-4 rounded-2xl bg-white shadow-clayCard border border-white">
+                    <div className="flex items-center gap-2 mb-2 text-xs font-bold text-emerald-600 font-heading">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Plain-Language Summary
+                    </div>
+                    <p className="font-sans text-xs text-clay-foreground font-medium leading-relaxed">
+                      &quot;Pay rent by the 1st of each month. A $50 late charge applies after the 3-day grace period, but the landlord cannot seize your deposit without written notice.&quot;
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Feature Tags & Action */}
+              <div className="pt-6 mt-4 border-t border-slate-200/60 flex flex-wrap items-center justify-between gap-4">
+                <div className="flex flex-wrap gap-2 text-xs font-semibold text-clay-muted">
+                  <span className="px-3 py-1 rounded-full bg-white shadow-clayCard">PDF & Text Input</span>
+                  <span className="px-3 py-1 rounded-full bg-white shadow-clayCard">English · हिन्दी · ગુજરાતી</span>
+                  <span className="px-3 py-1 rounded-full bg-white shadow-clayCard">5-8 Takeaway Bullets</span>
+                </div>
+                <Link href="/analyze">
+                  <Button variant="primary" size="sm">
+                    Analyze Document &rarr;
+                  </Button>
+                </Link>
+              </div>
+            </Card>
+          </div>
+
+          {/* CARD 2: "Risk Detection" */}
+          <Card
+            variant="glass"
+            interactive
+            id="feature-risk"
+            className="flex flex-col justify-between"
+          >
+            <div>
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-400 to-pink-600 flex items-center justify-center text-white shadow-clayButton mb-5">
+                <ShieldAlert className="w-7 h-7" />
+              </div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-pink-600 font-heading">
+                Safety First
+              </span>
+              <h3 className="font-heading font-black text-xl text-clay-foreground mt-1 mb-2">
+                Clause Risk Classification
+              </h3>
+              <p className="font-sans text-sm text-clay-muted leading-relaxed">
+                Flags one-sided clauses as Standard, Attention, or Risk. Highlights auto-renewal traps, unilateral forfeiture, and unreasonable waivers with objective explanations.
+              </p>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold font-heading text-pink-600">
+              <span>View Sample Risks</span>
               <ArrowRight className="w-4 h-4" />
-            </Link>
-          </motion.div>
+            </div>
+          </Card>
 
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
-            <Link
-              href="/compare"
-              id="cta-compare-2"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm text-primary
-                         bg-white border border-slate-200 shadow-soft
-                         hover:border-primary/30
-                         transition-all duration-200"
-            >
-              <GitCompare className="w-4 h-4" />
-              Compare Two Documents
-            </Link>
-          </motion.div>
-        </motion.div>
+          {/* CARD 3: "Ask Questions" */}
+          <Card
+            variant="glass"
+            interactive
+            id="feature-qa"
+            className="flex flex-col justify-between"
+          >
+            <div>
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white shadow-clayButton mb-5">
+                <MessageSquareText className="w-7 h-7" />
+              </div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-purple-600 font-heading">
+                Grounded Q&amp;A
+              </span>
+              <h3 className="font-heading font-black text-xl text-clay-foreground mt-1 mb-2">
+                Ask Document Questions
+              </h3>
+              <p className="font-sans text-sm text-clay-muted leading-relaxed">
+                Ask specific questions about your agreement. Retrieves source excerpts and refuses to hallucinate if terms are omitted from the text.
+              </p>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold font-heading text-purple-600">
+              <span>Try In-Scope Q&amp;A</span>
+              <ArrowRight className="w-4 h-4" />
+            </div>
+          </Card>
+
+          {/* CARD 4: "Compare Documents" */}
+          <Card
+            variant="glass"
+            interactive
+            id="feature-compare"
+            className="flex flex-col justify-between"
+          >
+            <div>
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white shadow-clayButton mb-5">
+                <Scale className="w-7 h-7" />
+              </div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 font-heading">
+                Side-by-Side
+              </span>
+              <h3 className="font-heading font-black text-xl text-clay-foreground mt-1 mb-2">
+                Compare Two Contracts
+              </h3>
+              <p className="font-sans text-sm text-clay-muted leading-relaxed">
+                Compare competing lease proposals or vendor contracts side-by-side with automated favorability verdicts per clause.
+              </p>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold font-heading text-blue-600">
+              <Link href="/compare" className="flex items-center justify-between w-full">
+                <span>Compare Contracts</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </Card>
+
+          {/* CARD 5: "Checklist & Lawyer Prep" */}
+          <Card
+            variant="glass"
+            interactive
+            id="feature-checklist"
+            className="flex flex-col justify-between"
+          >
+            <div>
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white shadow-clayButton mb-5">
+                <CheckSquare className="w-7 h-7" />
+              </div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 font-heading">
+                Action Plan
+              </span>
+              <h3 className="font-heading font-black text-xl text-clay-foreground mt-1 mb-2">
+                Pre-Signing Checklist
+              </h3>
+              <p className="font-sans text-sm text-clay-muted leading-relaxed">
+                Generates actionable items referencing actual clauses, plus tailored questions to ask the counterparty or your lawyer before signing.
+              </p>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold font-heading text-emerald-600">
+              <Link href="/checklist" className="flex items-center justify-between w-full">
+                <span>View Checklist</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </Card>
+
+        </div>
       </section>
 
-      {/* ── SECTION 3: DISCLAIMER ────────────────────────────────────── */}
+      {/* ── 4. DISCLAIMER SECTION (Dedicated Glass Card Component) ── */}
       <section className="relative z-10 max-w-4xl mx-auto px-6 pb-20">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-40px' }}
-          transition={{ duration: 0.5 }}
-          className="relative rounded-2xl border border-amber-200/80 bg-amber-50/60 p-6 overflow-hidden"
-        >
-          {/* Accent left strip */}
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-accent to-accent-light rounded-l-2xl" />
-
-          <div className="flex items-start gap-4 pl-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
-              <AlertTriangle className="w-5 h-5 text-accent" />
+        <Card variant="glass" className="p-8 sm:p-10 border border-amber-200/80 bg-white/70">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-white flex items-center justify-center shrink-0 shadow-clayButton">
+              <Shield className="w-7 h-7" />
             </div>
             <div>
-              <h3 className="text-[14px] font-700 text-amber-900 mb-1" style={{ fontWeight: 700 }}>
-                Important Disclaimer
+              <h3 className="font-heading font-black text-lg text-clay-foreground mb-1">
+                Legal Disclaimer &amp; Purpose
               </h3>
-              <p className="text-[13px] text-amber-800 leading-relaxed">
-                This tool provides information and assistance to help you understand documents —
-                it <strong>does not replace professional legal advice</strong>. Analysis results are
-                informational only. All explanations use phrasing such as{' '}
-                <em>"this may be worth clarifying"</em> and never constitute legal verdicts.
-                For any legally significant decision, consult a qualified attorney.
+              <p className="font-sans text-sm sm:text-base text-clay-muted leading-relaxed">
+                This tool provides information and assistance to help you understand documents —{' '}
+                <strong className="text-clay-foreground font-semibold">it does not replace professional legal advice.</strong>{' '}
+                Our analysis is informational only, uses non-verdict explanations, and helps you prepare for meaningful consultations with qualified attorneys.
               </p>
             </div>
           </div>
-        </motion.div>
+        </Card>
       </section>
 
-      {/* ── FOOTER ───────────────────────────────────────────────────── */}
-      <footer className="relative z-10 border-t border-slate-200/60 bg-white/70 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-text-secondary">
-          <p>Legal Document Assistant — AI-powered contract analysis</p>
-          <p className="flex items-center gap-1.5">
-            <Scale className="w-3 h-3" />
-            For informational purposes only · Not legal advice
+      {/* ── 5. PERSISTENT FOOTER ────────────────────────────────────── */}
+      <footer className="relative z-10 border-t border-slate-200/60 bg-white/60 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-clay-muted">
+          <p className="font-sans">
+            AI Legal Document Assistant — Built with High-Fidelity Claymorphism
+          </p>
+          <p className="flex items-center gap-2 font-medium">
+            <Scale className="w-3.5 h-3.5 text-clay-accent" />
+            <span>Zero Data Persistence · In-Memory Privacy</span>
           </p>
         </div>
       </footer>
