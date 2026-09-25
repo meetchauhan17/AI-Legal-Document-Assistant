@@ -130,13 +130,13 @@ export default function FloatingShapes({ className = '' }: FloatingShapesProps) 
 
   return (
     <div
-      className={`pointer-events-none absolute inset-0 -z-10 overflow-hidden ${className}`}
+      className={`pointer-events-none absolute inset-0 -z-10 overflow-hidden hidden md:block ${className}`}
       aria-hidden="true"
     >
       <Canvas
         camera={{ position: [0, 0, 6], fov: 45 }}
         gl={{ antialias: true, alpha: true, powerPreference: 'low-power' }}
-        dpr={[1, 1.5]}
+        dpr={[1, 1.25]}
       >
         <Scene />
       </Canvas>
