@@ -25,6 +25,7 @@ import { useDocument } from '@/context/DocumentContext';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import ClayBlobs from '@/components/ClayBlobs';
 
 // ── Types & Constants ─────────────────────────────────────────────────────
 
@@ -59,58 +60,61 @@ const SAMPLE_LEASE_TEXT = `RESIDENTIAL LEASE AGREEMENT
 5. MAINTENANCE & REPAIRS: Tenant is responsible for all plumbing and HVAC servicing regardless of cause.
 6. TERMINATION: Landlord may terminate this lease with 3 days notice upon any minor rule violation.`;
 
-// ── Typing Indicator Component ────────────────────────────────────────────
+// ── 3. Typing Indicator Component ─────────────────────────────────────────
 
 function TypingIndicator() {
   return (
     <div className="flex items-center gap-2">
-      <div className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-[#EFEBF5] shadow-clayPressed">
-        <span className="text-[11px] font-heading font-bold text-clay-muted mr-1">AI Thinking</span>
+      <div className="inline-flex items-center gap-2 px-4 py-3 rounded-full bg-[#EFEBF5] shadow-clayPressed border border-white/60">
         <span
-          className="w-2 h-2 rounded-full bg-clay-accent animate-clay-breathe"
+          className="w-2.5 h-2.5 rounded-full bg-clay-accent animate-clay-breathe"
           style={{ animationDuration: '1.2s' }}
         />
         <span
-          className="w-2 h-2 rounded-full bg-clay-accent animate-clay-breathe"
-          style={{ animationDuration: '1.2s', animationDelay: '0.25s' }}
+          className="w-2.5 h-2.5 rounded-full bg-clay-accent animate-clay-breathe"
+          style={{ animationDuration: '1.2s', animationDelay: '0.2s' }}
         />
         <span
-          className="w-2 h-2 rounded-full bg-clay-accent animate-clay-breathe"
-          style={{ animationDuration: '1.2s', animationDelay: '0.5s' }}
+          className="w-2.5 h-2.5 rounded-full bg-clay-accent animate-clay-breathe"
+          style={{ animationDuration: '1.2s', animationDelay: '0.4s' }}
         />
       </div>
     </div>
   );
 }
 
-// ── Confidence Badge Component ────────────────────────────────────────────
+// ── Confidence Badge Component (emerald/amber/muted-gray) ──────────────────
 
 function ConfidenceBadge({ confidence }: { confidence?: 'high' | 'medium' | 'low' }) {
   if (!confidence) return null;
 
   const cfg = {
     high: {
-      label: 'High Grounding',
+      label: 'High Confidence',
       icon: ShieldCheck,
-      classes: 'bg-emerald-100 text-emerald-800 shadow-clayPressed',
+      classes: 'bg-emerald-100 text-emerald-800 border border-emerald-200/60 shadow-clayPressed',
     },
     medium: {
-      label: 'Medium Grounding',
+      label: 'Medium Confidence',
       icon: Info,
-      classes: 'bg-amber-100 text-amber-800 shadow-clayPressed',
+      classes: 'bg-amber-100 text-amber-800 border border-amber-200/60 shadow-clayPressed',
     },
     low: {
-      label: 'Low / Out of Scope',
+      label: 'Low Confidence',
       icon: AlertTriangle,
-      classes: 'bg-slate-200 text-clay-muted shadow-clayPressed',
+      classes: 'bg-slate-200 text-clay-muted border border-slate-300/60 shadow-clayPressed',
     },
-  }[confidence];
+  }[confidence] || {
+    label: 'Grounded',
+    icon: ShieldCheck,
+    classes: 'bg-emerald-100 text-emerald-800 border border-emerald-200/60 shadow-clayPressed',
+  };
 
   const IconComp = cfg.icon;
 
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-heading font-bold tracking-wider uppercase ${cfg.classes}`}
+      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-heading font-black tracking-wider uppercase ${cfg.classes}`}
     >
       <IconComp className="w-3 h-3" />
       {cfg.label}
@@ -118,7 +122,7 @@ function ConfidenceBadge({ confidence }: { confidence?: 'high' | 'medium' | 'low
   );
 }
 
-// ── Expandable Source Excerpt Component ───────────────────────────────────
+// ── Expandable Source Excerpt Component (Ghost Toggle + Recessed Box) ──────
 
 function SourceSection({ excerpt }: { excerpt: string }) {
   const [open, setOpen] = useState(false);
@@ -126,17 +130,19 @@ function SourceSection({ excerpt }: { excerpt: string }) {
   if (!excerpt || excerpt.trim() === '' || excerpt.includes('None')) return null;
 
   return (
-    <div className="mt-3 pt-2.5 border-t border-slate-100">
-      <button
+    <div className="mt-3 pt-3 border-t border-slate-100/80">
+      <Button
+        variant="ghost"
+        size="sm"
         type="button"
         onClick={() => setOpen(!open)}
-        className="inline-flex items-center gap-1.5 text-xs font-heading font-bold text-clay-accent hover:text-clay-accent-alt transition-colors cursor-pointer select-none"
+        className="!h-7 !px-3 !text-xs !rounded-xl text-clay-accent hover:bg-clay-accent/10 transition-all gap-1 -ml-1"
       >
         <span>{open ? 'Hide source ▴' : 'Show source ▾'}</span>
-      </button>
+      </Button>
 
       {open && (
-        <div className="mt-2 p-3.5 rounded-2xl bg-[#EFEBF5] shadow-clayPressed border border-white font-mono text-xs text-clay-muted italic leading-relaxed whitespace-pre-wrap">
+        <div className="mt-2.5 p-4 rounded-2xl bg-[#EFEBF5] shadow-clayPressed border border-white font-mono text-xs text-clay-muted italic leading-relaxed whitespace-pre-wrap">
           &quot;{excerpt}&quot;
         </div>
       )}
@@ -259,8 +265,9 @@ function AskPageContent() {
   // ── 5. EMPTY STATE (No document loaded) ──────────────────────────────────
   if (!documentId) {
     return (
-      <main className="min-h-screen bg-clay-canvas text-clay-foreground py-12 px-4 sm:px-6 flex flex-col justify-between">
-        <div className="max-w-2xl mx-auto w-full pt-4">
+      <main className="min-h-screen bg-clay-canvas text-clay-foreground py-12 px-4 sm:px-6 flex flex-col justify-between relative overflow-hidden">
+        <ClayBlobs />
+        <div className="max-w-2xl mx-auto w-full pt-4 relative z-10">
           <Link
             href="/"
             className="inline-flex items-center gap-2 text-sm font-heading font-bold text-clay-muted hover:text-clay-accent transition-colors mb-6"
@@ -271,7 +278,7 @@ function AskPageContent() {
           {/* Centered Hero Variant Card with larger padding */}
           <Card variant="hero" className="text-center p-10 sm:p-14">
             {/* Friendly icon in large gradient orb */}
-            <div className="w-20 h-20 rounded-[28px] bg-gradient-to-br from-purple-400 to-clay-accent text-white shadow-clayButton flex items-center justify-center mx-auto mb-6">
+            <div className="w-20 h-20 rounded-[28px] bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] text-white shadow-clayButton flex items-center justify-center mx-auto mb-6">
               <FileQuestion className="w-10 h-10" />
             </div>
 
@@ -310,7 +317,7 @@ function AskPageContent() {
           </Card>
         </div>
 
-        <div className="text-center text-xs text-clay-muted/70 py-6">
+        <div className="text-center text-xs text-clay-muted/70 py-6 relative z-10">
           Grounded Clause-Level Question Answering · In-Memory Privacy
         </div>
       </main>
@@ -319,7 +326,9 @@ function AskPageContent() {
 
   // ── ACTIVE CHAT INTERFACE ────────────────────────────────────────────────
   return (
-    <main className="min-h-screen bg-clay-canvas text-clay-foreground flex flex-col justify-between">
+    <main className="min-h-screen bg-clay-canvas text-clay-foreground flex flex-col justify-between relative overflow-hidden">
+      <ClayBlobs />
+
       {/* ── 1. TOP CONFIRMATION BAR (Slim Glass Card) ────────────────────── */}
       <div className="sticky top-0 z-30 px-4 sm:px-6 pt-4 pb-2 bg-clay-canvas/80 backdrop-blur-md">
         <div className="max-w-4xl mx-auto">
@@ -397,7 +406,7 @@ function AskPageContent() {
       </div>
 
       {/* ── 2. CHAT AREA ─────────────────────────────────────────────────── */}
-      <div className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 flex flex-col justify-between">
+      <div className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 flex flex-col justify-between relative z-10">
         <div className="space-y-5 pb-6">
           {messages.map((msg) => (
             <div
@@ -421,7 +430,7 @@ function AskPageContent() {
                     variant="solid"
                     className="p-5 sm:p-6 shadow-clayCard border border-white/90 rounded-[24px] rounded-bl-[8px]"
                   >
-                    {/* Header with confidence pill */}
+                    {/* Header with confidence pill in corner */}
                     <div className="flex items-center justify-between gap-3 mb-2.5">
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-lg bg-clay-accent/15 text-clay-accent flex items-center justify-center shadow-clayPressed">
@@ -460,7 +469,7 @@ function AskPageContent() {
         {/* Suggested Quick Question Chips */}
         {messages.length <= 2 && (
           <div className="my-4">
-            <span className="text-[11px] font-heading font-bold uppercase tracking-wider text-clay-muted block mb-2 flex items-center gap-1.5">
+            <span className="text-[11px] font-heading font-bold uppercase tracking-wider text-clay-muted mb-2 flex items-center gap-1.5">
               <HelpCircle className="w-3.5 h-3.5 text-clay-accent" /> Suggested Inquiries
             </span>
             <div className="flex flex-wrap gap-2">
@@ -496,17 +505,17 @@ function AskPageContent() {
               />
             </div>
 
-            {/* Attached Send Button (primary variant, matching height and squish physics) */}
+            {/* Attached Send Button (primary variant, rounded to match, immediately adjacent) */}
             <Button
               variant="primary"
               size="md"
               onClick={() => handleSend()}
               disabled={!input.trim() || isLoading}
               id="ask-submit"
-              className="h-16 px-6 shrink-0 shadow-clayButton rounded-2xl"
+              className="h-16 px-7 shrink-0 shadow-clayButton rounded-[24px]"
               title="Send (Enter)"
             >
-              <Send className="w-5 h-5 mr-1" />
+              <Send className="w-5 h-5 mr-1.5" />
               <span className="hidden sm:inline">Send</span>
             </Button>
           </div>
