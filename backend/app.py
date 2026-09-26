@@ -56,9 +56,27 @@ with gr.Blocks(title="AI Legal Document Assistant API") as demo:
         """
     )
 
+from gradio.routes import App
 from fastapi.middleware.cors import CORSMiddleware
 
-# Attach all FastAPI endpoints and CORS directly to Gradio's internal FastAPI app
+_orig_create_app = App.create_app
+
+def _custom_create_app(*args, **kwargs):
+    app = _orig_create_app(*args, **kwargs)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    # Include all backend routes (upload, upload-text, simplify, risk, ask, compare, checklist, health)
+    app.include_router(fastapi_app.router)
+    return app
+
+App.create_app = _custom_create_app
+
+# Also inject into current demo.app
 demo.app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -68,9 +86,9 @@ demo.app.add_middleware(
 )
 demo.app.include_router(fastapi_app.router)
 
-# Expose app for ASGI runners
 app = demo.app
 
 if __name__ == "__main__":
     demo.launch()
+
 
