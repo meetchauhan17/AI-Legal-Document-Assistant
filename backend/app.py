@@ -17,10 +17,21 @@ if str(_APP_DIR) not in sys.path:
     sys.path.insert(0, str(_APP_DIR))
 
 import gradio as gr
+
+# Satisfy Hugging Face ZeroGPU startup check
+try:
+    import spaces
+    @spaces.GPU
+    def zero_gpu_check():
+        return True
+    zero_gpu_check()
+except Exception:
+    pass
+
 from main import app as fastapi_app
 
 # Create a clean Gradio interface for status & documentation
-with gr.Blocks(title="AI Legal Document Assistant API", theme=gr.themes.Soft()) as demo:
+with gr.Blocks(title="AI Legal Document Assistant API") as demo:
     gr.Markdown(
         """
         # ⚖️ AI Legal Document Assistant — Backend API
