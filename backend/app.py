@@ -31,7 +31,7 @@ from gradio.routes import App
 from fastapi.middleware.cors import CORSMiddleware
 from main import app as fastapi_app
 
-# Intercept Gradio App creation at the earliest point
+# Hook Gradio App creation to cleanly mount FastAPI backend routes & CORS
 _orig_create_app = App.create_app
 
 def _custom_create_app(*args, **kwargs):
@@ -43,14 +43,12 @@ def _custom_create_app(*args, **kwargs):
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    # Prepend all backend routes to the front of router.routes
-    fastapi_routes = [r for r in fastapi_app.router.routes if r.path != "/"]
-    gradio_app.router.routes = fastapi_routes + [r for r in gradio_app.router.routes if r not in fastapi_routes]
+    gradio_app.include_router(fastapi_app.router)
     return gradio_app
 
 App.create_app = _custom_create_app
 
-# Create a clean Gradio interface for status & documentation
+# Create clean Gradio documentation interface
 with gr.Blocks(title="AI Legal Document Assistant API") as demo:
     gr.Markdown(
         """
@@ -59,11 +57,6 @@ with gr.Blocks(title="AI Legal Document Assistant API") as demo:
         **Status**: 🟢 Online & Running 24/7 on Hugging Face Spaces (16GB RAM)
         
         This Space hosts the FastAPI backend powering the Next.js web application.
-        
-        ### Quick Links
-        - 📖 **Interactive API Documentation (Swagger)**: [/docs](/docs)
-        - 📄 **Alternative Documentation (ReDoc)**: [/redoc](/redoc)
-        - 🌐 **Frontend Application**: Connect via `NEXT_PUBLIC_API_URL`
         
         ### Active Endpoints
         - `POST /api/upload`: PDF extraction & parsing
@@ -76,17 +69,6 @@ with gr.Blocks(title="AI Legal Document Assistant API") as demo:
         - `GET /api/health`: Backend health status
         """
     )
-
-# Also ensure demo.app has the prepended routes
-demo.app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-fastapi_routes = [r for r in fastapi_app.router.routes if r.path != "/"]
-demo.app.router.routes = fastapi_routes + [r for r in demo.app.router.routes if r not in fastapi_routes]
 
 app = demo.app
 
