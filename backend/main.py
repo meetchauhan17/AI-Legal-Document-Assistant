@@ -1,11 +1,22 @@
 import uuid
 import sys
+import types
 from pathlib import Path
 
-# Ensure workspace root is in sys.path
-_ROOT_DIR = str(Path(__file__).resolve().parent.parent)
-if _ROOT_DIR not in sys.path:
-    sys.path.insert(0, _ROOT_DIR)
+# Ensure both workspace root and current directory are in sys.path
+_DIR = Path(__file__).resolve().parent
+_PARENT = _DIR.parent
+
+# Enable seamless imports whether running from repo root or inside Space root
+if (_DIR / "core").exists() and "backend" not in sys.modules:
+    _pkg = types.ModuleType("backend")
+    _pkg.__path__ = [str(_DIR)]
+    sys.modules["backend"] = _pkg
+
+if str(_PARENT) not in sys.path:
+    sys.path.insert(0, str(_PARENT))
+if str(_DIR) not in sys.path:
+    sys.path.insert(0, str(_DIR))
 
 from typing import Optional, List, Dict, Any
 from collections import OrderedDict

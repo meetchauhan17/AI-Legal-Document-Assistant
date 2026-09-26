@@ -3,6 +3,19 @@ AI Legal Document Assistant — Hugging Face Space Entrypoint
 Mounts the FastAPI backend onto Gradio for 100% free 24/7 hosting.
 """
 
+import sys
+import types
+from pathlib import Path
+
+# Support running directly in Hugging Face Spaces where 'core' is a sibling directory
+_APP_DIR = Path(__file__).resolve().parent
+if "backend" not in sys.modules and (_APP_DIR / "core").exists():
+    _pkg = types.ModuleType("backend")
+    _pkg.__path__ = [str(_APP_DIR)]
+    sys.modules["backend"] = _pkg
+if str(_APP_DIR) not in sys.path:
+    sys.path.insert(0, str(_APP_DIR))
+
 import gradio as gr
 from main import app as fastapi_app
 
