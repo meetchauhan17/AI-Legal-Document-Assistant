@@ -1,7 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { storeDocument } from '@/lib/store';
 
-export async function POST(req: NextRequest) {
+/**
+ * POST /api/upload
+ *
+ * Accepts a multipart/form-data file upload (PDF or plain text), extracts the
+ * readable text content using `pdf-parse`, and stores the result in the
+ * in-memory document session store.
+ *
+ * @body `FormData` with a `file` field containing the document.
+ * @returns `UploadResponse` with `document_id`, `text_preview`, `full_text`, and `page_count`.
+ * @throws 400 if no file is provided or if text extraction yields no readable content.
+ * @throws 500 on unexpected internal errors.
+ */
+export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
@@ -14,18 +26,19 @@ export async function POST(req: NextRequest) {
     let pageCount = 1;
 
     const buffer = Buffer.from(await file.arrayBuffer());
+    const isPdf =
+      file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
 
-    if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
+    if (isPdf) {
       try {
-        // Use pdf-parse for PDF text extraction
         const pdfParse = (await import('pdf-parse')).default;
         const data = await pdfParse(buffer);
-        extractedText = data.text || '';
-        pageCount = data.numpages || 1;
+        extractedText = data.text ?? '';
+        pageCount = data.numpages ?? 1;
       } catch {
-        // Fallback: extract printable strings from raw buffer if parser fails
+        // Graceful fallback: extract printable ASCII characters from raw buffer
         const raw = buffer.toString('latin1');
-        const matches = raw.match(/[A-Za-z0-9 .,;:'"?!@#$%^&*()_+\-=\[\]{}|\/<>]{4,}/g);
+        const matches = raw.match(/[A-Za-z0-9 .,;:'"?!@#$%^&*()_+\-=[\]{}|/<>]{4,}/g);
         extractedText = matches ? matches.join(' ') : '';
       }
     } else {
@@ -35,8 +48,11 @@ export async function POST(req: NextRequest) {
     const cleanText = extractedText.trim();
     if (!cleanText || cleanText.length < 10) {
       return NextResponse.json(
-        { detail: 'Could not extract text from document. Ensure it contains machine-readable text.' },
-        { status: 400 }
+        {
+          detail:
+            'Could not extract text from the document. Ensure it contains machine-readable (non-scanned) text.',
+        },
+        { status: 400 },
       );
     }
 
@@ -49,10 +65,8 @@ export async function POST(req: NextRequest) {
       full_text: cleanText,
       page_count: pageCount,
     });
-  } catch (error: any) {
-    return NextResponse.json(
-      { detail: error?.message || 'File upload failed' },
-      { status: 500 }
-    );
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'File upload failed';
+    return NextResponse.json({ detail: message }, { status: 500 });
   }
 }

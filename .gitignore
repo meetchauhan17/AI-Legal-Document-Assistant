@@ -34,9 +34,15 @@ wheels/
 .next/
 out/
 
-# Environment Variables
+# Environment Variables — never commit secrets
 .env
+.env.local
 .env*.local
+backend/.env
+frontend/.env.local
+# Always commit the example templates:
+!.env.example
+!**/.env.example
 
 # Uploads and temporary data
 /backend/uploads/*
