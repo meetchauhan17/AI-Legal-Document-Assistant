@@ -56,9 +56,21 @@ with gr.Blocks(title="AI Legal Document Assistant API") as demo:
         """
     )
 
-# Mount Gradio documentation/status at /status so it never intercepts /api/* or /
-app = gr.mount_gradio_app(fastapi_app, demo, path="/status")
+from fastapi.middleware.cors import CORSMiddleware
+
+# Attach all FastAPI endpoints and CORS directly to Gradio's internal FastAPI app
+demo.app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+demo.app.include_router(fastapi_app.router)
+
+# Expose app for ASGI runners
+app = demo.app
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=7860)
+    demo.launch()
+
