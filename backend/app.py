@@ -1,6 +1,6 @@
 """
 AI Legal Document Assistant — Hugging Face Space Entrypoint
-Mounts the FastAPI backend onto Gradio for 100% free 24/7 hosting.
+Mounts the FastAPI backend onto Gradio 4.44.1 for 100% free 24/7 hosting.
 """
 
 import sys
@@ -27,26 +27,7 @@ except Exception:
     pass
 
 import gradio as gr
-from gradio.routes import App
-from fastapi.middleware.cors import CORSMiddleware
 from main import app as fastapi_app
-
-# Hook Gradio App creation to cleanly mount FastAPI backend routes & CORS
-_orig_create_app = App.create_app
-
-def _custom_create_app(*args, **kwargs):
-    gradio_app = _orig_create_app(*args, **kwargs)
-    gradio_app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=False,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-    gradio_app.include_router(fastapi_app.router)
-    return gradio_app
-
-App.create_app = _custom_create_app
 
 # Create clean Gradio documentation interface
 with gr.Blocks(title="AI Legal Document Assistant API") as demo:
@@ -70,7 +51,5 @@ with gr.Blocks(title="AI Legal Document Assistant API") as demo:
         """
     )
 
-app = demo.app
-
-if __name__ == "__main__":
-    demo.launch()
+# Mount Gradio documentation at /status so it never interferes with FastAPI root or /api/*
+app = gr.mount_gradio_app(fastapi_app, demo, path="/status")
