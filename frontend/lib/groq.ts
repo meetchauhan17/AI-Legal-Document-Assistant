@@ -9,11 +9,14 @@
  *   - Set GROQ_MODEL to override the default model (optional).
  */
 
+/** Default Groq model — used when GROQ_MODEL environment variable is not set. */
+const DEFAULT_MODEL = 'llama-3.3-70b-versatile';
+
 /** The Groq API key sourced exclusively from environment variables. */
 export const GROQ_API_KEY: string = process.env.GROQ_API_KEY ?? '';
 
 /** The Groq model identifier to use for all inference calls. */
-export const GROQ_MODEL: string = process.env.GROQ_MODEL ?? 'llama-3.3-70b-versatile';
+export const GROQ_MODEL: string = process.env.GROQ_MODEL || DEFAULT_MODEL;
 
 /** Groq Chat Completion message shape. */
 export interface GroqMessage {
