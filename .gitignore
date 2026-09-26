@@ -41,7 +41,7 @@ out/
 # Uploads and temporary data
 /backend/uploads/*
 !/backend/uploads/.gitkeep
-/backend/test_docs/
+*test_docs*
 
 # Databases
 *.db

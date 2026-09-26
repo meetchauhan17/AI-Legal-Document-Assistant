@@ -12,13 +12,13 @@ _ROOT_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_ROOT_DIR))
 
 TESTS = [
-    ("1. Core Pipeline & Upload Validation", "backend/test_pipeline.py"),
-    ("2. Error Handling & Edge Cases", "backend/test_error_handling.py"),
-    ("3. Document Simplification & Risk Classification", "backend/test_analysis.py"),
-    ("4. RAG Chunks & Ephemeral In-Memory Indexing", "backend/test_rag_pipeline.py"),
-    ("5. Q&A Grounding & Contract Comparison", "backend/test_qa_compare.py"),
-    ("6. End-to-End Q&A Verification", "backend/test_qa_e2e.py"),
-    ("7. Pre-Signing Checklist & Lawyer Prep", "backend/test_checklist.py"),
+    ("1. Core Pipeline & Upload Validation", "backend/tests/test_pipeline.py"),
+    ("2. Error Handling & Edge Cases", "backend/tests/test_error_handling.py"),
+    ("3. Document Simplification & Risk Classification", "backend/tests/test_analysis.py"),
+    ("4. RAG Chunks & Ephemeral In-Memory Indexing", "backend/tests/test_rag_pipeline.py"),
+    ("5. Q&A Grounding & Contract Comparison", "backend/tests/test_qa_compare.py"),
+    ("6. End-to-End Q&A Verification", "backend/tests/test_qa_e2e.py"),
+    ("7. Pre-Signing Checklist & Lawyer Prep", "backend/tests/test_checklist.py"),
 ]
 
 def main():

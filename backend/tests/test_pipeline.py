@@ -4,7 +4,9 @@ import sys
 from pathlib import Path
 
 # Ensure root directory is on sys.path
-_ROOT_DIR = str(Path(__file__).resolve().parent.parent)
+_CURRENT_DIR = Path(__file__).resolve().parent
+_BACKEND_DIR = _CURRENT_DIR.parent
+_ROOT_DIR = str(_BACKEND_DIR.parent)
 if _ROOT_DIR not in sys.path:
     sys.path.insert(0, _ROOT_DIR)
 
@@ -14,9 +16,8 @@ from reportlab.pdfgen import canvas
 
 from backend.core.extract import extract_text_from_pdf, extract_pdf_data, SCANNED_DOC_MESSAGE
 
-BASE_DIR = Path(__file__).resolve().parent
-UPLOADS_DIR = BASE_DIR / "uploads"
-SCRATCH_DIR = BASE_DIR / "test_docs"
+UPLOADS_DIR = _BACKEND_DIR / "uploads"
+SCRATCH_DIR = _BACKEND_DIR / "test_docs"
 SCRATCH_DIR.mkdir(parents=True, exist_ok=True)
 
 def generate_sample_legal_pdf(file_path: Path):

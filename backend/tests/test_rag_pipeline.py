@@ -3,7 +3,9 @@ import sys
 from pathlib import Path
 
 # Ensure root directory is on sys.path
-_ROOT_DIR = str(Path(__file__).resolve().parent.parent)
+_CURRENT_DIR = Path(__file__).resolve().parent
+_BACKEND_DIR = _CURRENT_DIR.parent
+_ROOT_DIR = str(_BACKEND_DIR.parent)
 if _ROOT_DIR not in sys.path:
     sys.path.insert(0, _ROOT_DIR)
 
@@ -19,8 +21,7 @@ from backend.core.rag import (
     MAX_SESSIONS,
 )
 
-BASE_DIR = Path(__file__).resolve().parent
-TEST_DOCS_DIR = BASE_DIR / "test_docs_rag"
+TEST_DOCS_DIR = _CURRENT_DIR / "test_docs_rag"
 TEST_DOCS_DIR.mkdir(parents=True, exist_ok=True)
 
 def generate_test_legal_pdf(file_path: Path):

@@ -178,14 +178,14 @@ npm run dev
 ### 3. Automated Test Suite
 
 ```bash
-# Run comprehensive backend test suite
-cd backend
-python -m pytest
-# or run individual suites:
-python test_analysis.py
-python test_qa_compare.py
-python test_checklist.py
-python test_error_handling.py
+# Run comprehensive unified test suite (7/7 suites):
+python backend/run_all_tests.py
+
+# or run individual test suites:
+python backend/tests/test_analysis.py
+python backend/tests/test_qa_compare.py
+python backend/tests/test_checklist.py
+python backend/tests/test_error_handling.py
 ```
 
 ---
