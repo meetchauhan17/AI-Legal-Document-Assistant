@@ -1,5 +1,66 @@
-// Centralised API base URL — reads from env or falls back to localhost
-export const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000';
+// Centralised API base URL — dynamically resolves to relative or configured URL
+function getInitialApiBase(): string {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+
+  // If in browser on production (e.g. Vercel *.vercel.app)
+  if (typeof window !== 'undefined') {
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (!isLocalhost) {
+      // In production browser, if envUrl points to hf.space or is empty, use relative '' to hit Next.js serverless routes
+      if (!envUrl || envUrl.includes('hf.space') || envUrl.includes('localhost') || envUrl.includes('127.0.0.1')) {
+        return '';
+      }
+      return envUrl.replace(/\/+$/, '');
+    }
+  }
+
+  // If environment variable is explicitly provided and not hf.space
+  if (envUrl && !envUrl.includes('hf.space')) {
+    return envUrl.replace(/\/+$/, '');
+  }
+
+  // Default to relative path for full Vercel serverless integration
+  return '';
+}
+
+export const API_BASE = getInitialApiBase();
+
+/**
+ * Resilient fetch that tries API_BASE first, and automatically falls back
+ * to Next.js native serverless routes if external API returns 404, 405, 502, or fails.
+ */
+async function resilientFetch(path: string, options: RequestInit): Promise<Response> {
+  const primaryUrl = API_BASE ? `${API_BASE}${path}` : path;
+  let primaryRes: Response | null = null;
+  let primaryError: any = null;
+
+  try {
+    primaryRes = await fetch(primaryUrl, options);
+    // If primary responded with success or client validation error (400), return it
+    if (primaryRes.ok || primaryRes.status === 400 || !API_BASE) {
+      return primaryRes;
+    }
+  } catch (err) {
+    primaryError = err;
+  }
+
+  // If primary failed (network error, CORS, 404, 405 Method Not Allowed, 502/503/500)
+  // and we were calling an external API_BASE, fall back to native Next.js API route!
+  if (API_BASE && (primaryError || !primaryRes || primaryRes.status === 405 || primaryRes.status >= 500 || primaryRes.status === 404)) {
+    try {
+      const fallbackRes = await fetch(path, options);
+      if (fallbackRes.ok || fallbackRes.status === 400) {
+        return fallbackRes;
+      }
+      return fallbackRes;
+    } catch {
+      // Fallback failed too, return or re-throw primary
+    }
+  }
+
+  if (primaryRes) return primaryRes;
+  throw primaryError || new Error(`Request to ${path} failed`);
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -65,7 +126,7 @@ export interface ChecklistResponse {
 export async function uploadFile(file: File): Promise<UploadResponse> {
   const form = new FormData();
   form.append('file', file);
-  const res = await fetch(`${API_BASE}/api/upload`, { method: 'POST', body: form });
+  const res = await resilientFetch('/api/upload', { method: 'POST', body: form });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.detail ?? `Upload failed (${res.status})`);
@@ -74,7 +135,7 @@ export async function uploadFile(file: File): Promise<UploadResponse> {
 }
 
 export async function uploadText(text: string): Promise<UploadResponse> {
-  const res = await fetch(`${API_BASE}/api/upload-text`, {
+  const res = await resilientFetch('/api/upload-text', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text }),
@@ -91,7 +152,7 @@ export async function simplifyDocument(
   full_text: string,
   language = 'en',
 ): Promise<SimplifyResponse> {
-  const res = await fetch(`${API_BASE}/api/simplify`, {
+  const res = await resilientFetch('/api/simplify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ document_id, full_text, language }),
@@ -105,7 +166,7 @@ export async function analyzeRisk(
   full_text: string,
   language = 'en',
 ): Promise<RiskResponse> {
-  const res = await fetch(`${API_BASE}/api/analyze-risk`, {
+  const res = await resilientFetch('/api/analyze-risk', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ document_id, full_text, language }),
@@ -119,7 +180,7 @@ export async function askQuestion(
   question: string,
   language = 'en',
 ): Promise<QAResponse> {
-  const res = await fetch(`${API_BASE}/api/ask`, {
+  const res = await resilientFetch('/api/ask', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ document_id, question, language }),
@@ -133,7 +194,7 @@ export async function compareDocuments(
   text_b: string,
   language = 'en',
 ): Promise<CompareResponse> {
-  const res = await fetch(`${API_BASE}/api/compare`, {
+  const res = await resilientFetch('/api/compare', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text_a, text_b, language }),
@@ -151,7 +212,7 @@ export async function generateChecklist(
   risk_clauses: Clause[] = [],
   language = 'en',
 ): Promise<ChecklistResponse> {
-  const res = await fetch(`${API_BASE}/api/checklist`, {
+  const res = await resilientFetch('/api/checklist', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ document_id, full_text, risk_clauses, language }),
@@ -162,5 +223,3 @@ export async function generateChecklist(
   }
   return res.json();
 }
-
-
