@@ -139,9 +139,10 @@ CRITICAL RULES:
       document_id: body.document_id || '',
       language: lang,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Checklist generation failed';
     return NextResponse.json(
-      { detail: error?.message || 'Checklist generation failed' },
+      { detail: message },
       { status: 500 }
     );
   }

@@ -125,7 +125,8 @@ Respond ONLY with a valid JSON object matching this schema:
       question,
       language: lang,
     });
-  } catch (error: any) {
-    return NextResponse.json({ detail: error?.message || 'Q&A failed' }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Q&A failed';
+    return NextResponse.json({ detail: message }, { status: 500 });
   }
 }

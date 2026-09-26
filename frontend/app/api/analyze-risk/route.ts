@@ -218,7 +218,8 @@ Respond ONLY with a valid JSON object matching this schema:
     }
 
     return NextResponse.json(getHeuristicRisk(text, lang));
-  } catch (error: any) {
-    return NextResponse.json({ detail: error?.message || 'Risk analysis failed' }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Risk analysis failed';
+    return NextResponse.json({ detail: message }, { status: 500 });
   }
 }

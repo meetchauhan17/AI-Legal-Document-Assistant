@@ -152,9 +152,10 @@ Rules:
     }
 
     return NextResponse.json(getHeuristicCompare(text_a, text_b, lang));
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Comparison failed';
     return NextResponse.json(
-      { detail: error?.message || 'Comparison failed' },
+      { detail: message },
       { status: 500 }
     );
   }
