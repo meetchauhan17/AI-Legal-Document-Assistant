@@ -33,82 +33,143 @@ import {
 import { useDocument } from '@/context/DocumentContext';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
-import ClayBlobs from '@/components/ClayBlobs';
+import DocumentStack3DWrapper from '@/components/3d/DocumentStack3DWrapper';
+import { getTranslations } from '@/lib/translations';
+import PillBadge from '@/components/ui/PillBadge';
+import { Globe } from 'lucide-react';
 
 // ── Sample Data for Instant Preview / Testing ────────────────────────────
 
-const SAMPLE_PREP_DATA = {
-  documentType: 'Residential Lease Agreement',
-  summary:
-    'This is a standard 12-month residential lease for 742 Evergreen Terrace between Greenfield Properties LLC and Tenant Alex Mercer. Rent is $2,200/month with a 3-day grace period and $75 late penalty. Key attention areas include a non-refundable $4,400 deposit clause, 90-day automatic renewal notice, and a unilateral clause shifting all plumbing/HVAC maintenance costs to the tenant.',
-  keyPoints: [
-    'Monthly Rent: $2,200.00 payable in advance on the 1st of each month',
-    'Late Fee: $75.00 flat penalty applied after a 3-day grace period',
-    'Security Deposit: $4,400.00 (landlord reserves right to retain without receipts)',
-    'Auto-Renewal: 12-month automatic rollover requiring 90 days advance written notice',
-    'Maintenance: Tenant bears 100% cost of all HVAC and plumbing repairs regardless of cause',
-  ],
-  clauses: [
-    {
-      category: 'Unilateral Security Deposit Forfeiture',
-      category_level: 'risk',
-      explanation:
-        'Clause 3 permits the landlord to retain the $4,400 deposit without presenting itemized contractor receipts within 60 days, contrary to standard statutory deposit protections.',
-      clause_text: 'Landlord retains unilateral authority to withhold deposits without receipts within 60 days.',
-    },
-    {
-      category: 'HVAC & Plumbing Structural Maintenance Shift',
-      category_level: 'risk',
-      explanation:
-        'Clause 5 forces the tenant to pay for major structural plumbing and HVAC repairs regardless of who caused the issue or normal wear and tear.',
-      clause_text: 'Tenant is responsible for all plumbing and HVAC servicing regardless of cause.',
-    },
-    {
-      category: 'Extended 90-Day Auto-Renewal Notice Window',
-      category_level: 'attention',
-      explanation:
-        'Clause 4 requires 90 days advance written notice to prevent automatic 12-month rollover, which is significantly longer than standard 30-day statutory notice.',
-      clause_text: 'Automatically renews for 12 months unless written notice is given 90 days in advance.',
-    },
-  ],
-  questions: [
-    'Can the 90-day automatic renewal window be negotiated down to 30 days or convert to a month-to-month tenancy?',
-    'What specific statutory protections exist in my jurisdiction against unilateral deposit forfeiture without itemized receipts?',
-    'Under local habitability laws, can a landlord legally shift structural HVAC and plumbing maintenance obligations to a residential tenant?',
-    'Does the 3-day termination for any minor rule violation constitute an enforceable lease termination provision?',
-  ],
+const SAMPLE_PREP_DATA_MAP = {
+  en: {
+    documentType: 'Residential Lease Agreement',
+    summary:
+      'This is a standard 12-month residential lease for 742 Evergreen Terrace between Greenfield Properties LLC and Tenant Alex Mercer. Rent is $2,200/month with a 3-day grace period and $75 late penalty. Key attention areas include a non-refundable $4,400 deposit clause, 90-day automatic renewal notice, and a unilateral clause shifting all plumbing/HVAC maintenance costs to the tenant.',
+    keyPoints: [
+      'Monthly Rent: $2,200.00 payable in advance on the 1st of each month',
+      'Late Fee: $75.00 flat penalty applied after a 3-day grace period',
+      'Security Deposit: $4,400.00 (landlord reserves right to retain without receipts)',
+      'Auto-Renewal: 12-month automatic rollover requiring 90 days advance written notice',
+      'Maintenance: Tenant bears 100% cost of all HVAC and plumbing repairs regardless of cause',
+    ],
+    clauses: [
+      {
+        category: 'Unilateral Security Deposit Forfeiture',
+        category_level: 'risk',
+        explanation:
+          'Clause 3 permits the landlord to retain the $4,400 deposit without presenting itemized contractor receipts within 60 days, contrary to standard statutory deposit protections.',
+        clause_text: 'Landlord retains unilateral authority to withhold deposits without receipts within 60 days.',
+      },
+      {
+        category: 'HVAC & Plumbing Structural Maintenance Shift',
+        category_level: 'risk',
+        explanation:
+          'Clause 5 forces the tenant to pay for major structural plumbing and HVAC repairs regardless of who caused the issue or normal wear and tear.',
+        clause_text: 'Tenant is responsible for all plumbing and HVAC servicing regardless of cause.',
+      },
+      {
+        category: 'Extended 90-Day Auto-Renewal Notice Window',
+        category_level: 'attention',
+        explanation:
+          'Clause 4 requires 90 days advance written notice to prevent automatic 12-month rollover, which is significantly longer than standard 30-day statutory notice.',
+        clause_text: 'Automatically renews for 12 months unless written notice is given 90 days in advance.',
+      },
+    ],
+    questions: [
+      'Can the 90-day automatic renewal window be negotiated down to 30 days or convert to a month-to-month tenancy?',
+      'What specific statutory protections exist in my jurisdiction against unilateral deposit forfeiture without itemized receipts?',
+      'Under local habitability laws, can a landlord legally shift structural HVAC and plumbing maintenance obligations to a residential tenant?',
+      'Does the 3-day termination for any minor rule violation constitute an enforceable lease termination provision?',
+    ],
+  },
+  hi: {
+    documentType: 'आवासीय पट्टा समझौता (नमूना)',
+    summary:
+      'यह ग्रीनफील्ड प्रॉपर्टीज एलएलसी और किरायेदार एलेक्स मर्सर के बीच 742 एवरग्रीन टैरेस के लिए एक मानक 12 महीने का आवासीय पट्टा है। किराया $2,200/माह है जिसमें 3 दिन की छूट अवधि और $75 विलंब शुल्क है। मुख्य ध्यान देने योग्य क्षेत्रों में अप्रतिदेय $4,400 जमा खंड, 90-दिवसीय स्वचालित नवीनीकरण नोटिस और सभी रखरखाव लागतों को किरायेदार पर डालने वाली एकतरफा शर्त शामिल है।',
+    keyPoints: [
+      'मासिक किराया: $2,200.00 प्रत्येक माह की पहली तारीख को अग्रिम देय',
+      'विलंब शुल्क: 3 दिन की छूट अवधि के बाद $75.00 का निश्चित जुर्माना',
+      'सुरक्षा जमा: $4,400.00 (मकान मालिक बिना रसीद रोके रखने का अधिकार रखता है)',
+      'स्वतः नवीनीकरण: 12 महीने का स्वतः रोलओवर जिसके लिए 90 दिन पहले लिखित नोटिस आवश्यक है',
+      'रखरखाव: किरायेदार कारण की परवाह किए बिना सभी HVAC और प्लंबिंग मरम्मत की 100% लागत वहन करता है',
+    ],
+    clauses: [
+      {
+        category: 'एकतरफा सुरक्षा जमा जब्ती',
+        category_level: 'risk',
+        explanation:
+          'खंड 3 मकान मालिक को 60 दिनों के भीतर मदवार रसीदें प्रस्तुत किए बिना $4,400 जमा राशि रखने की अनुमति देता है, जो मानक कानूनी जमा सुरक्षा के विपरीत है।',
+        clause_text: 'Landlord retains unilateral authority to withhold deposits without receipts within 60 days.',
+      },
+      {
+        category: 'HVAC और प्लंबिंग संरचनात्मक रखरखाव का स्थानांतरण',
+        category_level: 'risk',
+        explanation:
+          'खंड 5 किरायेदार को सामान्य टूट-फूट के बावजूद सभी प्रमुख संरचनात्मक प्लंबिंग और HVAC मरम्मत के लिए भुगतान करने के लिए मजबूर करता है।',
+        clause_text: 'Tenant is responsible for all plumbing and HVAC servicing regardless of cause.',
+      },
+      {
+        category: 'विस्तारित 90-दिवसीय स्वतः नवीनीकरण नोटिस अवधि',
+        category_level: 'attention',
+        explanation:
+          'खंड 4 को स्वतः 12-महीने के नवीनीकरण को रोकने के लिए 90 दिन पहले अग्रिम लिखित नोटिस की आवश्यकता होती है, जो सामान्य 30 दिनों से काफी अधिक है।',
+        clause_text: 'Automatically renews for 12 months unless written notice is given 90 days in advance.',
+      },
+    ],
+    questions: [
+      'क्या 90 दिनों की स्वतः नवीनीकरण अवधि को 30 दिनों तक कम करने के लिए बातचीत की जा सकती है?',
+      'मदवार रसीदों के बिना एकतरफा जमा जब्ती के खिलाफ मेरे क्षेत्राधिकार में क्या विशिष्ट कानूनी सुरक्षाएं हैं?',
+      'स्थानीय निवास कानूनों के तहत, क्या मकान मालिक संरचनात्मक रखरखाव दायित्वों को कानूनी रूप से किरायेदार पर स्थानांतरित कर सकता है?',
+      'क्या किसी मामूली नियम उल्लंघन के लिए 3 दिन का समाप्ति नोटिस लागू करने योग्य प्रावधान है?',
+    ],
+  },
+  gu: {
+    documentType: 'રહેણાંક ભાડા કરાર (નમૂનો)',
+    summary:
+      'આ ગ્રીનફિલ્ડ પ્રોપર્ટીઝ એલએલસી અને ભાડૂત એલેક્સ મર્સર વચ્ચે 742 એવરગ્રીન ટેરેસ માટે પ્રમાણભૂત 12 મહિનાનો રહેણાંક ભાડાપટ્ટો છે. ભાડું દર મહિને $2,200 છે જેમાં 3 દિવસની છૂટ અવધિ અને $75 મોડો દંડ છે. મુખ્ય બાબતોમાં નોન-રિફંડપાત્ર $4,400 ડિપોઝિટ, 90 દિવસની ઓટો-રિન્યુઅલ નોટિસ અને પ્લમ્બિંગ/HVAC સમારકામનો ખર્ચ ભાડૂત પર લાદતી એકતરફી શરત શામેલ છે.',
+    keyPoints: [
+      'માસિક ભાડું: $2,200.00 દર મહિનાની 1લી તારીખે એડવાન્સમાં ચૂકવવાપાત્ર',
+      'મોડી ફી: 3-દિવસની છૂટ પછી લાગુ પડતો $75.00 ફ્લેટ દંડ',
+      'સિક્યોરિટી ડિપોઝિટ: $4,400.00 (મકાનમાલિક રસીદો વગર રોકવાનો અધિકાર અનામત રાખે છે)',
+      'ઓટો-રિન્યુઅલ: 12-મહિનાનું ઓટો રોલઓવર જેના માટે 90 દિવસ અગાઉ લેખિત નોટિસ જરૂરી છે',
+      'જાળવણી: ભાડૂત કોઈપણ કારણ વગર તમામ HVAC અને પ્લમ્બિંગ સમારકામનો 100% ખર્ચ ભોગવે છે',
+    ],
+    clauses: [
+      {
+        category: 'એકતરફી સિક્યોરિટી ડિપોઝિટ જપ્તી',
+        category_level: 'risk',
+        explanation:
+          'કલમ 3 મકાનમાલિકને 60 દિવસમાં વિગતવાર રસીદો આપ્યા વિના $4,400 ડિપોઝિટ જપ્ત કરવાની મંજૂરી આપે છે, જે કાનૂની રક્ષણ વિરુદ્ધ છે.',
+        clause_text: 'Landlord retains unilateral authority to withhold deposits without receipts within 60 days.',
+      },
+      {
+        category: 'HVAC અને પ્લમ્બિંગ સમારકામનો બોજ ભાડૂત પર',
+        category_level: 'risk',
+        explanation:
+          'કલમ 5 ભાડૂતને સામાન્ય ઘસારા છતાં મોટા માળખાકીય પ્લમ્બિંગ અને HVAC સમારકામ માટે ચૂકવણી કરવાની ફરજ પાડે છે.',
+        clause_text: 'Tenant is responsible for all plumbing and HVAC servicing regardless of cause.',
+      },
+      {
+        category: '90 દિવસની લાંબી ઓટો-રિન્યુઅલ નોટિસ અવધિ',
+        category_level: 'attention',
+        explanation:
+          'કલમ 4 મુજબ 12 મહિનાના ઓટો-રિન્યુઅલને રોકવા માટે 90 દિવસ અગાઉ લેખિત નોટિસ જરૂરી છે, જે પ્રમાણભૂત 30 દિવસ કરતાં ઘણી લાંબી છે.',
+        clause_text: 'Automatically renews for 12 months unless written notice is given 90 days in advance.',
+      },
+    ],
+    questions: [
+      'શું 90 દિવસની ઓટો-રિન્યુઅલ અવધિને વાટાઘાટ કરીને 30 દિવસમાં ઘટાડી શકાય?',
+      'વિગતવાર રસીદો વગર ડિપોઝિટ જપ્તી સામે મારા અધિકારક્ષેત્રમાં કયા કાનૂની રક્ષણો ઉપલબ્ધ છે?',
+      'સ્થानीय કાયદા હેઠળ, શું મકાનમાલિક માળખાકીય સમારકામની જવાબદારી ભાડૂત પર લાદી શકે?',
+      'શું કોઈપણ સામાન્ય નિયમ ઉલ્લંઘન માટે 3 દિવસની સમાપ્તિ નોટિસ કાયદેસર રીતે માન્ય છે?',
+    ],
+  },
 };
 
-// ── 1. Paper-Stack Pure CSS Decorative Element ───────────────────────────
+const SAMPLE_PREP_DATA = SAMPLE_PREP_DATA_MAP.en;
 
-function PaperStackDecoration() {
-  return (
-    <div className="relative w-24 h-20 mx-auto mb-4 flex items-center justify-center">
-      {/* Layer 3: Back Paper (rotate-6) */}
-      <div
-        className="absolute w-16 h-20 bg-white/70 rounded-[16px] shadow-clayCard border border-white/80 transform rotate-6 translate-x-2 -translate-y-1 z-0"
-        aria-hidden="true"
-      />
-      {/* Layer 2: Middle Paper (-rotate-3) */}
-      <div
-        className="absolute w-16 h-20 bg-white/85 rounded-[16px] shadow-clayCard border border-white/80 transform -rotate-3 -translate-x-1.5 translate-y-0.5 z-10"
-        aria-hidden="true"
-      />
-      {/* Layer 1: Front Top Paper */}
-      <div className="relative w-16 h-20 bg-white rounded-[16px] shadow-clayCard border border-white/90 p-2.5 flex flex-col justify-between z-20">
-        <div className="w-5 h-1.5 rounded-full bg-clay-accent/40" />
-        <div className="space-y-1">
-          <div className="w-full h-1 bg-slate-200 rounded-full" />
-          <div className="w-3/4 h-1 bg-slate-200 rounded-full" />
-          <div className="w-5/6 h-1 bg-slate-200 rounded-full" />
-        </div>
-        <div className="w-3.5 h-3.5 rounded-full bg-clay-accent/15 self-end flex items-center justify-center">
-          <div className="w-1.5 h-1.5 rounded-full bg-clay-accent" />
-        </div>
-      </div>
-    </div>
-  );
-}
+// ── 1. Paper-Stack decoration is now rendered by DocumentStack3DWrapper ─────
+// (3D version on desktop, CSS fallback on mobile/reduced-motion)
 
 // ── PDF Generation Logic using jsPDF ─────────────────────────────────────
 
@@ -307,7 +368,11 @@ function LawyerPrepContent() {
     riskResult: ctxRisk,
     checklistResult: ctxChecklist,
     language,
+    setLanguage,
   } = useDocument();
+
+  const t = getTranslations(language);
+  const sampleData = SAMPLE_PREP_DATA_MAP[language as keyof typeof SAMPLE_PREP_DATA_MAP] || SAMPLE_PREP_DATA_MAP.en;
 
   const documentId = searchParams.get('doc') || searchParams.get('document_id') || ctxDocId || '';
   const docTypeParam = searchParams.get('type') || (ctxDocId ? ctxDocType : '') || 'Legal Document';
@@ -359,11 +424,11 @@ function LawyerPrepContent() {
   }, [documentId, language, ctxSimplify, ctxRisk, ctxChecklist]);
 
   // Fallback to sample data for instant test drive if visited directly
-  const activeDocumentType = summaryData?.document_type || (documentId ? docTypeParam : SAMPLE_PREP_DATA.documentType);
-  const activeSummary = summaryData?.plain_summary || SAMPLE_PREP_DATA.summary;
-  const activeKeyPoints = summaryData?.key_points || SAMPLE_PREP_DATA.keyPoints;
-  const activeClauses = riskData?.clauses || (SAMPLE_PREP_DATA.clauses as Clause[]);
-  const activeQuestions = checklistData?.questions_to_ask || SAMPLE_PREP_DATA.questions;
+  const activeDocumentType = summaryData?.document_type || (documentId ? docTypeParam : sampleData.documentType);
+  const activeSummary = summaryData?.plain_summary || sampleData.summary;
+  const activeKeyPoints = summaryData?.key_points || sampleData.keyPoints;
+  const activeClauses = riskData?.clauses || (sampleData.clauses as Clause[]);
+  const activeQuestions = checklistData?.questions_to_ask || sampleData.questions;
 
   // Filter only risk/attention items
   const flaggedClauses = activeClauses.filter((c) => {
@@ -391,74 +456,85 @@ function LawyerPrepContent() {
 
   return (
     <main className="min-h-screen bg-clay-canvas text-clay-foreground pb-24 relative overflow-hidden">
-      <ClayBlobs />
-
-      {/* Top Persistent Navigation Header */}
-      <header className="sticky top-0 z-30 bg-clay-canvas/80 backdrop-blur-md px-4 sm:px-6 py-3.5">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/analyze"
-              className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-[16px] bg-white shadow-clayButton text-clay-foreground hover:text-clay-accent transition-colors"
-              title="Back to Analysis"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
-            <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-[16px] bg-clay-accent/15 flex items-center justify-center text-clay-accent shadow-clayPressed">
-                <Scale className="w-5 h-5" />
-              </div>
-              <div>
-                <h1 className="font-heading font-black text-sm text-clay-foreground tracking-tight">
-                  Lawyer Consultation Prep
-                </h1>
-                <p className="text-[11px] text-clay-foreground font-medium font-sans">
-                  Printable brief &amp; client PDF export
-                </p>
-              </div>
+      {/* Page Title & Navigation Header */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-4 pb-2 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/analyze"
+            className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-[16px] bg-white shadow-clayButton text-clay-foreground hover:text-clay-accent transition-colors"
+            title="Back to Analysis"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-[16px] bg-clay-accent/15 flex items-center justify-center text-clay-accent shadow-clayPressed">
+              <Scale className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="font-heading font-black text-sm text-clay-foreground tracking-tight">
+                {t.lawyerPrep.title}
+              </h1>
+              <p className="text-[11px] text-clay-foreground font-medium font-sans">
+                {t.lawyerPrep.subtitle}
+              </p>
             </div>
           </div>
-
-          {/* Right Action Links */}
-          <div className="flex items-center gap-2">
-            <Link
-              href={`/ask?doc=${documentId}&type=${encodeURIComponent(docTypeParam)}`}
-              className="hidden sm:inline-block"
-            >
-              <Button variant="ghost" size="sm" className="text-xs min-h-[44px] px-3">
-                <MessageSquare className="w-3.5 h-3.5 mr-1 text-clay-accent" />
-                Q&amp;A Chat
-              </Button>
-            </Link>
-            <Link
-              href={`/checklist?doc=${documentId}&type=${encodeURIComponent(docTypeParam)}`}
-              className="hidden sm:inline-block"
-            >
-              <Button variant="ghost" size="sm" className="text-xs min-h-[44px] px-3">
-                <ClipboardList className="w-3.5 h-3.5 mr-1 text-clay-accent-alt" />
-                Checklist
-              </Button>
-            </Link>
-          </div>
         </div>
-      </header>
+
+        {/* Right Action Links */}
+        <div className="flex items-center gap-2">
+          {/* Language Selector */}
+          <div className="inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-1.5 rounded-full bg-white shadow-clayButton border border-white text-xs font-heading font-bold text-clay-foreground mr-1">
+            <Globe className="w-3.5 h-3.5 text-clay-accent shrink-0" />
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              className="bg-transparent font-heading font-bold text-xs text-clay-foreground focus:outline-none cursor-pointer pr-1"
+            >
+              <option value="en">English</option>
+              <option value="hi">हिन्दी</option>
+              <option value="gu">ગુજરાતી</option>
+            </select>
+          </div>
+
+          <Link
+            href={`/ask?doc=${documentId}&type=${encodeURIComponent(docTypeParam)}`}
+            className="hidden sm:inline-block"
+          >
+            <Button variant="ghost" size="sm" className="text-xs min-h-[44px] px-3">
+              <MessageSquare className="w-3.5 h-3.5 mr-1 text-clay-accent" />
+              {t.nav.ask}
+            </Button>
+          </Link>
+          <Link
+            href={`/checklist?doc=${documentId}&type=${encodeURIComponent(docTypeParam)}`}
+            className="hidden sm:inline-block"
+          >
+            <Button variant="ghost" size="sm" className="text-xs min-h-[44px] px-3">
+              <ClipboardList className="w-3.5 h-3.5 mr-1 text-clay-accent-alt" />
+              {t.nav.checklist}
+            </Button>
+          </Link>
+        </div>
+      </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-6 relative z-10">
         {/* ── 1. PAGE HEADING WITH PAPER-STACK DECORATION ─────────────────── */}
         <div className="text-center max-w-2xl mx-auto mb-10">
-          <PaperStackDecoration />
+          <DocumentStack3DWrapper />
 
-          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-heading font-bold text-clay-accent bg-clay-accent/10 mb-3 shadow-clayPressed">
-            <Scale className="w-3.5 h-3.5" />
-            Structured Legal Consultation Export
-          </span>
+          <div className="mb-3.5 flex justify-center">
+            <PillBadge icon={Scale}>
+              {t.lawyerPrep.confidentialBrief}
+            </PillBadge>
+          </div>
 
           <h1 className="font-heading font-black text-3xl sm:text-4xl text-clay-foreground tracking-tight mb-3">
-            Lawyer Consultation Preparation Brief
+            {t.lawyerPrep.pageTitle}
           </h1>
 
           <p className="font-sans text-sm sm:text-base text-clay-muted leading-relaxed">
-            Preview your generated consultation brief below. Download as a clean, structured PDF to share directly with your attorney or retain for pre-signing negotiations.
+            {t.lawyerPrep.pageDesc}
           </p>
         </div>
 
@@ -489,10 +565,12 @@ function LawyerPrepContent() {
           <div className="border-b-2 border-clay-accent pb-6 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1.5">
-                <span className="text-[10px] font-heading font-black tracking-widest uppercase px-2.5 py-0.5 rounded-full bg-clay-accent text-white shadow-clayPressed">
-                  CONFIDENTIAL LEGAL BRIEF
+                <span className="inline-flex items-center gap-1.5 text-xs font-heading font-semibold text-clay-accent">
+                  <Scale className="w-3.5 h-3.5" />
+                  {t.lawyerPrep.confidentialBrief}
                 </span>
-                <span className="text-xs font-mono text-clay-foreground">
+                <span className="text-clay-muted text-xs">·</span>
+                <span className="text-xs font-mono text-clay-muted">
                   Ref: {documentId ? documentId.substring(0, 8) : 'SAMPLE-DOC'}
                 </span>
               </div>
@@ -502,8 +580,8 @@ function LawyerPrepContent() {
             </div>
 
             <div className="text-left sm:text-right text-xs text-clay-foreground font-sans">
-              <p className="font-heading font-bold text-clay-foreground">Prepared for Legal Review</p>
-              <p>{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+              <p className="font-heading font-bold text-clay-foreground">{t.lawyerPrep.preparedForReview}</p>
+              <p>{new Date().toLocaleDateString(language === 'hi' ? 'hi-IN' : language === 'gu' ? 'gu-IN' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
           </div>
 
@@ -511,7 +589,7 @@ function LawyerPrepContent() {
           <section className="mb-8">
             <h3 className="font-heading font-black text-xs uppercase tracking-wider text-clay-foreground mb-3 pb-1 border-b border-slate-100 flex items-center gap-1.5">
               <FileText className="w-3.5 h-3.5 text-clay-accent" />
-              1. Executive Plain-Language Summary
+              {t.lawyerPrep.summarySection}
             </h3>
             <p className="font-sans text-sm sm:text-[15px] text-clay-foreground leading-relaxed whitespace-pre-wrap">
               {activeSummary}
@@ -520,7 +598,7 @@ function LawyerPrepContent() {
             {activeKeyPoints && activeKeyPoints.length > 0 && (
               <div className="mt-4 p-4 sm:p-5 rounded-[24px] bg-[#EFEBF5] shadow-clayPressed border border-white space-y-2">
                 <p className="font-heading font-bold text-xs text-clay-foreground">
-                  Key Commitments &amp; Takeaways:
+                  {t.lawyerPrep.keyCommitmentsSection}
                 </p>
                 <ul className="space-y-1.5 text-xs font-sans text-clay-foreground">
                   {activeKeyPoints.slice(0, 6).map((pt, i) => (
@@ -538,7 +616,7 @@ function LawyerPrepContent() {
           <section className="mb-8">
             <h3 className="font-heading font-black text-xs uppercase tracking-wider text-clay-foreground mb-3 pb-1 border-b border-slate-100 flex items-center gap-1.5">
               <ShieldAlert className="w-3.5 h-3.5 text-red-500" />
-              2. Clauses to Discuss (Flagged Risk &amp; Attention Items)
+              {t.lawyerPrep.clausesSection}
             </h3>
 
             {displayClauses && displayClauses.length > 0 ? (
@@ -571,7 +649,7 @@ function LawyerPrepContent() {
                               : 'bg-amber-100 text-amber-800 border border-amber-200'
                           }`}
                         >
-                          {isRisk ? 'Risk Item' : 'Attention'}
+                          {isRisk ? t.analyze.potentialRisk : t.analyze.attentionNeeded}
                         </span>
                       </div>
 
@@ -599,7 +677,7 @@ function LawyerPrepContent() {
           <section className="mb-8">
             <h3 className="font-heading font-black text-xs uppercase tracking-wider text-clay-foreground mb-3 pb-1 border-b border-slate-100 flex items-center gap-1.5">
               <HelpCircle className="w-3.5 h-3.5 text-clay-accent-alt" />
-              3. Questions to Ask Legal Counsel
+              {t.lawyerPrep.questionsSection}
             </h3>
 
             <div className="space-y-2.5">
@@ -620,7 +698,7 @@ function LawyerPrepContent() {
           {/* Footer Mandatory Legal Disclaimer */}
           <footer className="pt-6 border-t border-slate-100 text-center">
             <p className="text-[11px] font-sans text-clay-foreground italic leading-relaxed max-w-xl mx-auto font-medium">
-              This is an AI-generated summary to help you prepare for a discussion with a qualified legal professional. It is not legal advice.
+              {t.lawyerPrep.disclaimer}
             </p>
           </footer>
         </Card>
@@ -640,12 +718,12 @@ function LawyerPrepContent() {
             {downloadSuccess ? (
               <>
                 <Check className="w-5 h-5 mr-2 stroke-[3]" />
-                <span>Downloaded!</span>
+                <span>{t.lawyerPrep.downloaded}</span>
               </>
             ) : (
               <>
                 <Download className="w-5 h-5 mr-2" />
-                <span>Download PDF Report</span>
+                <span>{t.lawyerPrep.downloadPdf}</span>
               </>
             )}
           </Button>
@@ -657,7 +735,7 @@ function LawyerPrepContent() {
             className="w-full sm:w-auto shadow-clayButton"
           >
             <Printer className="w-4 h-4 mr-2 text-clay-accent" />
-            Print Page
+            {t.lawyerPrep.printBrief}
           </Button>
         </div>
       </div>

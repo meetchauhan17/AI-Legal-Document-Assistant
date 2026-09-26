@@ -1,7 +1,14 @@
 import uuid
+import sys
+from pathlib import Path
+
+# Ensure workspace root is in sys.path
+_ROOT_DIR = str(Path(__file__).resolve().parent.parent)
+if _ROOT_DIR not in sys.path:
+    sys.path.insert(0, _ROOT_DIR)
+
 from typing import Optional, List, Dict, Any
 from collections import OrderedDict
-from pathlib import Path
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel

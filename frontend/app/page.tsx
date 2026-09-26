@@ -3,9 +3,10 @@
 import React from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import ClayBlobs from '@/components/ClayBlobs';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import ClayHeroObjectWrapper from '@/components/3d/ClayHeroObjectWrapper';
+import IconOrbWrapper from '@/components/3d/IconOrbWrapper';
 import {
   FileText,
   ShieldAlert,
@@ -19,7 +20,16 @@ import {
   CheckCircle2,
   AlertTriangle,
   ArrowUpRight,
+  Upload,
+  Brain,
+  BarChart2,
+  Lock,
+  Zap,
+  Users,
 } from 'lucide-react';
+import { useDocument } from '@/context/DocumentContext';
+import { getTranslations } from '@/lib/translations';
+import PillBadge from '@/components/ui/PillBadge';
 
 // Motion variants for entrance animations
 const containerVariants = {
@@ -39,13 +49,31 @@ const itemVariants = {
 };
 
 export default function Home() {
+  const { language } = useDocument();
+  const t = getTranslations(language);
+
   return (
     <main className="relative min-h-screen bg-clay-canvas text-clay-foreground overflow-x-hidden selection:bg-clay-accent/20 selection:text-clay-accent">
-      {/* ── 1. AMBIENT BACKGROUND BLOBS ──────────────────────────────── */}
-      <ClayBlobs />
-
       {/* ── 2. HERO SECTION ─────────────────────────────────────────── */}
       <section className="relative min-h-[85vh] flex flex-col items-center justify-center px-6 pt-16 pb-20 text-center clay-grain overflow-hidden">
+        {/* ── 3D CLAY OBJECT — desktop only, right side, behind text ── */}
+        <div
+          className="hidden md:block absolute right-[-24px] top-1/2 -translate-y-[45%] w-[440px] h-[440px] pointer-events-none"
+          style={{ zIndex: 0 }}
+          aria-hidden="true"
+        >
+          {/* Radial mask so canvas edges fade into the hero bg */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background:
+                'radial-gradient(ellipse 70% 70% at 60% 50%, transparent 40%, var(--clay-canvas, #F3F0FA) 100%)',
+              zIndex: 2,
+            }}
+          />
+          <ClayHeroObjectWrapper />
+        </div>
+
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -54,10 +82,9 @@ export default function Home() {
         >
           {/* Eyebrow badge */}
           <motion.div variants={itemVariants} className="mb-6">
-            <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/80 backdrop-blur-md shadow-clayCard border border-white text-xs font-bold text-clay-accent font-heading">
-              <Sparkles className="w-3.5 h-3.5 text-clay-accent" />
-              High-Fidelity AI Legal Document Intelligence
-            </div>
+            <PillBadge icon={Sparkles} className="px-4 py-1.5 shadow-clayCard">
+              {t.home.heroBadge}
+            </PillBadge>
           </motion.div>
 
           {/* Large Headline with Nunito Font-Black & Clay Text Gradient */}
@@ -65,11 +92,10 @@ export default function Home() {
             variants={itemVariants}
             className="font-heading font-black text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight leading-[1.1] text-clay-foreground mb-6"
           >
-            Understand any legal document{' '}
+            {t.home.heroTitlePart1}{' '}
             <span className="bg-gradient-to-r from-clay-foreground via-clay-accent to-clay-accent-alt bg-clip-text text-transparent">
-              in plain language
+              {t.home.heroTitleGradient}
             </span>
-            {' '}— instantly.
           </motion.h1>
 
           {/* Subheading in DM Sans, text-lg, text-clay-muted, max-w-2xl */}
@@ -77,8 +103,7 @@ export default function Home() {
             variants={itemVariants}
             className="font-sans text-lg sm:text-xl text-clay-muted max-w-2xl mx-auto leading-relaxed mb-10"
           >
-            Upload a contract, lease, or agreement. Get a plain-English summary, one-sided risk flags,
-            clause-by-clause analysis, and a pre-signing checklist — in seconds.
+            {t.home.heroSubtitle}
           </motion.p>
 
           {/* Two CTA Buttons: Stacked vertically on mobile, horizontal on desktop */}
@@ -88,7 +113,7 @@ export default function Home() {
           >
             <Link href="/analyze" id="cta-analyze" className="w-full sm:w-auto">
               <Button variant="primary" size="lg" className="w-full sm:w-auto shadow-clayButton">
-                Analyze a Document
+                {t.home.analyzeNow}
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </Link>
@@ -96,25 +121,45 @@ export default function Home() {
             <Link href="/compare" id="cta-compare" className="w-full sm:w-auto">
               <Button variant="outline" size="lg" className="w-full sm:w-auto shadow-clayCard bg-white/60 backdrop-blur-md">
                 <Scale className="w-5 h-5 mr-2" />
-                Compare Two Documents
+                {t.home.compareDocs}
               </Button>
             </Link>
           </motion.div>
         </motion.div>
 
-        {/* Explore cue */}
+
+        {/* ── HERO STAT BADGES ─────────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.0, duration: 0.6 }}
+          className="mt-12 flex flex-wrap items-center justify-center gap-3"
+        >
+          {[
+            { icon: Users, text: '10,000+ Documents Analyzed', color: 'text-violet-600', bg: 'bg-violet-50' },
+            { icon: Zap, text: 'Instant AI Analysis', color: 'text-amber-600', bg: 'bg-amber-50' },
+            { icon: Lock, text: 'Zero Data Stored', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+          ].map(({ icon: Icon, text, color, bg }) => (
+            <div key={text} className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${bg} border border-white/80 shadow-clayCard text-xs font-heading font-bold ${color}`}>
+              <Icon className="w-3.5 h-3.5" />
+              {text}
+            </div>
+          ))}
+        </motion.div>
+
+        {/* Scroll cue */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1.2, duration: 0.6 }}
-          className="mt-16 flex flex-col items-center gap-1.5 text-clay-foreground"
+          transition={{ delay: 1.4, duration: 0.6 }}
+          className="mt-12 flex flex-col items-center gap-1.5 text-clay-foreground"
           aria-hidden="true"
         >
-          <span className="text-xs font-bold tracking-widest uppercase font-heading">Explore Capabilities</span>
+          <span className="text-xs font-semibold text-clay-accent font-heading opacity-80">{t.home.featuresBadge}</span>
           <motion.div
             animate={{ y: [0, 6, 0] }}
             transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
-            className="w-4 h-4"
+            className="w-4 h-4 opacity-60"
           >
             <svg viewBox="0 0 16 16" fill="none">
               <path d="M8 3v10M3 8l5 5 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -123,28 +168,111 @@ export default function Home() {
         </motion.div>
       </section>
 
+      {/* ── HOW IT WORKS ─────────────────────────────────────────────── */}
+      <section className="relative z-10 max-w-5xl mx-auto px-6 py-16">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-12"
+        >
+          <div className="mb-3.5 flex justify-center">
+            <PillBadge icon={BarChart2}>
+              {t.home.howItWorksBadge}
+            </PillBadge>
+          </div>
+          <h2 className="font-heading font-black text-3xl sm:text-4xl text-clay-foreground tracking-tight">
+            {t.home.howItWorksTitle}
+          </h2>
+          <p className="font-sans text-sm sm:text-base text-clay-muted mt-2 max-w-lg mx-auto">
+            {t.home.howItWorksSubtitle}
+          </p>
+        </motion.div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 relative">
+          {/* Connector line — desktop only */}
+          <div className="hidden sm:block absolute top-10 left-[33%] right-[33%] h-0.5 bg-gradient-to-r from-clay-accent/30 to-clay-accent-alt/30" />
+
+          {[
+            {
+              step: '01',
+              icon: Upload,
+              color: 'from-[#4338CA] to-[#6366F1]',
+              bg: 'bg-indigo-50',
+              title: t.home.step1Title,
+              desc: t.home.step1Desc
+            },
+            {
+              step: '02',
+              icon: Brain,
+              color: 'from-[#8B5CF6] to-[#C026D3]',
+              bg: 'bg-purple-50',
+              title: t.home.step2Title,
+              desc: t.home.step2Desc
+            },
+            {
+              step: '03',
+              icon: CheckCircle2,
+              color: 'from-[#10B981] to-[#059669]',
+              bg: 'bg-emerald-50',
+              title: t.home.step3Title,
+              desc: t.home.step3Desc
+            },
+          ].map(({ step, icon: Icon, color, title, desc }, i) => (
+            <motion.div
+              key={step}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
+              className="relative flex flex-col items-center text-center"
+            >
+              <div className={`relative w-20 h-20 rounded-[28px] bg-gradient-to-br ${color} text-white shadow-clayButton flex items-center justify-center mb-4`}>
+                <Icon className="w-9 h-9" />
+                <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-white shadow-clayCard text-[10px] font-heading font-black text-clay-foreground flex items-center justify-center">{step}</span>
+              </div>
+              <h3 className="font-heading font-black text-base text-clay-foreground mb-2">{title}</h3>
+              <p className="font-sans text-sm text-clay-muted leading-relaxed max-w-[220px]">{desc}</p>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Single CTA below steps */}
+        <div className="flex justify-center mt-10">
+          <Link href="/analyze" id="how-it-works-cta">
+            <Button variant="primary" size="lg" className="shadow-clayButton gap-2">
+              <Upload className="w-4 h-4" />
+              Start Analyzing for Free
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+          </Link>
+        </div>
+      </section>
+
       {/* ── 3. FEATURE SECTION AS A BENTO GRID ──────────────────────── */}
       <section className="relative z-10 max-w-7xl mx-auto px-6 pb-24" aria-labelledby="features-heading">
         {/* Section title */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-60px' }}
+          viewport={{ once: true }}
           transition={{ duration: 0.5 }}
           className="text-center mb-14"
         >
-          <span className="inline-flex items-center gap-1.5 px-4 py-1 rounded-full text-xs font-bold text-clay-accent bg-clay-accent/10 mb-3 shadow-clayPressed font-heading">
-            <Layers className="w-3.5 h-3.5" />
-            All-In-One Legal Intelligence
-          </span>
+          <div className="mb-3.5 flex justify-center">
+            <PillBadge icon={Layers}>
+              {t.home.featuresBadge}
+            </PillBadge>
+          </div>
           <h2
             id="features-heading"
             className="font-heading font-black text-3xl sm:text-4xl md:text-5xl text-clay-foreground tracking-tight mb-3"
           >
-            Everything you need before you sign
+            {t.home.featuresTitle}
           </h2>
           <p className="font-sans text-base sm:text-lg text-clay-muted max-w-xl mx-auto">
-            Five specialized legal AI engines, grounded strictly in your document&apos;s actual text with zero permanent storage.
+            {t.home.featuresSubtitle}
           </p>
         </motion.div>
 
@@ -163,15 +291,19 @@ export default function Home() {
                 {/* Header row with gradient icon orb */}
                 <div className="flex items-start justify-between gap-4 mb-6">
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-[24px] bg-gradient-to-br from-[#4338CA] to-[#6366F1] flex items-center justify-center text-white shadow-clayButton shrink-0">
-                      <FileText className="w-8 h-8" />
-                    </div>
+                    <IconOrbWrapper
+                      color="#4338CA"
+                      gradientFrom="#4338CA"
+                      gradientTo="#6366F1"
+                      icon={<FileText className="w-8 h-8" />}
+                      size={64}
+                    />
                     <div>
                       <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-800 font-heading">
                         Core Feature
                       </span>
                       <h3 className="font-heading font-black text-2xl sm:text-3xl text-clay-foreground mt-1">
-                        Plain-Language Simplification
+                        {t.home.bento1Title}
                       </h3>
                     </div>
                   </div>
@@ -182,8 +314,7 @@ export default function Home() {
                 </div>
 
                 <p className="font-sans text-base text-clay-muted leading-relaxed mb-6">
-                  Translates dense, convoluted legal agreements into clear, structured plain language.
-                  Preserves every substantive financial obligation, deadline, and dollar amount while discarding archaic legal traps.
+                  {t.home.bento1Desc}
                 </p>
 
                 {/* Tactile Side-by-Side Example Preview inside the Bento Card */}
@@ -215,13 +346,13 @@ export default function Home() {
               {/* Bottom Feature Tags & Action */}
               <div className="pt-6 mt-4 border-t border-slate-200/60 flex flex-wrap items-center justify-between gap-4">
                 <div className="flex flex-wrap gap-2 text-xs font-semibold text-clay-foreground">
-                  <span className="px-3 py-1 rounded-full bg-white shadow-clayCard">PDF & Text Input</span>
+                  <span className="px-3 py-1 rounded-full bg-white shadow-clayCard">PDF &amp; Text Input</span>
                   <span className="px-3 py-1 rounded-full bg-white shadow-clayCard">English · हिन्दी · ગુજરાતી</span>
                   <span className="px-3 py-1 rounded-full bg-white shadow-clayCard">5-8 Takeaway Bullets</span>
                 </div>
                 <Link href="/analyze">
                   <Button variant="primary" size="sm">
-                    Analyze Document &rarr;
+                    {t.home.analyzeNow} &rarr;
                   </Button>
                 </Link>
               </div>
@@ -236,23 +367,30 @@ export default function Home() {
             className="flex flex-col justify-between"
           >
             <div>
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#F97316] to-[#FB923C] flex items-center justify-center text-white shadow-clayButton mb-5">
-                <ShieldAlert className="w-7 h-7" />
-              </div>
+              <IconOrbWrapper
+                color="#F97316"
+                gradientFrom="#F97316"
+                gradientTo="#FB923C"
+                icon={<ShieldAlert className="w-7 h-7" />}
+                size={56}
+                className="mb-5"
+              />
               <span className="text-[11px] font-bold uppercase tracking-wider text-orange-800 font-heading bg-orange-100 px-2.5 py-0.5 rounded-full inline-block">
                 Safety First
               </span>
               <h3 className="font-heading font-black text-xl text-clay-foreground mt-2 mb-2">
-                Clause Risk Classification
+                {t.home.bento2Title}
               </h3>
               <p className="font-sans text-sm text-clay-muted leading-relaxed">
-                Flags one-sided clauses as Standard, Attention, or Risk. Highlights auto-renewal traps, unilateral forfeiture, and unreasonable waivers with objective explanations.
+                {t.home.bento2Desc}
               </p>
             </div>
 
             <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold font-heading text-orange-800">
-              <span>View Sample Risks</span>
-              <ArrowRight className="w-4 h-4" />
+              <Link href="/analyze" className="flex items-center justify-between w-full">
+                <span>{t.home.analyzeNow}</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
           </Card>
 
@@ -264,23 +402,30 @@ export default function Home() {
             className="flex flex-col justify-between"
           >
             <div>
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#8B5CF6] to-[#C026D3] flex items-center justify-center text-white shadow-clayButton mb-5">
-                <MessageSquareText className="w-7 h-7" />
-              </div>
+              <IconOrbWrapper
+                color="#8B5CF6"
+                gradientFrom="#8B5CF6"
+                gradientTo="#C026D3"
+                icon={<MessageSquareText className="w-7 h-7" />}
+                size={56}
+                className="mb-5"
+              />
               <span className="text-[11px] font-bold uppercase tracking-wider text-purple-800 font-heading bg-purple-100 px-2.5 py-0.5 rounded-full inline-block">
                 Grounded Q&amp;A
               </span>
               <h3 className="font-heading font-black text-xl text-clay-foreground mt-2 mb-2">
-                Ask Document Questions
+                {t.home.bento3Title}
               </h3>
               <p className="font-sans text-sm text-clay-muted leading-relaxed">
-                Ask specific questions about your agreement. Retrieves source excerpts and refuses to hallucinate if terms are omitted from the text.
+                {t.home.bento3Desc}
               </p>
             </div>
 
             <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold font-heading text-purple-800">
-              <span>Try In-Scope Q&amp;A</span>
-              <ArrowRight className="w-4 h-4" />
+              <Link href="/ask" className="flex items-center justify-between w-full">
+                <span>{t.nav.ask}</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
           </Card>
 
@@ -292,23 +437,28 @@ export default function Home() {
             className="flex flex-col justify-between"
           >
             <div>
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#0D9488] to-[#14B8A6] flex items-center justify-center text-white shadow-clayButton mb-5">
-                <Scale className="w-7 h-7" />
-              </div>
+              <IconOrbWrapper
+                color="#0D9488"
+                gradientFrom="#0D9488"
+                gradientTo="#14B8A6"
+                icon={<Scale className="w-7 h-7" />}
+                size={56}
+                className="mb-5"
+              />
               <span className="text-[11px] font-bold uppercase tracking-wider text-teal-800 font-heading bg-teal-100 px-2.5 py-0.5 rounded-full inline-block">
                 Side-by-Side
               </span>
               <h3 className="font-heading font-black text-xl text-clay-foreground mt-2 mb-2">
-                Compare Two Contracts
+                {t.home.bento4Title}
               </h3>
               <p className="font-sans text-sm text-clay-muted leading-relaxed">
-                Compare competing lease proposals or vendor contracts side-by-side with automated favorability verdicts per clause.
+                {t.home.bento4Desc}
               </p>
             </div>
 
             <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold font-heading text-teal-800">
               <Link href="/compare" className="flex items-center justify-between w-full">
-                <span>Compare Contracts</span>
+                <span>{t.home.compareDocs}</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -322,23 +472,28 @@ export default function Home() {
             className="flex flex-col justify-between"
           >
             <div>
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#10B981] to-[#059669] flex items-center justify-center text-white shadow-clayButton mb-5">
-                <CheckSquare className="w-7 h-7" />
-              </div>
+              <IconOrbWrapper
+                color="#10B981"
+                gradientFrom="#10B981"
+                gradientTo="#059669"
+                icon={<CheckSquare className="w-7 h-7" />}
+                size={56}
+                className="mb-5"
+              />
               <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 font-heading bg-emerald-100 px-2.5 py-0.5 rounded-full inline-block">
                 Action Plan
               </span>
               <h3 className="font-heading font-black text-xl text-clay-foreground mt-2 mb-2">
-                Pre-Signing Checklist
+                {t.home.bento5Title}
               </h3>
               <p className="font-sans text-sm text-clay-muted leading-relaxed">
-                Generates actionable items referencing actual clauses, plus tailored questions to ask the counterparty or your lawyer before signing.
+                {t.home.bento5Desc}
               </p>
             </div>
 
             <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold font-heading text-emerald-800">
               <Link href="/checklist" className="flex items-center justify-between w-full">
-                <span>View Checklist</span>
+                <span>{t.nav.checklist}</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -356,12 +511,12 @@ export default function Home() {
             </div>
             <div>
               <h3 className="font-heading font-black text-lg text-clay-foreground mb-1">
-                Legal Disclaimer &amp; Purpose
+                {t.home.privacyBadge}
               </h3>
               <p className="font-sans text-sm sm:text-base text-clay-muted leading-relaxed">
-                This tool provides information and assistance to help you understand documents —{' '}
-                <strong className="text-clay-foreground font-semibold">it does not replace professional legal advice.</strong>{' '}
-                Our analysis is informational only, uses non-verdict explanations, and helps you prepare for meaningful consultations with qualified attorneys.
+                {t.home.privacySubtitle} —{' '}
+                <strong className="text-clay-foreground font-semibold">{t.home.privacy1}.</strong>{' '}
+                {t.home.privacy3}.
               </p>
             </div>
           </div>
@@ -370,14 +525,31 @@ export default function Home() {
 
       {/* ── 5. PERSISTENT FOOTER ────────────────────────────────────── */}
       <footer className="relative z-10 border-t border-slate-200/60 bg-white/60 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-clay-foreground">
-          <p className="font-sans">
-            AI Legal Document Assistant — Built with High-Fidelity Claymorphism
-          </p>
-          <p className="flex items-center gap-2 font-medium">
-            <Scale className="w-3.5 h-3.5 text-clay-accent" />
-            <span>Zero Data Persistence · In-Memory Privacy</span>
-          </p>
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          {/* Quick Links Row */}
+          <div className="flex flex-wrap justify-center gap-x-8 gap-y-2 mb-6 text-xs font-heading font-bold text-clay-muted">
+            {[
+              { href: '/analyze', label: 'Analyze a Document' },
+              { href: '/ask', label: 'Ask AI Questions' },
+              { href: '/compare', label: 'Compare Contracts' },
+              { href: '/checklist', label: 'Pre-Signing Checklist' },
+              { href: '/lawyer-prep', label: 'Lawyer Prep Brief' },
+            ].map(({ href, label }) => (
+              <Link key={href} href={href} className="hover:text-clay-accent transition-colors">
+                {label}
+              </Link>
+            ))}
+          </div>
+          {/* Bottom row */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-clay-foreground border-t border-slate-100 pt-5">
+            <p className="font-sans text-xs text-clay-muted">
+              {t.home.footerText}
+            </p>
+            <p className="flex items-center gap-2 font-medium text-xs text-clay-muted">
+              <Lock className="w-3.5 h-3.5 text-emerald-500" />
+              <span>Zero Data Persistence · In-Memory Privacy</span>
+            </p>
+          </div>
         </div>
       </footer>
     </main>

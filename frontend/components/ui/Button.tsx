@@ -31,16 +31,16 @@ export default function Button({
     lg: 'h-16 px-10 text-lg rounded-[24px]',
   };
 
-  // Variant visual styles and physics
+  // Variant visual styles and physics (cushioned clay squish & hover lift)
   const variantStyles = {
     primary:
-      'bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] text-white shadow-clayButton hover:shadow-clayButtonHover hover:-translate-y-1 active:scale-[0.92] active:shadow-clayPressed',
+      'bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] text-white shadow-clayButton hover:shadow-clayButtonHover hover:-translate-y-0.5 active:translate-y-0.5 active:scale-[0.96] active:shadow-clayPressed',
     secondary:
-      'bg-white text-clay-foreground shadow-clayButton hover:shadow-clayButtonHover hover:-translate-y-1 active:scale-[0.92] active:shadow-clayPressed border border-white/80',
+      'bg-white text-clay-foreground shadow-clayButton hover:shadow-clayButtonHover hover:-translate-y-0.5 active:translate-y-0.5 active:scale-[0.96] active:shadow-clayPressed border border-white/80',
     outline:
-      'border-2 border-clay-accent/20 bg-transparent text-clay-accent hover:border-clay-accent hover:bg-clay-accent/5 active:scale-[0.95]',
+      'border-2 border-clay-accent/20 bg-transparent text-clay-accent hover:border-clay-accent hover:bg-clay-accent/5 active:scale-[0.97] active:translate-y-0.5',
     ghost:
-      'text-clay-foreground hover:bg-clay-accent/10 hover:text-clay-accent active:scale-[0.95]',
+      'text-clay-foreground hover:bg-clay-accent/10 hover:text-clay-accent active:scale-[0.97]',
   };
 
   const disabledStyles = disabled
@@ -49,7 +49,7 @@ export default function Button({
 
   return (
     <button
-      className={`inline-flex items-center justify-center font-bold tracking-wide transition-all duration-200 select-none focus:outline-none focus-visible:ring-4 focus-visible:ring-clay-accent/30 focus-visible:ring-offset-2 ${sizeStyles[size]} ${variantStyles[variant]} ${disabledStyles} ${className}`}
+      className={`inline-flex items-center justify-center font-bold tracking-wide transition-[transform,box-shadow,background-color] duration-150 ease-out will-change-transform transform-gpu select-none focus:outline-none focus-visible:ring-4 focus-visible:ring-clay-accent/30 focus-visible:ring-offset-2 ${sizeStyles[size]} ${variantStyles[variant]} ${disabledStyles} ${className}`}
       disabled={disabled}
       style={{
         fontFamily: 'var(--font-nunito), Nunito, sans-serif',

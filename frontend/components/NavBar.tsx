@@ -19,21 +19,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useDocument } from '@/context/DocumentContext';
-
-interface NavItem {
-  name: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-}
-
-const NAV_ITEMS: NavItem[] = [
-  { name: 'Home', href: '/', icon: Sparkles },
-  { name: 'Analyze', href: '/analyze', icon: Search },
-  { name: 'Ask', href: '/ask', icon: MessageSquare },
-  { name: 'Compare', href: '/compare', icon: Scale },
-  { name: 'Checklist', href: '/checklist', icon: ClipboardList },
-  { name: 'Lawyer-Prep', href: '/lawyer-prep', icon: FileCheck2 },
-];
+import { getTranslations } from '@/lib/translations';
 
 const LANGUAGES = [
   { value: 'en', label: 'English' },
@@ -53,6 +39,16 @@ export default function NavBar() {
   const pathname = usePathname();
   const { language, setLanguage, documentId, documentType, hasDocument } = useDocument();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const t = getTranslations(language);
+
+  const navItems = [
+    { name: t.nav.home, href: '/', icon: Sparkles },
+    { name: t.nav.analyze, href: '/analyze', icon: Search },
+    { name: t.nav.ask, href: '/ask', icon: MessageSquare },
+    { name: t.nav.compare, href: '/compare', icon: Scale },
+    { name: t.nav.checklist, href: '/checklist', icon: ClipboardList },
+    { name: t.nav.lawyerPrep, href: '/lawyer-prep', icon: FileCheck2 },
+  ];
 
   return (
     <header className="sticky top-0 z-50 px-3 sm:px-6 pt-3 sm:pt-4 pointer-events-none">
@@ -69,13 +65,13 @@ export default function NavBar() {
                 Legal Assistant
               </span>
               {hasDocument ? (
-                <div className="flex items-center gap-1.5 text-xs text-clay-success font-heading font-bold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-clay-success animate-pulse" />
-                  <span className="truncate max-w-[110px] sm:max-w-[140px]">{documentType}</span>
+                <div className="flex items-center gap-1.5 text-xs text-clay-success font-heading font-semibold">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                  <span className="truncate max-w-[110px] sm:max-w-[140px] text-clay-foreground">{documentType}</span>
                 </div>
               ) : (
                 <p className="text-xs text-clay-foreground font-sans leading-none hidden sm:block">
-                  Plain-Language AI
+                  {t.nav.plainLanguageAi}
                 </p>
               )}
             </div>
@@ -83,7 +79,7 @@ export default function NavBar() {
 
           {/* Desktop Navigation Links (md and above) */}
           <div className="hidden md:flex items-center gap-1 lg:gap-1.5">
-            {NAV_ITEMS.map((item) => {
+            {navItems.map((item) => {
               const isActive =
                 item.href === '/'
                   ? pathname === '/'
@@ -107,9 +103,22 @@ export default function NavBar() {
             })}
           </div>
 
-          {/* Right Action: Language Selector & Mobile Hamburger */}
+          {/* Right Action: Language Selector, Get Started CTA & Mobile Hamburger */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* 4. Language Selector: small pill-shaped dropdown (shadow-clayButton, rounded-full) */}
+
+            {/* "Get Started" CTA — only shown on desktop when no document is active */}
+            {!hasDocument && (
+              <Link
+                href="/analyze"
+                id="nav-get-started"
+                className="hidden md:inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2 rounded-full bg-gradient-to-r from-clay-accent to-clay-accent-alt text-white text-sm font-heading font-black shadow-clayButton hover:shadow-deepClay hover:-translate-y-0.5 active:scale-[0.93] transition-all select-none"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Get Started
+              </Link>
+            )}
+
+            {/* Language Selector: small pill-shaped dropdown (shadow-clayButton, rounded-full) */}
             <div className="inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-1.5 rounded-full bg-white shadow-clayButton border border-white/90 text-sm font-heading font-bold text-clay-foreground cursor-pointer select-none active:scale-[0.95] transition-all">
               <Globe className="w-4 h-4 text-clay-accent shrink-0" />
               <select
@@ -126,7 +135,7 @@ export default function NavBar() {
               </select>
             </div>
 
-            {/* 3. Mobile Hamburger Button (min 44px touch target, shadow-clayButton) */}
+            {/* Mobile Hamburger Button (min 44px touch target, shadow-clayButton) */}
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -148,7 +157,7 @@ export default function NavBar() {
               transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
               className="md:hidden mt-2 p-5 rounded-[32px] bg-white/95 backdrop-blur-2xl shadow-deepClay border border-white/90 space-y-1.5 overflow-hidden"
             >
-              {NAV_ITEMS.map((item) => {
+              {navItems.map((item) => {
                 const isActive =
                   item.href === '/'
                     ? pathname === '/'

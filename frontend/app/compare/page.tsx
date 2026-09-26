@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import Link from 'next/link';
 import {
@@ -31,7 +31,9 @@ import { useDocument } from '@/context/DocumentContext';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Input';
-import ClayBlobs from '@/components/ClayBlobs';
+import VSBadge3DWrapper, { CssVsBadge } from '@/components/3d/VSBadge3DWrapper';
+import { getTranslations, type Translations } from '@/lib/translations';
+import PillBadge from '@/components/ui/PillBadge';
 
 // ── Sample Documents for Quick Testing ───────────────────────────────────
 
@@ -61,8 +63,8 @@ Property: 42 Oakdale Avenue, Suite 3B, Portland, Oregon.
 
 const LANGUAGES = [
   { value: 'en', label: 'English' },
-  { value: 'hi', label: 'हिन्दी (Hindi)' },
-  { value: 'gu', label: 'ગુજરાતી (Gujarati)' },
+  { value: 'hi', label: 'हिन्दी' },
+  { value: 'gu', label: 'ગુજરાતી' },
 ];
 
 // ── Helper for Favorability ──────────────────────────────────────────────
@@ -92,6 +94,8 @@ interface DocInputProps {
   onTextChange: (t: string) => void;
   onFileDrop: (f: File) => void;
   onClear: () => void;
+  t: Translations;
+  placeholder?: string;
 }
 
 function DocInputZone({
@@ -106,6 +110,8 @@ function DocInputZone({
   onTextChange,
   onFileDrop,
   onClear,
+  t,
+  placeholder,
 }: DocInputProps) {
   const onDrop = useCallback(
     (accepted: File[]) => {
@@ -142,7 +148,7 @@ function DocInputZone({
                 {label}
               </span>
               <span className="text-xs text-clay-foreground">
-                {mode === 'file' ? 'PDF File Upload' : 'Direct Text Input'}
+                {mode === 'file' ? t.compare.tabUpload : t.compare.tabPaste}
               </span>
             </div>
           </div>
@@ -158,7 +164,7 @@ function DocInputZone({
                   : 'text-clay-foreground hover:bg-white/40'
               }`}
             >
-              Upload PDF
+              {t.compare.tabUpload}
             </button>
             <button
               type="button"
@@ -169,7 +175,7 @@ function DocInputZone({
                   : 'text-clay-foreground hover:bg-white/40'
               }`}
             >
-              Paste Text
+              {t.compare.tabPaste}
             </button>
           </div>
         </div>
@@ -196,10 +202,10 @@ function DocInputZone({
                 </div>
 
                 <h4 className="font-heading font-black text-base text-clay-foreground mb-1">
-                  {isDragActive ? 'Drop PDF into tray!' : `Drop ${label} PDF here`}
+                  {isDragActive ? 'Drop PDF into tray!' : t.compare.dragDropText}
                 </h4>
                 <p className="font-sans text-xs sm:text-sm text-clay-foreground">
-                  or <span className="text-clay-accent font-bold underline">browse files</span> (up to 5MB)
+                  or <span className="text-clay-accent font-bold underline">{t.analyze.orBrowse}</span> (up to 5MB)
                 </p>
               </div>
             ) : (
@@ -233,7 +239,7 @@ function DocInputZone({
             <Textarea
               value={text}
               onChange={(e) => onTextChange(e.target.value)}
-              placeholder={`Paste the clauses, terms, or full text of ${label} here...`}
+              placeholder={placeholder || `Paste the clauses, terms, or full text of ${label} here...`}
               rows={8}
               className="text-xs sm:text-sm font-sans"
             />
@@ -265,6 +271,7 @@ function DocInputZone({
 
 export default function ComparePage() {
   const { language, setLanguage } = useDocument();
+  const t = getTranslations(language);
 
   // Document A State
   const [modeA, setModeA] = useState<'file' | 'text'>('text');
@@ -281,6 +288,26 @@ export default function ComparePage() {
   const [loadingStage, setLoadingStage] = useState('Preparing comparison…');
   const [result, setResult] = useState<CompareResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Auto re-compare if results are active and language changes
+  useEffect(() => {
+    if (!result) return;
+    let isSubscribed = true;
+    async function reCompare() {
+      try {
+        const compareRes = await compareDocuments(textA, textB, language);
+        if (isSubscribed) setResult(compareRes);
+      } catch (e) {
+        console.error('Failed to re-compare in new language', e);
+      }
+    }
+    if (textA && textB) {
+      reCompare();
+    }
+    return () => {
+      isSubscribed = false;
+    };
+  }, [language]);
 
   const handleLoadSample = () => {
     setModeA('text');
@@ -342,58 +369,53 @@ export default function ComparePage() {
 
   return (
     <main className="min-h-screen bg-clay-canvas text-clay-foreground pb-20 relative overflow-hidden">
-      {/* Ambient background blobs */}
-      <ClayBlobs />
+      {/* ── Page Navigation Header ────────────────────────────────────────── */}
+      <header className="max-w-6xl mx-auto px-4 sm:px-6 pt-4 pb-2 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/"
+            className="p-2 rounded-xl bg-white shadow-clayButton text-clay-muted hover:text-clay-accent transition-colors"
+            title="Home"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-2xl bg-clay-accent/15 flex items-center justify-center text-clay-accent shadow-clayPressed">
+              <Scale className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="font-heading font-black text-sm text-clay-foreground tracking-tight">
+                {t.compare.title}
+              </h1>
+              <p className="text-xs text-clay-foreground font-sans">
+                {t.compare.subtitle}
+              </p>
+            </div>
+          </div>
+        </div>
 
-      {/* ── Top Navigation Bar ────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-30 bg-clay-canvas/80 backdrop-blur-md px-4 sm:px-6 py-3.5">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="p-2 rounded-xl bg-white shadow-clayButton text-clay-muted hover:text-clay-accent transition-colors"
-              title="Home"
+        {/* Right Actions: Language Selector & Analyze Link */}
+        <div className="flex items-center gap-3">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white shadow-clayButton border border-white text-xs font-heading font-bold text-clay-foreground">
+            <Globe className="w-3.5 h-3.5 text-clay-accent shrink-0" />
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              className="bg-transparent font-heading font-bold text-xs text-clay-foreground focus:outline-none cursor-pointer pr-1"
             >
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-2xl bg-clay-accent/15 flex items-center justify-center text-clay-accent shadow-clayPressed">
-                <Scale className="w-5 h-5" />
-              </div>
-              <div>
-                <h1 className="font-heading font-black text-sm text-clay-foreground tracking-tight">
-                  Compare Legal Documents
-                </h1>
-                <p className="text-xs text-clay-foreground font-sans">
-                  Side-by-side term &amp; liability evaluation
-                </p>
-              </div>
-            </div>
+              {LANGUAGES.map((l) => (
+                <option key={l.value} value={l.value}>
+                  {l.label}
+                </option>
+              ))}
+            </select>
           </div>
 
-          {/* Right Actions: Language Selector & Analyze Link */}
-          <div className="flex items-center gap-3">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white shadow-clayButton border border-white text-xs font-heading font-bold text-clay-foreground">
-              <Globe className="w-3.5 h-3.5 text-clay-accent shrink-0" />
-              <select
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                className="bg-transparent font-heading font-bold text-xs text-clay-foreground focus:outline-none cursor-pointer pr-1"
-              >
-                {LANGUAGES.map((l) => (
-                  <option key={l.value} value={l.value}>
-                    {l.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <Link href="/analyze" className="hidden sm:inline-block">
-              <Button variant="ghost" size="sm" className="text-xs">
-                Single Document Analysis &rarr;
-              </Button>
-            </Link>
-          </div>
+          <Link href="/analyze" className="hidden sm:inline-block">
+            <Button variant="ghost" size="sm" className="text-xs">
+              {t.nav.analyze} &rarr;
+            </Button>
+          </Link>
         </div>
       </header>
 
@@ -401,15 +423,16 @@ export default function ComparePage() {
         {/* ── Page Intro Header ───────────────────────────────────────────── */}
         {!result && (
           <div className="text-center max-w-2xl mx-auto mb-10">
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-heading font-bold text-clay-accent bg-clay-accent/10 mb-4 shadow-clayPressed">
-              <Sparkles className="w-3.5 h-3.5" />
-              Intelligent Difference &amp; Favorability Detection
-            </span>
+            <div className="mb-4 flex justify-center">
+              <PillBadge icon={Sparkles}>
+                {t.compare.introBadge}
+              </PillBadge>
+            </div>
             <h2 className="font-heading font-black text-3xl sm:text-4xl text-clay-foreground tracking-tight mb-3">
-              Compare Two Contracts Side-by-Side
+              {t.compare.introTitle}
             </h2>
             <p className="font-sans text-sm sm:text-base text-clay-muted leading-relaxed">
-              Upload two versions of an agreement or competing proposals. Our AI highlights key differences in rent, liabilities, notice windows, and identifies which terms are more favorable.
+              {t.compare.introDesc}
             </p>
 
             {/* Quick Sample Trigger */}
@@ -421,7 +444,7 @@ export default function ComparePage() {
                 className="shadow-clayButton text-xs"
               >
                 <Layers className="w-4 h-4 mr-2 text-clay-accent" />
-                Load Sample Comparison (Contract A vs Contract B)
+                {t.compare.loadSampleButton}
               </Button>
             </div>
           </div>
@@ -433,7 +456,7 @@ export default function ComparePage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch relative">
               {/* Document A Zone */}
               <DocInputZone
-                label="Document A"
+                label={t.compare.docA}
                 badgeLabel="A"
                 badgeGradient="bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9]"
                 accentColor="from-[#8B5CF6] to-[#6D28D9]"
@@ -447,32 +470,23 @@ export default function ComparePage() {
                   setTextA('');
                   setFileA(null);
                 }}
+                t={t}
+                placeholder={t.compare.pastePlaceholderA}
               />
 
-              {/* 2. CIRCULAR "VS" BADGE (FLOATING AT CENTER ON DESKTOP, INLINE ON MOBILE) */}
-              {/* Desktop Floating VS Badge */}
+              {/* Desktop: 3D rotating VS badge, absolutely centered between zones */}
               <div className="hidden lg:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
-                <div
-                  className="w-16 h-16 rounded-full bg-gradient-to-br from-clay-accent to-clay-accent-alt text-white shadow-clayButton border-4 border-white flex items-center justify-center font-heading font-black text-lg tracking-wider animate-clay-breathe"
-                  style={{ animationDuration: '3s' }}
-                >
-                  VS
-                </div>
+                <VSBadge3DWrapper size={64} />
               </div>
 
-              {/* Mobile Inline VS Badge */}
+              {/* Mobile: CSS badge inline between zones (no Three.js on mobile) */}
               <div className="flex lg:hidden justify-center items-center -my-3 relative z-20">
-                <div
-                  className="w-14 h-14 rounded-full bg-gradient-to-br from-clay-accent to-clay-accent-alt text-white shadow-clayButton border-4 border-white flex items-center justify-center font-heading font-black text-base tracking-wider animate-clay-breathe"
-                  style={{ animationDuration: '3s' }}
-                >
-                  VS
-                </div>
+                <CssVsBadge size={56} />
               </div>
 
               {/* Document B Zone */}
               <DocInputZone
-                label="Document B"
+                label={t.compare.docB}
                 badgeLabel="B"
                 badgeGradient="bg-gradient-to-br from-[#E879F9] to-[#C026D3]"
                 accentColor="from-[#E879F9] to-[#C026D3]"
@@ -486,6 +500,8 @@ export default function ComparePage() {
                   setTextB('');
                   setFileB(null);
                 }}
+                t={t}
+                placeholder={t.compare.pastePlaceholderB}
               />
             </div>
 
@@ -514,7 +530,7 @@ export default function ComparePage() {
                 ) : (
                   <>
                     <Scale className="w-5 h-5 mr-2" />
-                    <span>Compare Documents</span>
+                    <span>{t.compare.compareButton}</span>
                   </>
                 )}
               </Button>
@@ -533,7 +549,7 @@ export default function ComparePage() {
                   Comparison Complete
                 </span>
                 <h2 className="font-heading font-black text-2xl sm:text-3xl text-clay-foreground tracking-tight">
-                  Detailed Clause Comparison
+                  {t.compare.title}
                 </h2>
                 <p className="font-sans text-xs sm:text-sm text-clay-foreground font-medium">
                   {result.comparison_points.length} key aspects evaluated across Document A &amp; Document B
@@ -547,7 +563,7 @@ export default function ComparePage() {
                 className="shadow-clayButton shrink-0 self-start sm:self-auto"
               >
                 <RotateCcw className="w-4 h-4 mr-1.5 text-clay-accent" />
-                Compare Different Documents
+                {t.analyze.newAnalysis}
               </Button>
             </div>
 
@@ -565,7 +581,7 @@ export default function ComparePage() {
                     Executive Analysis
                   </span>
                   <h3 className="font-heading font-black text-lg sm:text-xl text-clay-foreground tracking-tight">
-                    Overall Comparison Summary
+                    {t.compare.summaryTitle}
                   </h3>
                 </div>
               </div>
@@ -578,12 +594,12 @@ export default function ComparePage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between px-2 pt-2">
                 <h3 className="font-heading font-black text-lg text-clay-foreground">
-                  Comparison Aspects ({result.comparison_points.length})
+                  {t.compare.pointsTitle} ({result.comparison_points.length})
                 </h3>
                 <div className="flex items-center gap-3 text-xs font-sans text-clay-foreground font-medium">
                   <span className="flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm" />
-                    Emerald Left Accent = Favorable
+                    Emerald Left Accent = {t.compare.moreFavorable}
                   </span>
                 </div>
               </div>
@@ -631,7 +647,7 @@ export default function ComparePage() {
                           {favorable === 'a' && (
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-heading font-black bg-emerald-100 text-emerald-800 shadow-clayPressed uppercase">
                               <Check className="w-3 h-3 stroke-[3]" />
-                              More Favorable
+                              {t.compare.moreFavorable}
                             </span>
                           )}
                         </div>
@@ -655,7 +671,7 @@ export default function ComparePage() {
                           {favorable === 'b' && (
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-heading font-black bg-emerald-100 text-emerald-800 shadow-clayPressed uppercase">
                               <Check className="w-3 h-3 stroke-[3]" />
-                              More Favorable
+                              {t.compare.moreFavorable}
                             </span>
                           )}
                         </div>
@@ -680,10 +696,10 @@ export default function ComparePage() {
                 </div>
                 <div className="flex items-center gap-4 font-heading font-bold shrink-0">
                   <Link href="/analyze" className="text-clay-accent hover:underline flex items-center gap-1">
-                    Analyze Individual Contract <ChevronRight className="w-3.5 h-3.5" />
+                    {t.nav.analyze} <ChevronRight className="w-3.5 h-3.5" />
                   </Link>
                   <Link href="/ask" className="text-clay-accent hover:underline flex items-center gap-1">
-                    Q&amp;A Chat Assistant <ChevronRight className="w-3.5 h-3.5" />
+                    {t.nav.ask} <ChevronRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
               </div>

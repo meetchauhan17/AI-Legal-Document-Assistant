@@ -25,7 +25,9 @@ import { useDocument } from '@/context/DocumentContext';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import ClayBlobs from '@/components/ClayBlobs';
+import PillBadge from '@/components/ui/PillBadge';
+
+import { getTranslations, type Language } from '@/lib/translations';
 
 // ── Types & Constants ─────────────────────────────────────────────────────
 
@@ -40,17 +42,33 @@ interface Message {
 
 const LANGUAGES = [
   { value: 'en', label: 'English' },
-  { value: 'hi', label: 'हिन्दी (Hindi)' },
-  { value: 'gu', label: 'ગુજરાતી (Gujarati)' },
+  { value: 'hi', label: 'हिन्दी' },
+  { value: 'gu', label: 'ગુજરાતી' },
 ];
 
-const SAMPLE_QUESTIONS = [
-  'What is the monthly rent and late fee grace period?',
-  'Under what conditions can the security deposit be withheld?',
-  'Who is responsible for HVAC and plumbing repairs?',
-  'How many days notice is required before automatic renewal?',
-  'Can the landlord enter the property without notice?',
-];
+const SAMPLE_QUESTIONS_MAP: Record<string, string[]> = {
+  en: [
+    'What is the monthly rent and late fee grace period?',
+    'Under what conditions can the security deposit be withheld?',
+    'Who is responsible for HVAC and plumbing repairs?',
+    'How many days notice is required before automatic renewal?',
+    'Can the landlord enter the property without notice?',
+  ],
+  hi: [
+    'मासिक किराया और विलंब शुल्क की छूट अवधि क्या है?',
+    'किन शर्तों के तहत सुरक्षा जमा काटी जा सकती है?',
+    'HVAC और प्लंबिंग मरम्मत के लिए कौन जिम्मेदार है?',
+    'स्वतः नवीनीकरण से पहले कितने दिनों का नोटिस आवश्यक है?',
+    'क्या मकान मालिक बिना पूर्व सूचना के संपत्ति में प्रवेश कर सकता है?',
+  ],
+  gu: [
+    'માસિક ભાડું અને મોડા ચૂકવણીની ગ્રેસ પીરિયડ કેટલી છે?',
+    'કઈ શરતો હેઠળ સિક્યોરિટી ડિપોઝિટ રોકી શકાય છે?',
+    'HVAC અને પ્લમ્બિંગ સમારકામ માટે કોણ જવાબદાર છે?',
+    'ઓટો-રિન્યુઅલ પહેલાં કેટલા દિવસોની નોટિસ જરૂરી છે?',
+    'શું મકાનમાલિક પૂર્વ નોટિસ વગર ઘરમાં પ્રવેશી શકે છે?',
+  ],
+};
 
 const SAMPLE_LEASE_TEXT = `RESIDENTIAL LEASE AGREEMENT
 1. PARTIES & PREMISES: Greenfield Properties LLC ("Landlord") leases to Alex Mercer ("Tenant") the premises at 742 Evergreen Terrace.
@@ -65,18 +83,18 @@ const SAMPLE_LEASE_TEXT = `RESIDENTIAL LEASE AGREEMENT
 function TypingIndicator() {
   return (
     <div className="flex items-center gap-2">
-      <div className="inline-flex items-center gap-2 px-4 py-3 rounded-full bg-[#EFEBF5] shadow-clayPressed border border-white/60">
+      <div className="inline-flex items-center gap-1.5 px-4 py-3 rounded-full bg-[#EFEBF5] shadow-clayPressed border border-white/60">
         <span
-          className="w-2.5 h-2.5 rounded-full bg-clay-accent animate-clay-breathe"
-          style={{ animationDuration: '1.2s' }}
+          className="w-2 h-2 rounded-full bg-clay-accent animate-bounce"
+          style={{ animationDuration: '0.8s', animationDelay: '0ms' }}
         />
         <span
-          className="w-2.5 h-2.5 rounded-full bg-clay-accent animate-clay-breathe"
-          style={{ animationDuration: '1.2s', animationDelay: '0.2s' }}
+          className="w-2 h-2 rounded-full bg-clay-accent animate-bounce"
+          style={{ animationDuration: '0.8s', animationDelay: '150ms' }}
         />
         <span
-          className="w-2.5 h-2.5 rounded-full bg-clay-accent animate-clay-breathe"
-          style={{ animationDuration: '1.2s', animationDelay: '0.4s' }}
+          className="w-2 h-2 rounded-full bg-clay-accent animate-bounce"
+          style={{ animationDuration: '0.8s', animationDelay: '300ms' }}
         />
       </div>
     </div>
@@ -85,27 +103,34 @@ function TypingIndicator() {
 
 // ── Confidence Badge Component (emerald/amber/muted-gray) ──────────────────
 
-function ConfidenceBadge({ confidence }: { confidence?: 'high' | 'medium' | 'low' }) {
+function ConfidenceBadge({
+  confidence,
+  lang = 'en',
+}: {
+  confidence?: 'high' | 'medium' | 'low';
+  lang?: string;
+}) {
   if (!confidence) return null;
+  const t = getTranslations(lang);
 
   const cfg = {
     high: {
-      label: 'High Confidence',
+      label: t.ask.highConfidence,
       icon: ShieldCheck,
       classes: 'bg-emerald-100 text-emerald-800 border border-emerald-200/60 shadow-clayPressed',
     },
     medium: {
-      label: 'Medium Confidence',
+      label: t.ask.medConfidence,
       icon: Info,
       classes: 'bg-amber-100 text-amber-800 border border-amber-200/60 shadow-clayPressed',
     },
     low: {
-      label: 'Low Confidence',
+      label: t.ask.lowConfidence,
       icon: AlertTriangle,
       classes: 'bg-slate-200 text-clay-muted border border-slate-300/60 shadow-clayPressed',
     },
   }[confidence] || {
-    label: 'Grounded',
+    label: t.ask.highConfidence,
     icon: ShieldCheck,
     classes: 'bg-emerald-100 text-emerald-800 border border-emerald-200/60 shadow-clayPressed',
   };
@@ -124,8 +149,9 @@ function ConfidenceBadge({ confidence }: { confidence?: 'high' | 'medium' | 'low
 
 // ── Expandable Source Excerpt Component (Ghost Toggle + Recessed Box) ──────
 
-function SourceSection({ excerpt }: { excerpt: string }) {
+function SourceSection({ excerpt, lang = 'en' }: { excerpt: string; lang?: string }) {
   const [open, setOpen] = useState(false);
+  const t = getTranslations(lang);
 
   if (!excerpt || excerpt.trim() === '' || excerpt.includes('None')) return null;
 
@@ -138,7 +164,7 @@ function SourceSection({ excerpt }: { excerpt: string }) {
         onClick={() => setOpen(!open)}
         className="!h-9 !px-3.5 !text-xs !rounded-xl text-clay-accent hover:bg-clay-accent/10 transition-all gap-1 -ml-1 select-none"
       >
-        <span>{open ? 'Hide source ▴' : 'Show source ▾'}</span>
+        <span>{open ? `▲ ${t.ask.hideSource}` : `▼ ${t.ask.showSource}`}</span>
       </Button>
 
       {open && (
@@ -152,6 +178,17 @@ function SourceSection({ excerpt }: { excerpt: string }) {
 
 // ── Main Page Content ─────────────────────────────────────────────────────
 
+function getInitialWelcomeMessage(docType: string, lang: string): string {
+  switch (lang) {
+    case 'hi':
+      return `नमस्ते! मैंने आपके अनुबंध (${docType}) को इंडेक्स कर लिया है। किराए की राशि, समाप्ति जुर्माना, देनदारियों या समय-सीमा के बारे में कोई भी प्रश्न पूछें। मैं आपके दस्तावेज़ के अंशों के आधार पर उत्तर दूंगा।`;
+    case 'gu':
+      return `નમસ્તે! મેં તમારા કરાર (${docType}) ને ઇન્ડેક્સ કર્યું છે. ભાડાની રકમ, સમાપ્તિ દંડ, જવાબદારીઓ અથવા મુદત વિશે કોઈ પણ પ્રશ્ન પૂછો. હું તમારા દસ્તાવેજના આધારે ઉત્તર આપીશ.`;
+    default:
+      return `Hello! I have indexed your contract (${docType}). Ask me any specific question about rent amounts, termination penalties, liabilities, or deadlines. I will ground every answer strictly in your document's excerpts.`;
+  }
+}
+
 function AskPageContent() {
   const searchParams = useSearchParams();
   const {
@@ -162,6 +199,7 @@ function AskPageContent() {
     setDocumentData,
   } = useDocument();
 
+  const t = getTranslations(language);
   const documentId = searchParams.get('doc') || searchParams.get('document_id') || ctxDocId || '';
   const docTypeParam = searchParams.get('type') || (ctxDocId ? ctxDocType : '') || 'Legal Document';
 
@@ -169,7 +207,7 @@ function AskPageContent() {
     {
       id: 'welcome',
       role: 'assistant',
-      content: `Hello! I have indexed your contract (${docTypeParam}). Ask me any specific question about rent amounts, termination penalties, liabilities, or deadlines. I will ground every answer strictly in your document's excerpts.`,
+      content: getInitialWelcomeMessage(docTypeParam, language),
       confidence: 'high',
       timestamp: 'Just now',
     },
@@ -178,6 +216,21 @@ function AskPageContent() {
   const [isLoading, setIsLoading] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Update initial welcome message if user hasn't sent any messages yet
+  useEffect(() => {
+    setMessages((prev) => {
+      if (prev.length === 1 && prev[0].id === 'welcome') {
+        return [
+          {
+            ...prev[0],
+            content: getInitialWelcomeMessage(docTypeParam, language),
+          },
+        ];
+      }
+      return prev;
+    });
+  }, [language, docTypeParam]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -201,7 +254,12 @@ function AskPageContent() {
         {
           id: 'welcome-sample',
           role: 'assistant',
-          content: 'Sample Residential Lease Agreement loaded and indexed. Ask me about rent, security deposit forfeiture, or renewal terms!',
+          content:
+            language === 'hi'
+              ? 'नमूना आवासीय पट्टा समझौता लोड और अनुक्रमित किया गया। किराए, सुरक्षा जमा जब्ती या नवीनीकरण शर्तों के बारे में पूछें!'
+              : language === 'gu'
+              ? 'નમૂના રહેણાંક ભાડા કરાર લોડ અને અનુક્રમિત થયો. ભાડું, ડિપોઝિટ અથવા નવીનીકરણ શરતો વિશે પૂછો!'
+              : 'Sample Residential Lease Agreement loaded and indexed. Ask me about rent, security deposit forfeiture, or renewal terms!',
           confidence: 'high',
           timestamp: 'Just now',
         },
@@ -266,13 +324,12 @@ function AskPageContent() {
   if (!documentId) {
     return (
       <main className="min-h-screen bg-clay-canvas text-clay-foreground py-12 px-4 sm:px-6 flex flex-col justify-between relative overflow-hidden">
-        <ClayBlobs />
         <div className="max-w-2xl mx-auto w-full pt-4 relative z-10">
           <Link
             href="/"
             className="inline-flex items-center gap-2 text-sm font-heading font-bold text-clay-muted hover:text-clay-accent transition-colors mb-6"
           >
-            <ArrowLeft className="w-4 h-4" /> Back to Home
+            <ArrowLeft className="w-4 h-4" /> {t.nav.home}
           </Link>
 
           {/* Centered Hero Variant Card with larger padding */}
@@ -282,24 +339,25 @@ function AskPageContent() {
               <FileQuestion className="w-10 h-10" />
             </div>
 
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-heading font-bold text-clay-accent bg-clay-accent/10 mb-4 shadow-clayPressed">
-              <Sparkles className="w-3.5 h-3.5" />
-              Document Grounded Q&amp;A
-            </span>
+            <div className="mb-4">
+              <PillBadge icon={Sparkles}>
+                {t.ask.title}
+              </PillBadge>
+            </div>
 
             <h1 className="font-heading font-black text-3xl sm:text-4xl text-clay-foreground tracking-tight mb-3">
-              No Document Currently Loaded
+              {t.ask.noDocTitle}
             </h1>
 
             <p className="font-sans text-sm sm:text-base text-clay-muted leading-relaxed max-w-md mx-auto mb-8">
-              To ask questions and receive answers strictly grounded in contract clauses, please upload or paste your legal document for analysis first.
+              {t.ask.noDocDesc}
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/analyze">
                 <Button variant="primary" size="lg" className="w-full sm:w-auto shadow-clayButton">
                   <Sparkles className="w-4 h-4 mr-2" />
-                  Analyze a Document First
+                  {t.ask.analyzeFirst}
                 </Button>
               </Link>
 
@@ -308,48 +366,47 @@ function AskPageContent() {
                 size="lg"
                 onClick={handleLoadSampleAgreement}
                 disabled={isLoading}
-                className="w-full sm:w-auto"
+                className="w-full sm:w-auto shadow-clayButton"
               >
                 <Layers className="w-4 h-4 mr-2 text-clay-accent" />
-                Load Sample Contract
+                {t.ask.loadSample}
               </Button>
             </div>
           </Card>
         </div>
 
         <div className="text-center text-xs sm:text-sm text-clay-foreground py-6 relative z-10 font-medium">
-          Grounded Clause-Level Question Answering · In-Memory Privacy
+          {t.ask.subtitle}
         </div>
       </main>
     );
   }
 
+  const currentQuestions = SAMPLE_QUESTIONS_MAP[language] || SAMPLE_QUESTIONS_MAP.en;
+
   // ── ACTIVE CHAT INTERFACE ────────────────────────────────────────────────
   return (
     <main className="min-h-screen bg-clay-canvas text-clay-foreground flex flex-col justify-between relative overflow-hidden">
-      <ClayBlobs />
-
       {/* ── 1. TOP CONFIRMATION BAR (Slim Glass Card) ────────────────────── */}
-      <div className="sticky top-0 z-30 px-4 sm:px-6 pt-4 pb-2 bg-clay-canvas/80 backdrop-blur-md">
+      <div className="px-4 sm:px-6 pt-4 pb-2">
         <div className="max-w-4xl mx-auto">
           <Card variant="glass" className="p-3 sm:p-4 shadow-clayCard border border-white/80">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              {/* Document Type + Badge */}
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-clay-accent/15 text-clay-accent flex items-center justify-center shadow-clayPressed shrink-0">
                   <FileText className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <span className="font-heading font-black text-sm sm:text-base text-clay-foreground tracking-tight">
                       {docTypeParam}
                     </span>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-heading font-black bg-emerald-100 text-emerald-800 shadow-clayPressed uppercase">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
-                      Loaded
+                    <span className="flex items-center gap-1 text-xs text-emerald-600 font-heading font-semibold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      {t.nav.loaded}
                     </span>
                   </div>
-                  <span className="text-xs text-clay-foreground font-mono">
+                  <span className="text-xs text-clay-muted font-mono">
                     ID: {documentId.substring(0, 10)}…
                   </span>
                 </div>
@@ -376,7 +433,7 @@ function AskPageContent() {
                 {/* Change Document: ghost-variant Button */}
                 <Link href="/analyze">
                   <Button variant="ghost" size="sm" className="min-h-[44px] text-xs">
-                    Change Document
+                    {t.analyze.newAnalysis}
                   </Button>
                 </Link>
 
@@ -388,7 +445,7 @@ function AskPageContent() {
                       {
                         id: 'reset',
                         role: 'assistant',
-                        content: `Conversation reset. Ask any question about ${docTypeParam}.`,
+                        content: getInitialWelcomeMessage(docTypeParam, language),
                         confidence: 'high',
                         timestamp: 'Just now',
                       },
@@ -440,7 +497,7 @@ function AskPageContent() {
                           Legal Assistant
                         </span>
                       </div>
-                      <ConfidenceBadge confidence={msg.confidence} />
+                      <ConfidenceBadge confidence={msg.confidence} lang={language} />
                     </div>
 
                     {/* Answer Text in DM Sans */}
@@ -449,7 +506,7 @@ function AskPageContent() {
                     </p>
 
                     {/* Expandable Source Excerpt Section */}
-                    {msg.source_excerpt && <SourceSection excerpt={msg.source_excerpt} />}
+                    {msg.source_excerpt && <SourceSection excerpt={msg.source_excerpt} lang={language} />}
 
                     <span className="block text-[10px] text-clay-foreground font-mono mt-2">
                       {msg.timestamp}
@@ -466,22 +523,24 @@ function AskPageContent() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Suggested Quick Question Chips (min-h-[44px] touch target) */}
+        {/* Suggested Quick Question Chips */}
         {messages.length <= 2 && (
           <div className="my-4">
-            <span className="text-xs font-heading font-bold uppercase tracking-wider text-clay-foreground mb-2 flex items-center gap-1.5">
-              <HelpCircle className="w-3.5 h-3.5 text-clay-accent" /> Suggested Inquiries
+            <span className="text-xs font-heading font-bold uppercase tracking-wider text-clay-muted mb-3 flex items-center gap-1.5">
+              <HelpCircle className="w-3.5 h-3.5 text-clay-accent" /> {t.ask.suggestedInquiries}
             </span>
             <div className="flex flex-wrap gap-2">
-              {SAMPLE_QUESTIONS.map((sq, i) => (
+              {currentQuestions.map((sq, i) => (
                 <button
                   key={i}
                   type="button"
                   onClick={() => handleSend(sq)}
                   disabled={isLoading}
-                  className="px-4 py-2.5 min-h-[44px] bg-white border border-white/90 shadow-clayCard hover:shadow-deepClay text-clay-foreground hover:text-clay-accent rounded-full text-xs sm:text-sm font-sans font-medium transition-all cursor-pointer text-left active:scale-[0.96] flex items-center"
+                  className="group px-4 py-2.5 min-h-[44px] bg-white border border-clay-accent/20 shadow-clayCard hover:shadow-deepClay hover:border-clay-accent/60 text-clay-foreground hover:text-clay-accent rounded-2xl text-xs sm:text-sm font-sans font-medium transition-all cursor-pointer text-left active:scale-[0.96] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {sq}
+                  <span className="w-5 h-5 rounded-full bg-clay-accent/10 text-clay-accent text-[10px] font-heading font-black flex items-center justify-center shrink-0 group-hover:bg-clay-accent group-hover:text-white transition-all">{i + 1}</span>
+                  <span className="flex-1">{sq}</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-clay-accent opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                 </button>
               ))}
             </div>
@@ -499,7 +558,7 @@ function AskPageContent() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask about clauses, refund dates, penalties, or obligations..."
+                placeholder={t.ask.inputPlaceholder}
                 disabled={isLoading}
                 id="ask-input"
               />
@@ -516,13 +575,18 @@ function AskPageContent() {
               title="Send (Enter)"
             >
               <Send className="w-5 h-5 mr-1.5" />
-              <span className="hidden sm:inline">Send</span>
+              <span className="hidden sm:inline">{t.ask.send}</span>
             </Button>
           </div>
 
-          <div className="flex items-center justify-between px-2 pt-2 text-xs text-clay-foreground font-sans">
-            <span>Press <strong>Enter</strong> to send question</span>
-            <span className="text-clay-accent font-bold">Grounded strictly in contract excerpts</span>
+          <div className="flex items-center justify-between px-2 pt-2 text-[11px] text-clay-muted font-sans">
+            <span className="flex items-center gap-1">
+              <kbd className="px-1.5 py-0.5 rounded bg-white shadow-clayCard text-[10px] font-mono font-bold text-clay-foreground border border-slate-200">Enter</kbd>
+              to send · <kbd className="px-1.5 py-0.5 rounded bg-white shadow-clayCard text-[10px] font-mono font-bold text-clay-foreground border border-slate-200">Shift+Enter</kbd> new line
+            </span>
+            <span className="text-clay-accent font-heading font-semibold flex items-center gap-1">
+              <ShieldCheck className="w-3 h-3" /> Grounded in contract excerpts
+            </span>
           </div>
         </div>
       </footer>

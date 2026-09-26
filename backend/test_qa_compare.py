@@ -1,5 +1,12 @@
 import sys
 import io
+from pathlib import Path
+
+# Ensure root directory is on sys.path
+_ROOT_DIR = str(Path(__file__).resolve().parent.parent)
+if _ROOT_DIR not in sys.path:
+    sys.path.insert(0, _ROOT_DIR)
+
 import requests
 from backend.core.qa import answer_document_question
 from backend.core.compare import compare_documents

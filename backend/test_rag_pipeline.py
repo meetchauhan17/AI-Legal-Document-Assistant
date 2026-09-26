@@ -1,6 +1,13 @@
 import io
-import requests
+import sys
 from pathlib import Path
+
+# Ensure root directory is on sys.path
+_ROOT_DIR = str(Path(__file__).resolve().parent.parent)
+if _ROOT_DIR not in sys.path:
+    sys.path.insert(0, _ROOT_DIR)
+
+import requests
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 

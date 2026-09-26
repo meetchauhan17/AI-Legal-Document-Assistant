@@ -23,7 +23,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       <div className="w-full">
         <input
           ref={ref}
-          className={`w-full h-16 rounded-2xl border-0 bg-[#EFEBF5] px-6 py-4 text-clay-foreground text-lg shadow-clayPressed placeholder:text-clay-muted transition-all duration-200 focus:outline-none focus:bg-white focus:ring-4 focus:ring-clay-accent/20 focus:shadow-clayCard disabled:opacity-50 disabled:cursor-not-allowed ${
+          className={`w-full h-16 rounded-2xl border-0 bg-[#EFEBF5] px-6 py-4 text-clay-foreground text-lg shadow-clayPressed placeholder:text-clay-muted transition-[background-color,box-shadow] duration-200 ease-out focus:outline-none focus:bg-white focus:ring-4 focus:ring-clay-accent/20 focus:shadow-clayCard disabled:opacity-50 disabled:cursor-not-allowed ${
             error ? 'ring-2 ring-red-400 bg-red-50/50' : ''
           } ${className}`}
           {...props}
@@ -48,7 +48,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         <textarea
           ref={ref}
           rows={rows}
-          className={`w-full rounded-2xl border-0 bg-[#EFEBF5] px-6 py-4 text-clay-foreground text-base shadow-clayPressed placeholder:text-clay-muted transition-all duration-200 focus:outline-none focus:bg-white focus:ring-4 focus:ring-clay-accent/20 focus:shadow-clayCard disabled:opacity-50 disabled:cursor-not-allowed resize-none ${
+          className={`w-full rounded-2xl border-0 bg-[#EFEBF5] px-6 py-4 text-clay-foreground text-base shadow-clayPressed placeholder:text-clay-muted transition-[background-color,box-shadow] duration-200 ease-out focus:outline-none focus:bg-white focus:ring-4 focus:ring-clay-accent/20 focus:shadow-clayCard disabled:opacity-50 disabled:cursor-not-allowed resize-none ${
             error ? 'ring-2 ring-red-400 bg-red-50/50' : ''
           } ${className}`}
           {...props}

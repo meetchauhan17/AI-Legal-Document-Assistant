@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import type { SimplifyResponse, RiskResponse, ChecklistResponse } from '@/lib/api';
 
 export interface DocumentContextType {
@@ -38,9 +38,15 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<string>('en');
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Restore from sessionStorage on mount
+  // Restore from sessionStorage and localStorage on mount
   useEffect(() => {
     try {
+      // Check localStorage for user language preference first
+      const storedLang = localStorage.getItem('lda_user_language');
+      if (storedLang && ['en', 'hi', 'gu'].includes(storedLang)) {
+        setLanguageState(storedLang);
+      }
+
       const stored = sessionStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
@@ -51,11 +57,14 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
           setSimplifyResult(parsed.simplifyResult || null);
           setRiskResult(parsed.riskResult || null);
           setChecklistResult(parsed.checklistResult || null);
-          if (parsed.language) setLanguageState(parsed.language);
+          // Only override if storedLang wasn't already set
+          if (parsed.language && !storedLang) {
+            setLanguageState(parsed.language);
+          }
         }
       }
     } catch (e) {
-      console.error('Failed to load document context from session storage', e);
+      console.error('Failed to load document context from storage', e);
     } finally {
       setIsLoaded(true);
     }
@@ -86,11 +95,16 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     }
   }, [documentId, documentType, fullText, simplifyResult, riskResult, checklistResult, language, isLoaded]);
 
-  const setLanguage = (lang: string) => {
+  const setLanguage = useCallback((lang: string) => {
     setLanguageState(lang);
-  };
+    try {
+      localStorage.setItem('lda_user_language', lang);
+    } catch (e) {
+      console.error('Failed to save language to localStorage', e);
+    }
+  }, []);
 
-  const setDocumentData = (data: {
+  const setDocumentData = useCallback((data: {
     documentId: string;
     documentType: string;
     fullText?: string;
@@ -102,13 +116,13 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     if (data.fullText !== undefined) setFullText(data.fullText);
     if (data.simplifyResult !== undefined) setSimplifyResult(data.simplifyResult);
     if (data.riskResult !== undefined) setRiskResult(data.riskResult);
-  };
+  }, []);
 
-  const setChecklistData = (data: ChecklistResponse) => {
+  const setChecklistData = useCallback((data: ChecklistResponse) => {
     setChecklistResult(data);
-  };
+  }, []);
 
-  const clearDocument = () => {
+  const clearDocument = useCallback(() => {
     setDocumentId(null);
     setDocumentType('Document');
     setFullText('');
@@ -118,7 +132,7 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     try {
       sessionStorage.removeItem(STORAGE_KEY);
     } catch (e) {}
-  };
+  }, []);
 
   return (
     <DocumentContext.Provider

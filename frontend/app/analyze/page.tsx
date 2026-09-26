@@ -26,6 +26,8 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { useDocument } from '@/context/DocumentContext';
+import { getTranslations } from '@/lib/translations';
+import PillBadge from '@/components/ui/PillBadge';
 import {
   uploadFile,
   uploadText,
@@ -107,9 +109,29 @@ const SEVERITY_CONFIG = {
 
 // ── Clause Item Component ─────────────────────────────────────────────────
 
-function ClauseItem({ clause, index }: { clause: Clause; index: number }) {
+function ClauseItem({ clause, index, t }: { clause: Clause; index: number; t: ReturnType<typeof getTranslations> }) {
   const level = clauseLevel(clause);
-  const cfg = SEVERITY_CONFIG[level];
+  const severityConfig = {
+    risk: {
+      borderLeft: 'border-l-4 border-l-[#DB2777]',
+      badgeBg: 'bg-pink-100 text-pink-700',
+      icon: ShieldAlert,
+      label: t.analyze.potentialRisk,
+    },
+    attention: {
+      borderLeft: 'border-l-4 border-l-[#F59E0B]',
+      badgeBg: 'bg-amber-100 text-amber-700',
+      icon: AlertTriangle,
+      label: t.analyze.attentionNeeded,
+    },
+    standard: {
+      borderLeft: 'border-l-4 border-l-[#10B981]',
+      badgeBg: 'bg-emerald-100 text-emerald-700',
+      icon: ShieldCheck,
+      label: t.analyze.standardTerms,
+    },
+  };
+  const cfg = severityConfig[level];
   const [expanded, setExpanded] = useState(false);
   const IconComponent = cfg.icon;
 
@@ -154,7 +176,7 @@ function ClauseItem({ clause, index }: { clause: Clause; index: number }) {
         <div className="mt-4 pt-4 border-t border-slate-100/80 space-y-3">
           <div>
             <span className="text-[10px] font-bold uppercase tracking-wider text-clay-foreground font-heading block mb-1">
-              Practical Explanation
+              {t.analyze.practicalExplanation}
             </span>
             <p className="font-sans text-xs sm:text-sm text-clay-foreground leading-relaxed bg-slate-50/80 p-3.5 rounded-[16px] border border-slate-100">
               {clause.explanation}
@@ -163,7 +185,7 @@ function ClauseItem({ clause, index }: { clause: Clause; index: number }) {
 
           <div>
             <span className="text-[10px] font-bold uppercase tracking-wider text-clay-foreground font-heading block mb-1">
-              Exact Contract Excerpt
+              {t.analyze.exactExcerpt}
             </span>
             <p className="font-mono text-xs text-clay-foreground italic bg-[#EFEBF5]/60 p-3.5 rounded-[16px] border border-white shadow-clayPressed leading-relaxed">
               &quot;{clause.clause_text.trim()}&quot;
@@ -179,6 +201,7 @@ function ClauseItem({ clause, index }: { clause: Clause; index: number }) {
 
 export default function AnalyzePage() {
   const { language, setLanguage, setDocumentData } = useDocument();
+  const t = getTranslations(language);
 
   // Mode: 'file' or 'text'
   const [mode, setMode] = useState<'file' | 'text'>('file');
@@ -268,6 +291,52 @@ export default function AnalyzePage() {
     }
   }
 
+  // Auto re-translate active analysis when language is changed
+  const prevLangRef = React.useRef(language);
+  React.useEffect(() => {
+    if (!result || prevLangRef.current === language) {
+      prevLangRef.current = language;
+      return;
+    }
+    prevLangRef.current = language;
+
+    let isSubscribed = true;
+    async function retranslate() {
+      if (!result) return;
+      try {
+        setStage('simplifying');
+        const [simplifyRes, riskRes] = await Promise.all([
+          simplifyDocument(result.upload.document_id, result.upload.full_text, language),
+          analyzeRisk(result.upload.document_id, result.upload.full_text, language),
+        ]);
+        if (isSubscribed) {
+          const updated: AnalysisResult = {
+            upload: result.upload,
+            simplify: simplifyRes,
+            risk: riskRes,
+          };
+          setResult(updated);
+          setDocumentData({
+            documentId: result.upload.document_id,
+            documentType: simplifyRes.document_type,
+            fullText: result.upload.full_text,
+            simplifyResult: simplifyRes,
+            riskResult: riskRes,
+          });
+        }
+      } catch (err) {
+        console.error('Failed to retranslate document on language change:', err);
+      } finally {
+        if (isSubscribed) setStage(null);
+      }
+    }
+
+    retranslate();
+    return () => {
+      isSubscribed = false;
+    };
+  }, [language, result, setDocumentData]);
+
   const handleReset = () => {
     setResult(null);
     setError(null);
@@ -297,9 +366,9 @@ export default function AnalyzePage() {
             </Link>
             <div>
               <h1 className="font-heading font-black text-sm text-clay-foreground tracking-tight">
-                Analyze Legal Document
+                {t.analyze.title}
               </h1>
-              <p className="text-[11px] text-clay-foreground font-medium">Plain-language summary &amp; risk matrix</p>
+              <p className="text-[11px] text-clay-foreground font-medium">{t.analyze.subtitle}</p>
             </div>
           </div>
 
@@ -330,14 +399,16 @@ export default function AnalyzePage() {
         {/* ── PAGE HEADER (When idle) ─────────────────────────────────── */}
         {!result && !isLoading && (
           <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-clay-accent/10 text-clay-accent text-xs font-heading font-bold mb-3 shadow-clayPressed">
-              <Sparkles className="w-3.5 h-3.5" /> High-Fidelity Document Scanner
+            <div className="mb-3.5 flex justify-center">
+              <PillBadge icon={Sparkles}>
+                {t.analyze.tagline}
+              </PillBadge>
             </div>
             <h2 className="font-heading font-black text-3xl sm:text-4xl text-clay-foreground tracking-tight mb-2">
-              Upload or Paste Any Legal Agreement
+              {t.analyze.heading}
             </h2>
             <p className="font-sans text-sm sm:text-base text-clay-foreground max-w-lg mx-auto">
-              Extracts text locally in memory, generates transparent plain-language takeaways, and categorizes high-stakes risk clauses.
+              {t.analyze.description}
             </p>
 
             {/* Quick 1-Click Sample Trigger */}
@@ -348,7 +419,7 @@ export default function AnalyzePage() {
                 className="inline-flex items-center gap-1.5 text-xs font-heading font-bold text-clay-accent hover:text-clay-accent-alt bg-white shadow-clayButton hover:shadow-clayButtonHover active:scale-[0.95] px-4 py-2.5 min-h-[44px] rounded-full border border-white/80 transition-all cursor-pointer"
               >
                 <Layers className="w-3.5 h-3.5 text-clay-accent" />
-                Load Sample Agreement (Residential Lease)
+                {t.analyze.loadSampleButton}
               </button>
             </div>
           </div>
@@ -369,7 +440,7 @@ export default function AnalyzePage() {
                 }`}
               >
                 <Upload className="w-3.5 h-3.5" />
-                Upload PDF
+                {t.analyze.tabUpload}
               </button>
               <button
                 type="button"
@@ -381,7 +452,7 @@ export default function AnalyzePage() {
                 }`}
               >
                 <Type className="w-3.5 h-3.5" />
-                Paste Text
+                {t.analyze.tabPaste}
               </button>
             </div>
 
@@ -392,70 +463,109 @@ export default function AnalyzePage() {
                   <div
                     {...getRootProps()}
                     id="drop-zone"
-                    className={`relative rounded-[32px] p-12 text-center cursor-pointer transition-all duration-300 bg-[#EFEBF5] shadow-clayPressed border-2 border-dashed ${
+                    className={`relative rounded-[32px] p-10 sm:p-14 text-center cursor-pointer transition-all duration-300 bg-[#EFEBF5] shadow-clayPressed border-2 border-dashed ${
                       isDragActive
-                        ? 'border-clay-accent bg-clay-accent/5 ring-4 ring-clay-accent/20'
-                        : 'border-clay-accent/25 hover:border-clay-accent/60'
+                        ? 'border-clay-accent bg-clay-accent/5 ring-4 ring-clay-accent/20 scale-[1.01]'
+                        : 'border-clay-accent/25 hover:border-clay-accent/60 hover:bg-[#EBE6F5]'
                     }`}
                   >
                     <input {...getInputProps()} />
 
-                    {/* Gradient icon orb (8px less than dropzone rounded-[32px]) */}
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-[24px] bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] text-white shadow-clayButton flex items-center justify-center">
+                    {/* Gradient icon orb */}
+                    <div className={`w-16 h-16 mx-auto mb-5 rounded-[24px] flex items-center justify-center shadow-clayButton transition-all duration-300 ${
+                      isDragActive
+                        ? 'bg-gradient-to-br from-clay-accent to-clay-accent-alt scale-110'
+                        : 'bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9]'
+                    } text-white`}>
                       <Upload className="w-8 h-8" />
                     </div>
 
-                    <h3 className="font-heading font-black text-lg text-clay-foreground mb-1">
-                      {isDragActive ? 'Drop your PDF into the tray!' : 'Drag & drop a PDF contract here'}
-                    </h3>
-                    <p className="font-sans text-xs text-clay-foreground">
-                      or <span className="text-clay-accent font-bold underline">browse your device</span> (PDF up to 5MB)
-                    </p>
+                    {isDragActive ? (
+                      <>
+                        <h3 className="font-heading font-black text-xl text-clay-accent mb-1">Release to upload!</h3>
+                        <p className="font-sans text-sm text-clay-accent/80">Drop your PDF here to begin analysis</p>
+                      </>
+                    ) : (
+                      <>
+                        <h3 className="font-heading font-black text-lg text-clay-foreground mb-1">
+                          {t.analyze.dragDropText}
+                        </h3>
+                        <p className="font-sans text-xs text-clay-muted mb-3">
+                          or <span className="text-clay-accent font-bold underline">{t.analyze.orBrowse}</span>
+                        </p>
+                        <div className="flex items-center justify-center gap-3 flex-wrap">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/80 shadow-clayCard text-[11px] font-heading font-semibold text-clay-foreground">
+                            <FileText className="w-3 h-3 text-clay-accent" /> PDF format only
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/80 shadow-clayCard text-[11px] font-heading font-semibold text-clay-foreground">
+                            <ShieldCheck className="w-3 h-3 text-emerald-500" /> Max 5MB
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 ) : (
                   /* File selected state */
-                  <div className="p-6 rounded-[32px] bg-white border border-white shadow-clayCard flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-[24px] bg-clay-success/15 text-clay-success flex items-center justify-center shadow-clayPressed">
-                        <CheckCircle2 className="w-6 h-6" />
+                  <div className="p-6 rounded-[32px] bg-white border border-emerald-100 shadow-clayCard">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-[24px] bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-clayPressed shrink-0">
+                          <CheckCircle2 className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h4 className="font-heading font-bold text-sm text-clay-foreground truncate max-w-[200px] sm:max-w-xs">
+                            {file.name}
+                          </h4>
+                          <p className="text-xs text-clay-muted mt-0.5">
+                            {file.size >= 1024 * 1024
+                              ? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
+                              : `${(file.size / 1024).toFixed(1)} KB`
+                            } · PDF · Ready to analyze
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-heading font-bold text-sm text-clay-foreground">
-                          {file.name}
-                        </h4>
-                        <p className="text-xs text-clay-foreground">
-                          {(file.size / 1024).toFixed(1)} KB · Ready to analyze
-                        </p>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setFile(null)}
+                        className="shrink-0 text-xs font-bold text-clay-muted hover:text-red-500 underline transition-colors min-h-[44px] px-3 flex items-center gap-1 rounded-xl hover:bg-red-50"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" /> Change
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setFile(null)}
-                      className="text-xs font-bold text-clay-foreground hover:text-red-500 underline transition-colors min-h-[44px] px-3 flex items-center"
-                    >
-                      Change File
-                    </button>
+                    <div className="mt-4 pt-3 border-t border-emerald-50 flex items-center gap-2 text-[11px] text-emerald-700 font-heading font-semibold">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      File will be processed in-memory only — no permanent storage.
+                    </div>
                   </div>
                 )}
               </div>
             ) : (
-              /* Mode Text: 2. "Paste text instead" Textarea (Recessed/Concave) */
+              /* Mode Text: "Paste text instead" Textarea */
               <div>
                 <Textarea
                   value={pastedText}
                   onChange={(e) => setPastedText(e.target.value)}
-                  placeholder="Paste the full text of your legal agreement here..."
+                  placeholder={`Paste the full text of your legal agreement here...\n\nTip: Include all numbered sections for the most accurate analysis. You need at least 30 characters.`}
                   rows={8}
                 />
-                <div className="mt-2 flex items-center justify-between text-xs text-clay-foreground px-2">
-                  <span>{pastedText.length} characters</span>
+                <div className="mt-2 flex items-center justify-between text-xs px-2">
+                  <span className={`font-heading font-semibold transition-colors ${
+                    pastedText.length === 0 ? 'text-clay-muted'
+                    : pastedText.length < 30 ? 'text-amber-600'
+                    : 'text-emerald-600'
+                  }`}>
+                    {pastedText.length === 0 ? 'Start typing or paste contract text'
+                      : pastedText.length < 30 ? `${pastedText.length}/30 characters minimum`
+                      : `${pastedText.length.toLocaleString()} characters ✓`
+                    }
+                  </span>
                   {pastedText.length > 0 && (
                     <button
                       type="button"
                       onClick={() => setPastedText('')}
-                      className="min-h-[44px] flex items-center hover:text-red-500 transition-colors"
+                      className="min-h-[44px] flex items-center gap-1 hover:text-red-500 transition-colors text-clay-muted font-heading font-semibold"
                     >
-                      Clear Text
+                      <RotateCcw className="w-3 h-3" /> Clear
                     </button>
                   )}
                 </div>
@@ -480,7 +590,7 @@ export default function AnalyzePage() {
                 id="analyze-submit"
                 className="w-full sm:w-80 shadow-clayButton"
               >
-                Analyze Document
+                {t.analyze.analyzeButton}
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </div>
@@ -492,18 +602,23 @@ export default function AnalyzePage() {
           <div className="py-8 space-y-4 max-w-xl mx-auto">
             <div className="text-center mb-6">
               <h3 className="font-heading font-black text-2xl text-clay-foreground">
-                Analyzing Contract
+                {t.analyze.heading}
               </h3>
               <p className="font-sans text-xs text-clay-foreground mt-1">
-                Executing 3-stage privacy-first analysis in local memory...
+                {t.analyze.stageUploading}
               </p>
             </div>
 
             {LOADING_STAGES.map((s, idx) => {
               const isCurrent = stage === s.key;
               const isDone = completedStages.includes(s.key);
-              const isPending = !isCurrent && !isDone;
               const IconComp = s.icon;
+              const stageLabels: Record<StageKey, { label: string; desc: string }> = {
+                uploading: { label: t.analyze.stageUploading, desc: 'Extracting text and establishing in-memory session' },
+                simplifying: { label: t.analyze.stageSimplifying, desc: 'Translating legalese into plain English and key takeaways' },
+                risks: { label: t.analyze.stageRisks, desc: 'Evaluating one-sided clauses, liability waivers, and hidden traps' },
+              };
+              const currentInfo = stageLabels[s.key];
 
               return (
                 <Card
@@ -519,13 +634,13 @@ export default function AnalyzePage() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      {/* Icon with clay-breathe animation while active (8px less than Card) */}
+                      {/* Icon with clay-breathe animation while active */}
                       <div
                         className={`w-12 h-12 rounded-[24px] flex items-center justify-center text-white shrink-0 ${
                           isDone
                             ? 'bg-clay-success shadow-clayPressed'
                             : isCurrent
-                            ? `bg-gradient-to-br ${s.color} animate-clay-breathe shadow-clayButton`
+                            ? `bg-gradient-to-br ${s.color} shadow-clayButton`
                             : 'bg-slate-300'
                         }`}
                       >
@@ -542,16 +657,17 @@ export default function AnalyzePage() {
                             Stage {idx + 1}
                           </span>
                           {isCurrent && (
-                            <span className="inline-flex px-2 py-0.5 rounded-full text-[9px] font-black bg-clay-accent/15 text-clay-accent uppercase font-heading animate-pulse">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-clay-accent/15 text-clay-accent font-heading">
+                              <span className="w-1.5 h-1.5 rounded-full bg-clay-accent animate-ping" />
                               Processing
                             </span>
                           )}
                         </div>
                         <h4 className="font-heading font-bold text-base text-clay-foreground">
-                          {s.label}
+                          {currentInfo.label}
                         </h4>
                         <p className="text-xs text-clay-foreground">
-                          {s.desc}
+                          {currentInfo.desc}
                         </p>
                       </div>
                     </div>
@@ -575,17 +691,17 @@ export default function AnalyzePage() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/60">
               <div>
                 <h2 className="font-heading font-black text-2xl text-clay-foreground">
-                  Document Analysis Complete
+                  {t.analyze.title}
                 </h2>
                 <p className="font-sans text-xs text-clay-foreground mt-0.5">
-                  {result.risk.clauses.length} clauses analyzed · {riskCount} risk flags · {attentionCount} attention items
+                  {result.risk.clauses.length} clauses analyzed · {riskCount} {t.analyze.potentialRisk} · {attentionCount} {t.analyze.attentionNeeded}
                 </p>
               </div>
 
               <div className="flex items-center gap-2">
                 <Button variant="secondary" size="sm" onClick={handleReset}>
                   <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
-                  Analyze Another
+                  {t.analyze.newAnalysis}
                 </Button>
               </div>
             </div>
@@ -602,14 +718,14 @@ export default function AnalyzePage() {
                 <Link href={`/ask?doc=${result.upload.document_id}`}>
                   <Button variant="outline" size="sm" className="bg-white/80">
                     <MessageSquare className="w-3.5 h-3.5 mr-1.5" />
-                    Ask Questions
+                    {t.analyze.askQuestions}
                   </Button>
                 </Link>
 
                 <Link href={`/checklist?doc=${result.upload.document_id}`}>
                   <Button variant="outline" size="sm" className="bg-white/80">
                     <ClipboardList className="w-3.5 h-3.5 mr-1.5" />
-                    Action Checklist
+                    {t.analyze.viewChecklist}
                   </Button>
                 </Link>
               </div>
@@ -626,7 +742,7 @@ export default function AnalyzePage() {
                     Clear Translation
                   </span>
                   <h3 className="font-heading font-black text-xl text-clay-foreground">
-                    Plain-Language Summary
+                    {t.analyze.executiveSummary}
                   </h3>
                 </div>
               </div>
@@ -647,7 +763,7 @@ export default function AnalyzePage() {
                       Executive Takeaways
                     </span>
                     <h3 className="font-heading font-black text-xl text-clay-foreground">
-                      Key Points &amp; Critical Terms
+                      {t.analyze.keyTakeaways}
                     </h3>
                   </div>
                 </div>
@@ -681,7 +797,7 @@ export default function AnalyzePage() {
                       Protection Audit
                     </span>
                     <h3 className="font-heading font-black text-xl text-clay-foreground">
-                      Clause Risk Classification
+                      {t.analyze.clauseMatrix}
                     </h3>
                   </div>
                 </div>
@@ -700,15 +816,15 @@ export default function AnalyzePage() {
                     </span>
                     <div className="flex items-center gap-2">
                       <span className="w-3 h-3 rounded-full bg-[#10B981] shadow-clayPressed" />
-                      <span className="font-bold text-clay-foreground text-xs">Standard Terms ({standardCount})</span>
+                      <span className="font-bold text-clay-foreground text-xs">{t.analyze.standardTerms} ({standardCount})</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="w-3 h-3 rounded-full bg-[#F59E0B] shadow-clayPressed" />
-                      <span className="font-bold text-clay-foreground text-xs">Attention Needed ({attentionCount})</span>
+                      <span className="font-bold text-clay-foreground text-xs">{t.analyze.attentionNeeded} ({attentionCount})</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="w-3 h-3 rounded-full bg-[#DB2777] shadow-clayPressed" />
-                      <span className="font-bold text-clay-foreground text-xs">Potential Risk ({riskCount})</span>
+                      <span className="font-bold text-clay-foreground text-xs">{t.analyze.potentialRisk} ({riskCount})</span>
                     </div>
                   </div>
 
@@ -721,7 +837,7 @@ export default function AnalyzePage() {
               {/* Clause List: Each as its own rounded-[24px] Card with colored left border */}
               <div className="space-y-3">
                 {result.risk.clauses.map((clause, i) => (
-                  <ClauseItem key={i} clause={clause} index={i} />
+                  <ClauseItem key={i} clause={clause} index={i} t={t} />
                 ))}
               </div>
             </div>
@@ -731,21 +847,21 @@ export default function AnalyzePage() {
               <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
                 <div>
                   <h3 className="font-heading font-black text-xl text-clay-foreground mb-1">
-                    Ready for Next Steps?
+                    {t.analyze.nextSteps}
                   </h3>
                   <p className="font-sans text-xs sm:text-sm text-clay-foreground">
-                    Generate an attorney consultation brief or ask grounded questions about your agreement.
+                    {t.analyze.description}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 shrink-0">
                   <Link href={`/ask?doc=${result.upload.document_id}`}>
                     <Button variant="secondary" size="md">
-                      Ask Questions
+                      {t.analyze.askQuestions}
                     </Button>
                   </Link>
                   <Link href={`/checklist?doc=${result.upload.document_id}`}>
                     <Button variant="primary" size="md">
-                      Generate Checklist &rarr;
+                      {t.analyze.viewChecklist} &rarr;
                     </Button>
                   </Link>
                 </div>
