@@ -7,6 +7,85 @@ const LANGUAGE_INSTRUCTIONS: Record<string, string> = {
   gu: "Write all 'note' fields and 'overall_summary' in Gujarati (Gujarati script). Keep 'aspect', 'document_a_value', 'document_b_value', 'more_favorable' in English.",
 };
 
+function extractPattern(text: string, patterns: RegExp[]): string {
+  for (const pat of patterns) {
+    const m = text.match(pat);
+    if (m && m[1]) return m[1].trim();
+  }
+  return 'Not specified';
+}
+
+function getHeuristicCompare(text_a: string, text_b: string, language: string) {
+  const points: Array<{
+    aspect: string;
+    document_a_value: string;
+    document_b_value: string;
+    more_favorable: 'a' | 'b' | 'neutral';
+    note: string;
+  }> = [];
+
+  // Monthly rent
+  const rentA = extractPattern(text_a, [/monthly rent.*?\$?([\d,]+)/i, /rent.*?\$?([\d,]+)/i]);
+  const rentB = extractPattern(text_b, [/monthly rent.*?\$?([\d,]+)/i, /rent.*?\$?([\d,]+)/i]);
+  if (rentA !== 'Not specified' || rentB !== 'Not specified') {
+    const valA = parseFloat(rentA.replace(/,/g, '')) || 999999;
+    const valB = parseFloat(rentB.replace(/,/g, '')) || 999999;
+    points.push({
+      aspect: 'Monthly Rent',
+      document_a_value: rentA !== 'Not specified' ? `$${rentA}` : 'Not specified',
+      document_b_value: rentB !== 'Not specified' ? `$${rentB}` : 'Not specified',
+      more_favorable: valA < valB ? 'a' : valB < valA ? 'b' : 'neutral',
+      note: 'Lower monthly rent reduces ongoing fixed living costs for the tenant.',
+    });
+  }
+
+  // Security deposit
+  const depA = extractPattern(text_a, [/security deposit.*?\$?([\d,]+)/i, /deposit.*?\$?([\d,]+)/i]);
+  const depB = extractPattern(text_b, [/security deposit.*?\$?([\d,]+)/i, /deposit.*?\$?([\d,]+)/i]);
+  if (depA !== 'Not specified' || depB !== 'Not specified') {
+    const valA = parseFloat(depA.replace(/,/g, '')) || 999999;
+    const valB = parseFloat(depB.replace(/,/g, '')) || 999999;
+    points.push({
+      aspect: 'Security Deposit',
+      document_a_value: depA !== 'Not specified' ? `$${depA}` : 'Not specified',
+      document_b_value: depB !== 'Not specified' ? `$${depB}` : 'Not specified',
+      more_favorable: valA < valB ? 'a' : valB < valA ? 'b' : 'neutral',
+      note: 'Lower deposit requirements minimize upfront capital lockup at signing.',
+    });
+  }
+
+  // Late fee
+  const feeA = extractPattern(text_a, [/late (?:fee|charge|penalty).*?\$?([\d,]+)/i]);
+  const feeB = extractPattern(text_b, [/late (?:fee|charge|penalty).*?\$?([\d,]+)/i]);
+  if (feeA !== 'Not specified' || feeB !== 'Not specified') {
+    const valA = parseFloat(feeA.replace(/,/g, '')) || 999999;
+    const valB = parseFloat(feeB.replace(/,/g, '')) || 999999;
+    points.push({
+      aspect: 'Late Payment Fee',
+      document_a_value: feeA !== 'Not specified' ? `$${feeA}` : 'Not specified',
+      document_b_value: feeB !== 'Not specified' ? `$${feeB}` : 'Not specified',
+      more_favorable: valA < valB ? 'a' : valB < valA ? 'b' : 'neutral',
+      note: 'Lower late charges provide greater financial leniency in case of processing delays.',
+    });
+  }
+
+  if (points.length === 0) {
+    points.push({
+      aspect: 'General Contract Provisions',
+      document_a_value: 'Standard obligations and terms',
+      document_b_value: 'Standard obligations and terms',
+      more_favorable: 'neutral',
+      note: 'Both documents specify customary legal rights and obligations.',
+    });
+  }
+
+  return {
+    comparison_points: points,
+    overall_summary: `Document A and Document B were compared across ${points.length} primary financial and legal dimensions. Review individual points to determine the optimal agreement for your priorities.`,
+    language,
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
@@ -54,33 +133,25 @@ Rules:
 
     const userPrompt = `DOCUMENT A:\n${text_a.slice(0, 6000)}\n\n---\n\nDOCUMENT B:\n${text_b.slice(0, 6000)}\n\nIdentify all key differences and output them in the specified JSON format:`;
 
-    const raw = await callGroq([
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
-    ], true, 0.2);
+    try {
+      const raw = await callGroq([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ], true, 0.2);
 
-    const fallback = {
-      comparison_points: [
-        {
-          aspect: 'Key Terms & Obligations',
-          document_a_value: 'Terms outlined in Document A',
-          document_b_value: 'Terms outlined in Document B',
-          more_favorable: 'neutral',
-          note: 'Review terms carefully to assess which agreement is more advantageous.',
-        },
-      ],
-      overall_summary: 'Both documents contain key obligations and legal conditions with distinctive requirements.',
-    };
+      const parsed = cleanJson(raw, null);
+      if (parsed && Array.isArray(parsed.comparison_points) && parsed.comparison_points.length > 0) {
+        return NextResponse.json({
+          comparison_points: parsed.comparison_points,
+          overall_summary: parsed.overall_summary || 'Comparison completed successfully.',
+          language: lang,
+        });
+      }
+    } catch {
+      // Groq failed -> Use rule-based comparison fallback
+    }
 
-    const parsed = cleanJson(raw, fallback);
-
-    return NextResponse.json({
-      comparison_points: Array.isArray(parsed.comparison_points) && parsed.comparison_points.length > 0
-        ? parsed.comparison_points
-        : fallback.comparison_points,
-      overall_summary: parsed.overall_summary || fallback.overall_summary,
-      language: lang,
-    });
+    return NextResponse.json(getHeuristicCompare(text_a, text_b, lang));
   } catch (error: any) {
     return NextResponse.json(
       { detail: error?.message || 'Comparison failed' },

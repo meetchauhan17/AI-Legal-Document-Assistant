@@ -8,6 +8,58 @@ const LANGUAGE_INSTRUCTIONS: Record<string, string> = {
   gu: 'Write all checklist items and questions in Gujarati (Gujarati script). Keep JSON keys in English.',
 };
 
+function getHeuristicChecklist(text: string, riskClauses: any[], language: string) {
+  const checklist: string[] = [];
+  const questions: string[] = [];
+
+  // Extract dollar amounts
+  const amounts = text.match(/\$[\d,]+(?:\.\d{2})?/g) || [];
+  if (amounts.length > 0) {
+    checklist.push(`Verify exact scheduled amounts and payment dates: ${amounts.slice(0, 3).join(', ')}.`);
+  }
+
+  // Check for risk clauses
+  for (const c of riskClauses) {
+    const cat = c.category || '';
+    const excerpt = (c.clause_text || '').slice(0, 80).replace(/\n/g, ' ');
+
+    if (/deposit/i.test(cat) || /deposit/i.test(excerpt)) {
+      checklist.push(`Clarify return conditions and formal inspection reports for the security deposit.`);
+      questions.push('Under what specific objective criteria can any portion of the security deposit be withheld?');
+    } else if (/evict|access|notice/i.test(cat) || /notice/i.test(excerpt)) {
+      checklist.push(`Confirm minimum written notice required before property entry or termination enforcement.`);
+      questions.push('What is the mandatory advance written notice required prior to landlord entry or lease termination?');
+    } else if (/renewal|auto-renew/i.test(cat)) {
+      checklist.push(`Calendar the exact deadline window required to opt out of automatic contract renewal.`);
+      questions.push('What written format and address are required to issue non-renewal notice?');
+    }
+  }
+
+  // Defaults if needed
+  if (checklist.length < 4) {
+    checklist.push(
+      'Verify all counterparty contact details and notice addresses.',
+      'Check that all exhibit schedules and attachments are appended.',
+      'Confirm responsibility thresholds for maintenance, utilities, and insurance.',
+      'Ensure no blanks or unfilled signature lines remain in the agreement.'
+    );
+  }
+
+  if (questions.length < 3) {
+    questions.push(
+      'What are the exact penalty amounts and grace periods for delayed payments?',
+      'Which party bears legal costs and attorney fees in the event of an alleged default?',
+      'Is there an option for mutual early termination with reasonable advance notice?'
+    );
+  }
+
+  return {
+    before_signing_checklist: checklist.slice(0, 8),
+    questions_to_ask: questions.slice(0, 5),
+    language,
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
@@ -61,35 +113,29 @@ CRITICAL RULES:
 
     const userPrompt = `DOCUMENT TEXT:\n${text.slice(0, 6000)}\n\nIDENTIFIED RISK/ATTENTION CLAUSES:\n${riskBlock}\n\nGenerate the actionable checklist and questions in JSON format:`;
 
-    const raw = await callGroq([
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
-    ], true, 0.2);
+    try {
+      const raw = await callGroq([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ], true, 0.2);
 
-    const fallback = {
-      before_signing_checklist: [
-        'Confirm all financial sums, security deposits, and payment due dates explicitly stated in the document.',
-        'Review renewal notice windows and termination notice periods.',
-        'Verify maintenance and repair liability allocations between parties.',
-        'Clarify consequences and penalty amounts for early termination or default.',
-        'Ensure all blanks, dates, and exhibits are completed before signing.',
-      ],
-      questions_to_ask: [
-        'Under what conditions can deposits or funds be withheld or penalized?',
-        'What is the exact written notice required before any termination or enforcement action?',
-        'Which party carries the indemnification and liability burden under dispute scenarios?',
-      ],
-    };
+      const parsed = cleanJson(raw, null);
+      if (parsed && Array.isArray(parsed.before_signing_checklist) && parsed.before_signing_checklist.length > 0) {
+        return NextResponse.json({
+          before_signing_checklist: parsed.before_signing_checklist,
+          questions_to_ask: Array.isArray(parsed.questions_to_ask) ? parsed.questions_to_ask : [],
+          document_id: body.document_id || '',
+          language: lang,
+        });
+      }
+    } catch {
+      // Groq failed -> Use heuristic document checklist
+    }
 
-    const parsed = cleanJson(raw, fallback);
-
+    const heuristic = getHeuristicChecklist(text, riskClauses, lang);
     return NextResponse.json({
-      before_signing_checklist: Array.isArray(parsed.before_signing_checklist) && parsed.before_signing_checklist.length > 0
-        ? parsed.before_signing_checklist
-        : fallback.before_signing_checklist,
-      questions_to_ask: Array.isArray(parsed.questions_to_ask) && parsed.questions_to_ask.length > 0
-        ? parsed.questions_to_ask
-        : fallback.questions_to_ask,
+      before_signing_checklist: heuristic.before_signing_checklist,
+      questions_to_ask: heuristic.questions_to_ask,
       document_id: body.document_id || '',
       language: lang,
     });

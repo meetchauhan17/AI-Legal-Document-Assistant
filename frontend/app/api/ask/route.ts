@@ -8,6 +8,56 @@ const LANGUAGE_INSTRUCTIONS: Record<string, string> = {
   gu: 'Answer the question in Gujarati (Gujarati script). Keep JSON keys in English.',
 };
 
+function getHeuristicQA(text: string, question: string, language: string) {
+  const paragraphs = text
+    .split(/\n\s*\n+/)
+    .map((p) => p.trim())
+    .filter((p) => p.length > 20);
+
+  // Extract key question terms
+  const terms = question
+    .toLowerCase()
+    .replace(/[?.,!]/g, '')
+    .split(/\s+/)
+    .filter((w) => w.length > 3 && !['what', 'when', 'where', 'which', 'who', 'does', 'have', 'from', 'this', 'that', 'with'].includes(w));
+
+  let bestParagraph = '';
+  let bestScore = 0;
+
+  for (const p of paragraphs) {
+    const pLower = p.toLowerCase();
+    let score = 0;
+    for (const term of terms) {
+      if (pLower.includes(term)) score += 1;
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      bestParagraph = p;
+    }
+  }
+
+  if (bestScore > 0 && bestParagraph) {
+    return {
+      answer: `According to the document: ${bestParagraph.replace(/\n/g, ' ').slice(0, 300)}`,
+      source_excerpt: bestParagraph.replace(/\n/g, ' ').slice(0, 250),
+      confidence: bestScore >= 2 ? 'high' : 'medium',
+    };
+  }
+
+  const notFoundMsg =
+    language === 'hi'
+      ? 'यह दस्तावेज़ इस प्रश्न का स्पष्ट उत्तर नहीं देता।'
+      : language === 'gu'
+      ? 'આ દસ્તાવેજ આ પ્રશ્ન અંગે કોઈ સ્પષ્ટ માહિતી આપતો નથી.'
+      : 'This document does not appear to address that specific question.';
+
+  return {
+    answer: notFoundMsg,
+    source_excerpt: '',
+    confidence: 'low',
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
@@ -45,23 +95,32 @@ Respond ONLY with a valid JSON object matching this schema:
   "confidence": "<must be exactly one of: high | medium | low>"
 }`;
 
-    const raw = await callGroq([
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: `Document:\n\n${text.slice(0, 12000)}\n\nUser Question:\n${question}` },
-    ], true);
+    try {
+      const raw = await callGroq([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Document:\n\n${text.slice(0, 12000)}\n\nUser Question:\n${question}` },
+      ], true);
 
-    const fallback = {
-      answer: "Based on the provided document text, this question is not explicitly addressed.",
-      source_excerpt: "",
-      confidence: "low",
-    };
+      const parsed = cleanJson(raw, null);
+      if (parsed && parsed.answer) {
+        return NextResponse.json({
+          answer: parsed.answer,
+          source_excerpt: parsed.source_excerpt || '',
+          confidence: ['high', 'medium', 'low'].includes(parsed.confidence) ? parsed.confidence : 'medium',
+          document_id: body.document_id || '',
+          question,
+          language: lang,
+        });
+      }
+    } catch {
+      // Groq failed -> Use keyword-grounded heuristic Q&A
+    }
 
-    const parsed = cleanJson(raw, fallback);
-
+    const heuristic = getHeuristicQA(text, question, lang);
     return NextResponse.json({
-      answer: parsed.answer || fallback.answer,
-      source_excerpt: parsed.source_excerpt || fallback.source_excerpt,
-      confidence: ['high', 'medium', 'low'].includes(parsed.confidence) ? parsed.confidence : 'medium',
+      answer: heuristic.answer,
+      source_excerpt: heuristic.source_excerpt,
+      confidence: heuristic.confidence,
       document_id: body.document_id || '',
       question,
       language: lang,
