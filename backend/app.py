@@ -56,8 +56,9 @@ with gr.Blocks(title="AI Legal Document Assistant API") as demo:
         """
     )
 
-# Mount the FastAPI backend onto the Gradio Space
-app = gr.mount_gradio_app(fastapi_app, demo, path="/")
+# Mount Gradio documentation/status at /status so it never intercepts /api/* or /
+app = gr.mount_gradio_app(fastapi_app, demo, path="/status")
 
 if __name__ == "__main__":
-    demo.launch()
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=7860)

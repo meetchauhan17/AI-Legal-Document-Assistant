@@ -20,7 +20,8 @@ if str(_DIR) not in sys.path:
 
 from typing import Optional, List, Dict, Any
 from collections import OrderedDict
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Request
+from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -45,11 +46,11 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS Middleware
+# CORS Middleware — permits localhost and any deployed Vercel domain
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
-    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_origin_regex=r"https?://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -102,7 +103,52 @@ class ChecklistRequest(BaseModel):
     language: str = "en"
 
 @app.get("/")
-def root():
+def root(request: Request):
+    accept = request.headers.get("accept", "")
+    if "text/html" in accept and "application/json" not in accept:
+        html_content = """<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Legal Document Assistant API</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 40px; max-width: 580px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+    .badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); color: #34d399; padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; margin-bottom: 20px; }
+    .pulse { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; animation: blink 2s infinite; }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    h1 { margin: 0 0 10px; font-size: 22px; font-weight: 700; color: #fff; }
+    p { color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 24px; }
+    .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 24px; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; transition: all 0.2s; }
+    .btn-primary { background: #6366f1; color: white; }
+    .btn-primary:hover { background: #4f46e5; }
+    .btn-secondary { background: #334155; color: #e2e8f0; border: 1px solid #475569; }
+    .btn-secondary:hover { background: #475569; }
+    .meta { border-top: 1px solid #334155; padding-top: 16px; font-size: 12px; color: #64748b; display: flex; justify-content: space-between; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge"><div class="pulse"></div> 🟢 Online &amp; Running 24/7</div>
+    <h1>⚖️ AI Legal Document Assistant API</h1>
+    <p>High-performance FastAPI backend with ChromaDB RAG &amp; Groq LLaMA-3.3-70b-versatile intelligence.</p>
+    <div class="btn-group">
+      <a href="/docs" class="btn btn-primary">📖 Interactive Swagger Docs</a>
+      <a href="/status" class="btn btn-secondary">📊 Gradio Status UI</a>
+      <a href="/api/health" class="btn btn-secondary">🩺 Health Check</a>
+    </div>
+    <div class="meta">
+      <span>Model: llama-3.3-70b-versatile</span>
+      <span>Engine: ChromaDB RAG</span>
+    </div>
+  </div>
+</body>
+</html>"""
+        return HTMLResponse(content=html_content)
+
     return {
         "service": "Legal Document Assistant Backend",
         "status": "online",
